@@ -25,7 +25,9 @@ export type GameResult = 'attacker-wins' | 'defender-wins' | null;
 
 export type BoardSize = 9 | 11;
 
-export type AIDifficulty = 'easy' | 'medium' | 'hard';
+export type AIDifficulty = 'beginner' | 'easy' | 'medium' | 'valhalla';
+
+export type GameMode = 'play' | 'demo';
 
 export interface GameState {
   pieces: Piece[];

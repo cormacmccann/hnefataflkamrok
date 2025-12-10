@@ -9,9 +9,10 @@ interface AIMove {
 }
 
 const DIFFICULTY_CONFIG = {
+  beginner: { depth: 1, randomness: 80, blunderChance: 0.5 },
   easy: { depth: 1, randomness: 50, blunderChance: 0.3 },
   medium: { depth: 2, randomness: 15, blunderChance: 0.1 },
-  hard: { depth: 3, randomness: 5, blunderChance: 0 },
+  valhalla: { depth: 4, randomness: 0, blunderChance: 0 },
 };
 
 export function useAI(boardSize: BoardSize, difficulty: AIDifficulty = 'medium') {
