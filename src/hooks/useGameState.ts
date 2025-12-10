@@ -111,7 +111,7 @@ export function useGameState(boardSize: BoardSize, playerSide: Player) {
       }
 
       if (gameResult) {
-        sounds.playGameOver(gameResult === `${prev.playerSide}-wins`);
+        sounds.playGameOver();
       }
 
       moveSuccessful = true;

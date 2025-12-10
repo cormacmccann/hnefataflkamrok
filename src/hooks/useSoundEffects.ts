@@ -1,64 +1,40 @@
 import { useCallback, useRef, useEffect } from 'react';
 
 export function useSoundEffects() {
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const moveAudioRef = useRef<HTMLAudioElement | null>(null);
+  const captureAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    moveAudioRef.current = new Audio('/audio/piece-move.mp3');
+    moveAudioRef.current.volume = 0.5;
+    
+    captureAudioRef.current = new Audio('/audio/piece-defeated.wav');
+    captureAudioRef.current.volume = 0.5;
+
     return () => {
-      audioContextRef.current?.close();
+      moveAudioRef.current = null;
+      captureAudioRef.current = null;
     };
   }, []);
 
-  const playTone = useCallback((frequency: number, duration: number, type: OscillatorType = 'sine', volume = 0.3) => {
-    const ctx = audioContextRef.current;
-    if (!ctx) return;
-
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-    
-    gainNode.gain.setValueAtTime(volume, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + duration);
+  const playMove = useCallback(() => {
+    if (moveAudioRef.current) {
+      moveAudioRef.current.currentTime = 0;
+      moveAudioRef.current.play().catch(() => {});
+    }
   }, []);
 
-  const playSelect = useCallback(() => {
-    playTone(400, 0.1, 'sine', 0.2);
-  }, [playTone]);
-
-  const playMove = useCallback(() => {
-    playTone(300, 0.15, 'triangle', 0.25);
-    setTimeout(() => playTone(350, 0.1, 'triangle', 0.2), 50);
-  }, [playTone]);
-
   const playCapture = useCallback(() => {
-    playTone(200, 0.2, 'sawtooth', 0.2);
-    setTimeout(() => playTone(150, 0.3, 'sawtooth', 0.15), 100);
-  }, [playTone]);
-
-  const playGameOver = useCallback((isVictory: boolean) => {
-    if (isVictory) {
-      playTone(400, 0.2, 'sine', 0.3);
-      setTimeout(() => playTone(500, 0.2, 'sine', 0.3), 150);
-      setTimeout(() => playTone(600, 0.4, 'sine', 0.3), 300);
-    } else {
-      playTone(300, 0.3, 'sine', 0.3);
-      setTimeout(() => playTone(200, 0.5, 'sine', 0.3), 200);
+    if (captureAudioRef.current) {
+      captureAudioRef.current.currentTime = 0;
+      captureAudioRef.current.play().catch(() => {});
     }
-  }, [playTone]);
+  }, []);
 
   return {
-    playSelect,
+    playSelect: playMove,
     playMove,
     playCapture,
-    playGameOver,
+    playGameOver: playCapture,
   };
 }
