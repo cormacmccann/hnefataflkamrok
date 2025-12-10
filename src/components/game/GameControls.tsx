@@ -11,7 +11,7 @@ interface GameControlsProps {
 
 export function GameControls({ onUndo, onNewGame, onShowRules, canUndo, isGameOver }: GameControlsProps) {
   return (
-    <div className="flex flex-wrap gap-2 justify-center">
+    <div className="flex flex-col gap-2 bg-card/90 backdrop-blur p-3 rounded-lg border border-border shadow-lg">
       <Button 
         variant="outline" 
         onClick={onUndo} 

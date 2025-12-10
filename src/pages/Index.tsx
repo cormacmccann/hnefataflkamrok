@@ -10,7 +10,6 @@ import { GameControls } from '@/components/game/GameControls';
 import { VictoryModal } from '@/components/game/VictoryModal';
 import { RulesModal } from '@/components/game/RulesModal';
 import { GameSetup } from '@/components/game/GameSetup';
-import vikingBackground from '@/assets/viking-background.jpg';
 
 export default function Index() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -18,6 +17,7 @@ export default function Index() {
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   const { gameState, selectPiece, makeMove, undoMove, resetGame } = useGameState(boardSize, playerSide);
   const ai = useAI(boardSize);
@@ -94,89 +94,98 @@ export default function Index() {
   }
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-fixed p-4"
-      style={{ backgroundImage: `url(${vikingBackground})` }}
-    >
-      <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px]" />
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Fullscreen 3D Scene */}
+      <Scene3D 
+        gameState={gameState} 
+        onSquareClick={handleSquareClick} 
+        onPieceClick={handlePieceClick} 
+      />
+
+      {/* Header Overlay */}
+      <motion.header 
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 max-w-7xl mx-auto"
+        className="fixed top-0 left-0 right-0 z-20 pointer-events-none"
       >
-        <header className="text-center mb-6">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl sm:text-4xl font-['Cinzel'] text-primary tracking-wide drop-shadow-lg"
-          >
+        <div className="text-center py-4">
+          <h1 className="text-2xl sm:text-3xl font-['Cinzel'] text-primary drop-shadow-lg">
             Hnefatafl
-          </motion.h1>
-          <p className="text-muted-foreground text-sm mt-1">The Viking Game</p>
-        </header>
+          </h1>
+        </div>
+      </motion.header>
 
-        <div className="flex flex-col lg:flex-row gap-6 justify-center items-start">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
+      {/* Left Panel - Turn Indicator & Controls */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+        className="fixed top-20 left-4 z-20 space-y-3 w-48"
+      >
+        <TurnIndicator 
+          currentPlayer={gameState.currentPlayer} 
+          isPlayerTurn={gameState.isPlayerTurn} 
+          playerSide={playerSide} 
+        />
+        <GameControls 
+          onUndo={undoMove} 
+          onNewGame={handleNewGame} 
+          onShowRules={() => setShowRules(true)} 
+          canUndo={gameState.moveHistory.length >= 2 && gameState.isPlayerTurn} 
+          isGameOver={!!gameState.gameResult} 
+        />
+      </motion.div>
+
+      {/* Right Panel - Move History (toggleable on mobile) */}
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+        className="fixed top-20 right-4 z-20 hidden lg:block w-48 h-80"
+      >
+        <MoveHistory moves={gameState.moveHistory} />
+      </motion.div>
+
+      {/* Mobile History Toggle */}
+      <button
+        onClick={() => setShowHistory(!showHistory)}
+        className="fixed top-20 right-4 z-20 lg:hidden bg-card/90 backdrop-blur p-2 rounded-lg border border-border"
+      >
+        <span className="text-sm font-['Cinzel']">📜 History</span>
+      </button>
+
+      {/* Mobile History Panel */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="w-full lg:w-56 space-y-4 order-2 lg:order-1"
-          >
-            <TurnIndicator 
-              currentPlayer={gameState.currentPlayer} 
-              isPlayerTurn={gameState.isPlayerTurn} 
-              playerSide={playerSide} 
-            />
-            <GameControls 
-              onUndo={undoMove} 
-              onNewGame={handleNewGame} 
-              onShowRules={() => setShowRules(true)} 
-              canUndo={gameState.moveHistory.length >= 2 && gameState.isPlayerTurn} 
-              isGameOver={!!gameState.gameResult} 
-            />
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="order-1 lg:order-2"
-          >
-            <Scene3D 
-              gameState={gameState} 
-              onSquareClick={handleSquareClick} 
-              onPieceClick={handlePieceClick} 
-            />
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="w-full lg:w-56 h-64 lg:h-96 order-3"
+            exit={{ opacity: 0, x: 100 }}
+            className="fixed top-32 right-4 z-30 w-48 h-64 lg:hidden"
           >
             <MoveHistory moves={gameState.moveHistory} />
           </motion.div>
-        </div>
+        )}
+      </AnimatePresence>
 
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex justify-center gap-8 mt-6 text-sm"
-        >
-          <div className="flex items-center gap-2 bg-card/80 backdrop-blur px-4 py-2 rounded-full">
-            <div className="w-4 h-4 rounded-full bg-[hsl(var(--piece-attacker))]" />
-            <span>Attackers: {gameState.pieces.filter(p => p.type === 'attacker').length}</span>
-          </div>
-          <div className="flex items-center gap-2 bg-card/80 backdrop-blur px-4 py-2 rounded-full">
-            <div className="w-4 h-4 rounded-full bg-[hsl(var(--piece-defender))]" />
-            <span>Defenders: {gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
-          </div>
-        </motion.div>
+      {/* Bottom Stats Bar */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-4 text-sm"
+      >
+        <div className="flex items-center gap-2 bg-card/90 backdrop-blur px-4 py-2 rounded-full border border-border shadow-lg">
+          <div className="w-3 h-3 rounded-full bg-[hsl(var(--piece-attacker))]" />
+          <span className="text-foreground/90">Attackers: {gameState.pieces.filter(p => p.type === 'attacker').length}</span>
+        </div>
+        <div className="flex items-center gap-2 bg-card/90 backdrop-blur px-4 py-2 rounded-full border border-border shadow-lg">
+          <div className="w-3 h-3 rounded-full bg-[hsl(var(--piece-defender))]" />
+          <span className="text-foreground/90">Defenders: {gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
+        </div>
       </motion.div>
 
+      {/* Modals */}
       <VictoryModal 
         result={showVictory ? gameState.gameResult : null} 
         playerSide={playerSide} 

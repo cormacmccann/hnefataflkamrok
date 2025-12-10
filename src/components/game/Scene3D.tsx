@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { GameState, Position } from '@/types/game';
@@ -12,27 +11,37 @@ interface Scene3DProps {
 
 export function Scene3D({ gameState, onSquareClick, onPieceClick }: Scene3DProps) {
   return (
-    <div className="w-full aspect-square max-w-[600px] rounded-lg overflow-hidden viking-border">
-      <Canvas shadows>
-        <PerspectiveCamera makeDefault position={[0, 12, 8]} fov={45} />
+    <div className="fixed inset-0 w-full h-full">
+      <Canvas shadows className="w-full h-full">
+        <PerspectiveCamera makeDefault position={[0, 14, 10]} fov={40} />
         <OrbitControls 
           enablePan={false}
           minPolarAngle={Math.PI / 6}
-          maxPolarAngle={Math.PI / 2.5}
-          minDistance={10}
-          maxDistance={20}
+          maxPolarAngle={Math.PI / 2.2}
+          minDistance={12}
+          maxDistance={25}
+          target={[0, 0, 0]}
         />
         
-        {/* Lighting */}
-        <ambientLight intensity={0.4} />
+        {/* Environment and lighting */}
+        <color attach="background" args={['#1a1208']} />
+        <fog attach="fog" args={['#1a1208', 20, 45]} />
+        <ambientLight intensity={0.3} />
         <directionalLight
-          position={[5, 10, 5]}
-          intensity={1}
+          position={[5, 12, 5]}
+          intensity={1.2}
           castShadow
           shadow-mapSize={[2048, 2048]}
         />
-        <pointLight position={[-5, 8, -5]} intensity={0.5} color="#ffaa55" />
-        <pointLight position={[5, 8, -5]} intensity={0.3} color="#ff8844" />
+        <pointLight position={[-6, 8, -6]} intensity={0.6} color="#ff9944" />
+        <pointLight position={[6, 8, -6]} intensity={0.4} color="#ff7733" />
+        <pointLight position={[0, 6, 8]} intensity={0.3} color="#ffaa66" />
+        
+        {/* Ground plane for atmosphere */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
+          <planeGeometry args={[50, 50]} />
+          <meshStandardMaterial color="#0d0905" />
+        </mesh>
         
         <Board3D
           gameState={gameState}
