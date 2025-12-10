@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BoardSize, Player, AIDifficulty } from '@/types/game';
-import { ChevronLeft, ChevronRight, Play, BookOpen, Zap, Brain, Skull } from 'lucide-react';
+import { BoardSize, Player, AIDifficulty, GameMode } from '@/types/game';
+import { ChevronLeft, ChevronRight, Play, BookOpen, Sparkles, Zap, Brain, Skull, Eye } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import tutorialKing from '@/assets/tutorial-king.png';
@@ -14,7 +14,7 @@ import tutorialVictory from '@/assets/tutorial-victory.png';
 import { VolumeControl } from './VolumeControl';
 
 interface GameSetupProps {
-  onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty) => void;
+  onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode) => void;
   musicVolume: number;
   sfxVolume: number;
   onMusicVolumeChange: (volume: number) => void;
@@ -88,7 +88,7 @@ export function GameSetup({
 }: GameSetupProps) {
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
-  const [difficulty, setDifficulty] = useState<AIDifficulty>('medium');
+  const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showTutorial, setShowTutorial] = useState(true);
   const [tutorialStep, setTutorialStep] = useState(0);
 
@@ -333,14 +333,22 @@ export function GameSetup({
                     <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                       AI Difficulty
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-4 gap-2">
+                      <Button
+                        variant={difficulty === 'beginner' ? 'default' : 'outline'}
+                        onClick={() => setDifficulty('beginner')}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <Sparkles className="w-5 h-5" />
+                        <span className="font-['Cinzel'] text-xs">Beginner</span>
+                      </Button>
                       <Button
                         variant={difficulty === 'easy' ? 'default' : 'outline'}
                         onClick={() => setDifficulty('easy')}
                         className="h-auto py-3 flex-col gap-1"
                       >
                         <Zap className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-sm">Easy</span>
+                        <span className="font-['Cinzel'] text-xs">Easy</span>
                       </Button>
                       <Button
                         variant={difficulty === 'medium' ? 'default' : 'outline'}
@@ -348,25 +356,36 @@ export function GameSetup({
                         className="h-auto py-3 flex-col gap-1"
                       >
                         <Brain className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-sm">Medium</span>
+                        <span className="font-['Cinzel'] text-xs">Medium</span>
                       </Button>
                       <Button
-                        variant={difficulty === 'hard' ? 'default' : 'outline'}
-                        onClick={() => setDifficulty('hard')}
-                        className="h-auto py-3 flex-col gap-1"
+                        variant={difficulty === 'valhalla' ? 'default' : 'outline'}
+                        onClick={() => setDifficulty('valhalla')}
+                        className="h-auto py-3 flex-col gap-1 text-destructive"
                       >
                         <Skull className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-sm">Hard</span>
+                        <span className="font-['Cinzel'] text-xs">Valhalla</span>
                       </Button>
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={() => onStartGame(boardSize, playerSide, difficulty)} 
-                    className="w-full h-12 text-lg font-['Cinzel']"
-                  >
-                    Begin Battle
-                  </Button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      onClick={() => onStartGame(boardSize, playerSide, difficulty, 'play')} 
+                      className="h-12 text-lg font-['Cinzel']"
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      Play
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => onStartGame(boardSize, playerSide, difficulty, 'demo')} 
+                      className="h-12 text-lg font-['Cinzel']"
+                    >
+                      <Eye className="w-5 h-5 mr-2" />
+                      Demo
+                    </Button>
+                  </div>
 
                   <div className="flex justify-center">
                     <Button
