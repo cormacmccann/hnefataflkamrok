@@ -4,6 +4,8 @@ import { useGLTF } from '@react-three/drei';
 import { Piece } from '@/types/game';
 import * as THREE from 'three';
 import defenderModelUrl from '@/assets/defender-piece.glb?url';
+import attackerModelUrl from '@/assets/attacker-piece.glb?url';
+import kingModelUrl from '@/assets/king-piece.glb?url';
 
 interface Piece3DProps {
   piece: Piece;
@@ -12,15 +14,33 @@ interface Piece3DProps {
   onClick: () => void;
 }
 
-// Preload the model
+// Preload all models
 useGLTF.preload(defenderModelUrl);
+useGLTF.preload(attackerModelUrl);
+useGLTF.preload(kingModelUrl);
 
 export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   const [currentPos, setCurrentPos] = useState<THREE.Vector3>(new THREE.Vector3(...position));
   const targetPos = useRef(new THREE.Vector3(...position));
-  const { scene } = useGLTF(defenderModelUrl);
+  
+  // Load all models
+  const defenderGltf = useGLTF(defenderModelUrl);
+  const attackerGltf = useGLTF(attackerModelUrl);
+  const kingGltf = useGLTF(kingModelUrl);
+
+  // Get the appropriate model based on piece type
+  const getModel = () => {
+    switch (piece.type) {
+      case 'attacker':
+        return attackerGltf.scene;
+      case 'king':
+        return kingGltf.scene;
+      default:
+        return defenderGltf.scene;
+    }
+  };
 
   // Update target position when position prop changes
   useEffect(() => {
@@ -65,10 +85,8 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
     meshRef.current.scale.setScalar(newScale);
   });
 
-  const isDefenderOrKing = piece.type === 'defender' || piece.type === 'king';
-
   // Clone the scene for each instance
-  const clonedScene = scene.clone();
+  const clonedScene = getModel().clone();
   
   // Apply materials to the cloned scene
   clonedScene.traverse((child) => {
@@ -85,6 +103,7 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
   });
 
   const radius = piece.type === 'king' ? 0.35 : 0.3;
+  const modelScale = piece.type === 'king' ? 0.5 : 0.4;
 
   return (
     <group
@@ -96,38 +115,11 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {isDefenderOrKing ? (
-        <primitive 
-          object={clonedScene} 
-          scale={piece.type === 'king' ? 0.5 : 0.4}
-          position={[0, 0, 0]}
-        />
-      ) : (
-        <mesh castShadow>
-          <cylinderGeometry args={[0.24, 0.3, 0.45, 32]} />
-          <meshStandardMaterial
-            color={getColor()}
-            roughness={0.4}
-            metalness={0.2}
-            emissive={isSelected ? '#ffaa00' : hovered ? '#666666' : '#000000'}
-            emissiveIntensity={isSelected ? 0.5 : hovered ? 0.2 : 0}
-          />
-        </mesh>
-      )}
-
-      {/* Crown for king */}
-      {piece.type === 'king' && (
-        <mesh position={[0, 0.5, 0]} castShadow>
-          <coneGeometry args={[0.12, 0.15, 5]} />
-          <meshStandardMaterial 
-            color="#FFD700" 
-            roughness={0.3} 
-            metalness={0.8}
-            emissive={isSelected ? '#ffaa00' : '#442200'}
-            emissiveIntensity={isSelected ? 0.5 : 0.2}
-          />
-        </mesh>
-      )}
+      <primitive 
+        object={clonedScene} 
+        scale={modelScale}
+        position={[0, 0, 0]}
+      />
 
       {/* Selected glow ring */}
       {isSelected && (
