@@ -67,10 +67,12 @@ export function Scene3D({
         <PerspectiveCamera makeDefault position={[0, 12, 8]} fov={50} />
         <OrbitControls 
           enablePan={false}
-          enableRotate={false}
+          enableRotate={true}
           enableZoom={true}
-          minDistance={12}
+          minDistance={8}
           maxDistance={25}
+          minPolarAngle={Math.PI / 6}
+          maxPolarAngle={Math.PI / 2.5}
           target={[0, 0, 0]}
         />
         
