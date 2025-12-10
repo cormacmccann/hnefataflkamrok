@@ -13,9 +13,11 @@ import { VictoryModal } from '@/components/game/VictoryModal';
 import { RulesModal } from '@/components/game/RulesModal';
 import { GameSetup } from '@/components/game/GameSetup';
 import { VolumeControl } from '@/components/game/VolumeControl';
+import { LogoIntro } from '@/components/game/LogoIntro';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 
 export default function Index() {
+  const [showIntro, setShowIntro] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
@@ -25,6 +27,11 @@ export default function Index() {
 
   const { musicVolume, sfxVolume, updateMusicVolume, updateSfxVolume } = useVolumeControl();
   const { isPlaying, startMusic } = useMusicPlayer(musicVolume);
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+    startMusic();
+  };
 
   const { gameState, selectPiece, makeMove, undoMove, resetGame, capturePositions, clearCapturePositions } = useGameState(boardSize, playerSide, sfxVolume);
   const ai = useAI(boardSize);
@@ -96,6 +103,10 @@ export default function Index() {
       setShowVictory(true);
     }
   }, [gameState.gameResult]);
+
+  if (showIntro) {
+    return <LogoIntro onComplete={handleIntroComplete} />;
+  }
 
   if (!gameStarted) {
     return (
