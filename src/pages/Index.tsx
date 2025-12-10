@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, Position } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
 import { useAI } from '@/hooks/useAI';
+import { useVolumeControl } from '@/hooks/useVolumeControl';
+import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { Scene3D } from '@/components/game/Scene3D';
 import { TurnIndicator } from '@/components/game/TurnIndicator';
 import { MoveHistory } from '@/components/game/MoveHistory';
@@ -10,7 +12,7 @@ import { GameControls } from '@/components/game/GameControls';
 import { VictoryModal } from '@/components/game/VictoryModal';
 import { RulesModal } from '@/components/game/RulesModal';
 import { GameSetup } from '@/components/game/GameSetup';
-import { MusicPlayer } from '@/components/game/MusicPlayer';
+import { VolumeControl } from '@/components/game/VolumeControl';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 
 export default function Index() {
@@ -21,7 +23,10 @@ export default function Index() {
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
 
-  const { gameState, selectPiece, makeMove, undoMove, resetGame } = useGameState(boardSize, playerSide);
+  const { musicVolume, sfxVolume, updateMusicVolume, updateSfxVolume } = useVolumeControl();
+  const { isPlaying, startMusic } = useMusicPlayer(musicVolume);
+
+  const { gameState, selectPiece, makeMove, undoMove, resetGame, capturePositions, clearCapturePositions } = useGameState(boardSize, playerSide, sfxVolume);
   const ai = useAI(boardSize);
 
   const handleStartGame = (size: BoardSize, side: Player) => {
@@ -29,6 +34,7 @@ export default function Index() {
     setPlayerSide(side);
     setGameStarted(true);
     resetGame(size, side);
+    startMusic();
   };
 
   const handleNewGame = () => {
@@ -92,7 +98,15 @@ export default function Index() {
   }, [gameState.gameResult]);
 
   if (!gameStarted) {
-    return <GameSetup onStartGame={handleStartGame} />;
+    return (
+      <GameSetup 
+        onStartGame={handleStartGame}
+        musicVolume={musicVolume}
+        sfxVolume={sfxVolume}
+        onMusicVolumeChange={updateMusicVolume}
+        onSfxVolumeChange={updateSfxVolume}
+      />
+    );
   }
 
   return (
@@ -101,10 +115,12 @@ export default function Index() {
       <Scene3D 
         gameState={gameState} 
         onSquareClick={handleSquareClick} 
-        onPieceClick={handlePieceClick} 
+        onPieceClick={handlePieceClick}
+        capturePositions={capturePositions}
+        onCaptureComplete={clearCapturePositions}
       />
 
-      {/* Header Overlay with Logo and Music */}
+      {/* Header Overlay with Logo and Volume */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -117,7 +133,12 @@ export default function Index() {
           className="h-12 sm:h-16 drop-shadow-lg"
         />
         <div className="flex-1 flex justify-end">
-          <MusicPlayer />
+          <VolumeControl
+            musicVolume={musicVolume}
+            sfxVolume={sfxVolume}
+            onMusicVolumeChange={updateMusicVolume}
+            onSfxVolumeChange={updateSfxVolume}
+          />
         </div>
       </motion.header>
 

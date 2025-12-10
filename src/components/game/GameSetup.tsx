@@ -6,18 +6,25 @@ import { BoardSize, Player } from '@/types/game';
 import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
-import { PiecePreview3D } from './PiecePreview3D';
-import { MusicPlayer } from './MusicPlayer';
+import tutorialKing from '@/assets/tutorial-king.png';
+import tutorialDefender from '@/assets/tutorial-defender.png';
+import tutorialAttacker from '@/assets/tutorial-attacker.png';
+import tutorialCapturing from '@/assets/tutorial-capturing.png';
+import tutorialVictory from '@/assets/tutorial-victory.png';
+import { VolumeControl } from './VolumeControl';
 
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player) => void;
+  musicVolume: number;
+  sfxVolume: number;
+  onMusicVolumeChange: (volume: number) => void;
+  onSfxVolumeChange: (volume: number) => void;
 }
 
 const tutorialSteps = [
   {
     title: "The King",
-    icon: "👑",
-    piece: "king",
+    image: tutorialKing,
     description: "The King is the most important piece. He starts in the center (the Throne) and must escape to any corner to win.",
     rules: [
       "Moves like all pieces: any number of squares horizontally or vertically",
@@ -28,8 +35,7 @@ const tutorialSteps = [
   },
   {
     title: "The Defenders",
-    icon: "🛡️",
-    piece: "defender", 
+    image: tutorialDefender,
     description: "Defenders protect the King and help clear his escape route. They start around the King in the center.",
     rules: [
       "Move any number of squares horizontally or vertically",
@@ -40,8 +46,7 @@ const tutorialSteps = [
   },
   {
     title: "The Attackers",
-    icon: "⚔️",
-    piece: "attacker",
+    image: tutorialAttacker,
     description: "Attackers start on the edges and outnumber defenders 2:1. Their goal is to capture the King.",
     rules: [
       "Move any number of squares horizontally or vertically",
@@ -52,8 +57,7 @@ const tutorialSteps = [
   },
   {
     title: "Capturing",
-    icon: "💀",
-    piece: "capture",
+    image: tutorialCapturing,
     description: "Capture enemy pieces by sandwiching them between two of your pieces (or a piece and a hostile square).",
     rules: [
       "Move a piece to complete the sandwich - captures happen on your move",
@@ -64,8 +68,7 @@ const tutorialSteps = [
   },
   {
     title: "Victory",
-    icon: "🏆",
-    piece: "victory",
+    image: tutorialVictory,
     description: "The game ends when either side achieves their objective.",
     rules: [
       "Defenders WIN: King reaches any corner square",
@@ -76,7 +79,13 @@ const tutorialSteps = [
   }
 ];
 
-export function GameSetup({ onStartGame }: GameSetupProps) {
+export function GameSetup({ 
+  onStartGame, 
+  musicVolume, 
+  sfxVolume, 
+  onMusicVolumeChange, 
+  onSfxVolumeChange 
+}: GameSetupProps) {
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [showTutorial, setShowTutorial] = useState(true);
@@ -105,9 +114,14 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
     >
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
       
-      {/* Music Player in corner */}
+      {/* Volume Control in corner */}
       <div className="fixed top-4 right-4 z-20">
-        <MusicPlayer />
+        <VolumeControl
+          musicVolume={musicVolume}
+          sfxVolume={sfxVolume}
+          onMusicVolumeChange={onMusicVolumeChange}
+          onSfxVolumeChange={onSfxVolumeChange}
+        />
       </div>
       
       <div className="relative z-10 w-full max-w-4xl">
@@ -161,16 +175,21 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
                     transition={{ duration: 0.2 }}
                     className="grid md:grid-cols-2 gap-6"
                   >
-                    {/* Left: 3D Model Preview */}
+                    {/* Left: Image Preview */}
                     <div className="flex flex-col items-center justify-center p-6 rounded-lg bg-secondary/30">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.1, type: "spring" }}
+                        className="w-full max-w-[200px]"
                       >
-                        <PiecePreview3D type={currentStep.piece as any} />
+                        <img 
+                          src={currentStep.image} 
+                          alt={currentStep.title}
+                          className="w-full h-auto object-contain drop-shadow-2xl"
+                        />
                       </motion.div>
-                      <h3 className="text-2xl font-['Cinzel'] text-primary mt-2">
+                      <h3 className="text-2xl font-['Cinzel'] text-primary mt-4">
                         {currentStep.title}
                       </h3>
                     </div>
