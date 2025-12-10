@@ -10,6 +10,8 @@ import { GameControls } from '@/components/game/GameControls';
 import { VictoryModal } from '@/components/game/VictoryModal';
 import { RulesModal } from '@/components/game/RulesModal';
 import { GameSetup } from '@/components/game/GameSetup';
+import { MusicPlayer } from '@/components/game/MusicPlayer';
+import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 
 export default function Index() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -102,16 +104,20 @@ export default function Index() {
         onPieceClick={handlePieceClick} 
       />
 
-      {/* Header Overlay */}
+      {/* Header Overlay with Logo and Music */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed top-0 left-0 right-0 z-20 pointer-events-none"
+        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3"
       >
-        <div className="text-center py-4">
-          <h1 className="text-2xl sm:text-3xl font-['Cinzel'] text-primary drop-shadow-lg">
-            Hnefatafl
-          </h1>
+        <div className="flex-1" />
+        <img 
+          src={hnefataflLogo} 
+          alt="Hnefatafl" 
+          className="h-12 sm:h-16 drop-shadow-lg"
+        />
+        <div className="flex-1 flex justify-end">
+          <MusicPlayer />
         </div>
       </motion.header>
 

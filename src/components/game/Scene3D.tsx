@@ -21,13 +21,13 @@ export function Scene3D({ gameState, onSquareClick, onPieceClick }: Scene3DProps
       <div className="absolute inset-0 bg-black/30" />
       
       <Canvas shadows className="w-full h-full relative z-10">
-        <PerspectiveCamera makeDefault position={[0, 15, 0.01]} fov={45} />
+        <PerspectiveCamera makeDefault position={[0, 12, 8]} fov={50} />
         <OrbitControls 
           enablePan={false}
           enableRotate={false}
           enableZoom={true}
-          minDistance={10}
-          maxDistance={20}
+          minDistance={12}
+          maxDistance={25}
           target={[0, 0, 0]}
         />
         
