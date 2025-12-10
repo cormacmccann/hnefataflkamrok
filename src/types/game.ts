@@ -25,6 +25,8 @@ export type GameResult = 'attacker-wins' | 'defender-wins' | null;
 
 export type BoardSize = 9 | 11;
 
+export type AIDifficulty = 'easy' | 'medium' | 'hard';
+
 export interface GameState {
   pieces: Piece[];
   currentPlayer: Player;

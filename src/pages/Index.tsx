@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BoardSize, Player, Position } from '@/types/game';
+import { BoardSize, Player, Position, AIDifficulty } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
 import { useAI } from '@/hooks/useAI';
 import { useVolumeControl } from '@/hooks/useVolumeControl';
@@ -21,6 +21,7 @@ export default function Index() {
   const [gameStarted, setGameStarted] = useState(false);
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
+  const [difficulty, setDifficulty] = useState<AIDifficulty>('medium');
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
@@ -34,11 +35,12 @@ export default function Index() {
   };
 
   const { gameState, selectPiece, makeMove, undoMove, resetGame, capturePositions, clearCapturePositions } = useGameState(boardSize, playerSide, sfxVolume);
-  const ai = useAI(boardSize);
+  const ai = useAI(boardSize, difficulty);
 
-  const handleStartGame = (size: BoardSize, side: Player) => {
+  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty) => {
     setBoardSize(size);
     setPlayerSide(side);
+    setDifficulty(diff);
     setGameStarted(true);
     resetGame(size, side);
     startMusic();
