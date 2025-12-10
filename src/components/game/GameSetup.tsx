@@ -181,12 +181,14 @@ export function GameSetup({
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.1, type: "spring" }}
-                        className="w-full max-w-[200px]"
+                        className="w-full max-w-[180px]"
                       >
                         <img 
                           src={currentStep.image} 
                           alt={currentStep.title}
-                          className="w-full h-auto object-contain drop-shadow-2xl"
+                          className="w-full h-auto object-contain drop-shadow-2xl max-h-[180px]"
+                          loading="lazy"
+                          decoding="async"
                         />
                       </motion.div>
                       <h3 className="text-2xl font-['Cinzel'] text-primary mt-4">
@@ -263,12 +265,11 @@ export function GameSetup({
             >
               <Card className="w-full max-w-lg mx-auto viking-border bg-card/95 backdrop-blur">
                 <CardHeader className="text-center">
-                  <CardTitle className="text-4xl font-['Cinzel'] text-primary">
-                    ᚺᚾᛖᚠᚨᛏᚨᚠᛚ
-                  </CardTitle>
-                  <CardDescription className="text-xl font-['Cinzel'] mt-2">
-                    Hnefatafl
-                  </CardDescription>
+                  <img 
+                    src={hnefataflLogo} 
+                    alt="Hnefatafl" 
+                    className="h-20 mx-auto mb-2"
+                  />
                   <p className="text-muted-foreground mt-2">
                     The Viking Game of Strategy
                   </p>
