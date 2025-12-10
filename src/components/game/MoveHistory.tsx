@@ -7,7 +7,7 @@ interface MoveHistoryProps {
 
 export function MoveHistory({ moves }: MoveHistoryProps) {
   return (
-    <div className="flex flex-col h-full bg-card border border-border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full bg-card/90 backdrop-blur border border-border rounded-lg overflow-hidden shadow-lg">
       <div className="p-3 border-b border-border bg-secondary/50">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-center font-['Cinzel']">
           Move History

@@ -9,7 +9,7 @@ interface TurnIndicatorProps {
 
 export function TurnIndicator({ currentPlayer, isPlayerTurn, playerSide }: TurnIndicatorProps) {
   return (
-    <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-card border border-border">
+    <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-card/90 backdrop-blur border border-border shadow-lg">
       <div className="text-sm text-muted-foreground uppercase tracking-wider">Current Turn</div>
       <div className="flex items-center gap-3">
         <div 
