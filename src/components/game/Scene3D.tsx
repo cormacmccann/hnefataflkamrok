@@ -13,29 +13,28 @@ export function Scene3D({ gameState, onSquareClick, onPieceClick }: Scene3DProps
   return (
     <div className="fixed inset-0 w-full h-full">
       <Canvas shadows className="w-full h-full">
-        <PerspectiveCamera makeDefault position={[0, 14, 10]} fov={40} />
+        <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={35} />
         <OrbitControls 
           enablePan={false}
-          minPolarAngle={Math.PI / 6}
-          maxPolarAngle={Math.PI / 2.2}
-          minDistance={12}
+          enableRotate={false}
+          minDistance={15}
           maxDistance={25}
           target={[0, 0, 0]}
         />
         
-        {/* Environment and lighting */}
+        {/* Environment and lighting - softer, from above */}
         <color attach="background" args={['#1a1208']} />
-        <fog attach="fog" args={['#1a1208', 20, 45]} />
-        <ambientLight intensity={0.3} />
+        <fog attach="fog" args={['#1a1208', 25, 50]} />
+        <ambientLight intensity={0.6} />
         <directionalLight
-          position={[5, 12, 5]}
-          intensity={1.2}
+          position={[0, 20, 0]}
+          intensity={0.8}
           castShadow
           shadow-mapSize={[2048, 2048]}
         />
-        <pointLight position={[-6, 8, -6]} intensity={0.6} color="#ff9944" />
-        <pointLight position={[6, 8, -6]} intensity={0.4} color="#ff7733" />
-        <pointLight position={[0, 6, 8]} intensity={0.3} color="#ffaa66" />
+        <pointLight position={[-8, 10, -8]} intensity={0.3} color="#ff9944" />
+        <pointLight position={[8, 10, -8]} intensity={0.3} color="#ff7733" />
+        <pointLight position={[0, 10, 8]} intensity={0.3} color="#ffaa66" />
         
         {/* Ground plane for atmosphere */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
