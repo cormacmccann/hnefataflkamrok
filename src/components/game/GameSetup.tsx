@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BoardSize, Player } from '@/types/game';
-import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
+import { BoardSize, Player, AIDifficulty } from '@/types/game';
+import { ChevronLeft, ChevronRight, Play, BookOpen, Zap, Brain, Skull } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import tutorialKing from '@/assets/tutorial-king.png';
@@ -14,7 +14,7 @@ import tutorialVictory from '@/assets/tutorial-victory.png';
 import { VolumeControl } from './VolumeControl';
 
 interface GameSetupProps {
-  onStartGame: (boardSize: BoardSize, playerSide: Player) => void;
+  onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty) => void;
   musicVolume: number;
   sfxVolume: number;
   onMusicVolumeChange: (volume: number) => void;
@@ -88,6 +88,7 @@ export function GameSetup({
 }: GameSetupProps) {
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
+  const [difficulty, setDifficulty] = useState<AIDifficulty>('medium');
   const [showTutorial, setShowTutorial] = useState(true);
   const [tutorialStep, setTutorialStep] = useState(0);
 
@@ -328,8 +329,40 @@ export function GameSetup({
                     </div>
                   </div>
 
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      AI Difficulty
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <Button
+                        variant={difficulty === 'easy' ? 'default' : 'outline'}
+                        onClick={() => setDifficulty('easy')}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <Zap className="w-5 h-5" />
+                        <span className="font-['Cinzel'] text-sm">Easy</span>
+                      </Button>
+                      <Button
+                        variant={difficulty === 'medium' ? 'default' : 'outline'}
+                        onClick={() => setDifficulty('medium')}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <Brain className="w-5 h-5" />
+                        <span className="font-['Cinzel'] text-sm">Medium</span>
+                      </Button>
+                      <Button
+                        variant={difficulty === 'hard' ? 'default' : 'outline'}
+                        onClick={() => setDifficulty('hard')}
+                        className="h-auto py-3 flex-col gap-1"
+                      >
+                        <Skull className="w-5 h-5" />
+                        <span className="font-['Cinzel'] text-sm">Hard</span>
+                      </Button>
+                    </div>
+                  </div>
+
                   <Button 
-                    onClick={() => onStartGame(boardSize, playerSide)} 
+                    onClick={() => onStartGame(boardSize, playerSide, difficulty)} 
                     className="w-full h-12 text-lg font-['Cinzel']"
                   >
                     Begin Battle
