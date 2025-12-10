@@ -1,8 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { GameState, Piece, Position, Move, BoardSize, Player } from '@/types/game';
 import { BOARD_CONFIGS } from '@/constants/game';
 import { useGameLogic } from './useGameLogic';
 import { useSoundEffects } from './useSoundEffects';
+
+interface CapturePosition {
+  position: Position;
+  pieceType: 'attacker' | 'defender' | 'king';
+}
 
 function createInitialPieces(boardSize: BoardSize): Piece[] {
   const config = BOARD_CONFIGS[boardSize];
@@ -22,7 +27,7 @@ function createInitialPieces(boardSize: BoardSize): Piece[] {
   return pieces;
 }
 
-export function useGameState(boardSize: BoardSize, playerSide: Player) {
+export function useGameState(boardSize: BoardSize, playerSide: Player, sfxVolume: number = 0.5) {
   const [gameState, setGameState] = useState<GameState>(() => ({
     pieces: createInitialPieces(boardSize),
     currentPlayer: 'attacker',
@@ -35,12 +40,19 @@ export function useGameState(boardSize: BoardSize, playerSide: Player) {
     playerSide,
   }));
 
+  const [capturePositions, setCapturePositions] = useState<CapturePosition[]>([]);
+
   const logic = useGameLogic(boardSize);
-  const sounds = useSoundEffects();
+  const sounds = useSoundEffects(sfxVolume);
+
+  const clearCapturePositions = useCallback(() => {
+    setCapturePositions([]);
+  }, []);
 
   const resetGame = useCallback((newSize?: BoardSize, newSide?: Player) => {
     const size = newSize ?? boardSize;
     const side = newSide ?? playerSide;
+    setCapturePositions([]);
     setGameState({
       pieces: createInitialPieces(size),
       currentPlayer: 'attacker',
@@ -106,6 +118,11 @@ export function useGameState(boardSize: BoardSize, playerSide: Player) {
 
       if (captured.length > 0) {
         sounds.playCapture();
+        // Set capture positions for particle effects
+        setCapturePositions(captured.map(p => ({
+          position: p.position,
+          pieceType: p.type,
+        })));
       } else {
         sounds.playMove();
       }
@@ -168,5 +185,7 @@ export function useGameState(boardSize: BoardSize, playerSide: Player) {
     undoMove,
     resetGame,
     logic,
+    capturePositions,
+    clearCapturePositions,
   };
 }

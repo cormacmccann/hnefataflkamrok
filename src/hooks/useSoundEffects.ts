@@ -1,19 +1,14 @@
 import { useCallback, useRef, useEffect } from 'react';
 
-export function useSoundEffects() {
+export function useSoundEffects(volume: number = 0.5) {
   const moveAudioRef = useRef<HTMLAudioElement | null>(null);
   const captureAudioRef = useRef<HTMLAudioElement | null>(null);
   const selectAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     moveAudioRef.current = new Audio('/audio/piece-move.mp3');
-    moveAudioRef.current.volume = 0.5;
-    
     captureAudioRef.current = new Audio('/audio/piece-defeated.wav');
-    captureAudioRef.current.volume = 0.5;
-
     selectAudioRef.current = new Audio('/audio/select-piece.wav');
-    selectAudioRef.current.volume = 0.5;
 
     return () => {
       moveAudioRef.current = null;
@@ -21,6 +16,13 @@ export function useSoundEffects() {
       selectAudioRef.current = null;
     };
   }, []);
+
+  // Update volumes when volume prop changes
+  useEffect(() => {
+    if (moveAudioRef.current) moveAudioRef.current.volume = volume;
+    if (captureAudioRef.current) captureAudioRef.current.volume = volume;
+    if (selectAudioRef.current) selectAudioRef.current.volume = volume;
+  }, [volume]);
 
   const playSelect = useCallback(() => {
     if (selectAudioRef.current) {

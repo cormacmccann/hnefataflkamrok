@@ -1,16 +1,59 @@
+import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { GameState, Position } from '@/types/game';
 import { Board3D } from './Board3D';
+import { CaptureParticles } from './CaptureParticles';
 import vikingTableBg from '@/assets/viking-table-bg.jpg';
+
+interface CapturePosition {
+  position: Position;
+  pieceType: 'attacker' | 'defender' | 'king';
+}
 
 interface Scene3DProps {
   gameState: GameState;
   onSquareClick: (position: Position) => void;
   onPieceClick: (pieceId: string) => void;
+  capturePositions?: CapturePosition[];
+  onCaptureComplete?: () => void;
 }
 
-export function Scene3D({ gameState, onSquareClick, onPieceClick }: Scene3DProps) {
+export function Scene3D({ 
+  gameState, 
+  onSquareClick, 
+  onPieceClick, 
+  capturePositions = [], 
+  onCaptureComplete 
+}: Scene3DProps) {
+  const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
+
+  const squareSize = 1;
+  const boardWidth = gameState.boardSize * squareSize;
+  const offset = boardWidth / 2 - squareSize / 2;
+
+  const handleParticleComplete = (key: string) => {
+    setCompletedParticles(prev => {
+      const next = new Set(prev);
+      next.add(key);
+      if (next.size === capturePositions.length && onCaptureComplete) {
+        setTimeout(() => {
+          onCaptureComplete();
+          setCompletedParticles(new Set());
+        }, 100);
+      }
+      return next;
+    });
+  };
+
+  const getParticleColor = (type: 'attacker' | 'defender' | 'king') => {
+    switch (type) {
+      case 'attacker': return '#2a2a2a';
+      case 'defender': return '#D4A574';
+      case 'king': return '#FFD700';
+    }
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full">
       {/* Viking table background */}
@@ -49,6 +92,24 @@ export function Scene3D({ gameState, onSquareClick, onPieceClick }: Scene3DProps
           onSquareClick={onSquareClick}
           onPieceClick={onPieceClick}
         />
+
+        {/* Capture particle effects */}
+        {capturePositions.map((cp, idx) => {
+          const key = `${cp.position.row}-${cp.position.col}-${idx}`;
+          if (completedParticles.has(key)) return null;
+          
+          const x = cp.position.col * squareSize - offset;
+          const z = cp.position.row * squareSize - offset;
+          
+          return (
+            <CaptureParticles
+              key={key}
+              position={[x, 0.3, z]}
+              color={getParticleColor(cp.pieceType)}
+              onComplete={() => handleParticleComplete(key)}
+            />
+          );
+        })}
       </Canvas>
     </div>
   );
