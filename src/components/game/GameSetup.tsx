@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BoardSize, Player } from '@/types/game';
 import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
+import hnefataflLogo from '@/assets/hnefatafl-logo.png';
+import { PiecePreview3D } from './PiecePreview3D';
 
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player) => void;
@@ -114,8 +116,13 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
             >
               <Card className="viking-border bg-card/95 backdrop-blur">
                 <CardHeader className="text-center pb-2">
-                  <CardTitle className="text-3xl font-['Cinzel'] text-primary">
-                    Learn Hnefatafl
+                  <img 
+                    src={hnefataflLogo} 
+                    alt="Hnefatafl" 
+                    className="h-16 mx-auto mb-2"
+                  />
+                  <CardTitle className="text-2xl font-['Cinzel'] text-primary">
+                    Learn the Game
                   </CardTitle>
                   <CardDescription>
                     Step {tutorialStep + 1} of {tutorialSteps.length}
@@ -148,17 +155,16 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
                     transition={{ duration: 0.2 }}
                     className="grid md:grid-cols-2 gap-6"
                   >
-                    {/* Left: Visual */}
+                    {/* Left: 3D Model Preview */}
                     <div className="flex flex-col items-center justify-center p-6 rounded-lg bg-secondary/30">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.1, type: "spring" }}
-                        className="text-8xl mb-4"
                       >
-                        {currentStep.icon}
+                        <PiecePreview3D type={currentStep.piece as any} />
                       </motion.div>
-                      <h3 className="text-2xl font-['Cinzel'] text-primary">
+                      <h3 className="text-2xl font-['Cinzel'] text-primary mt-2">
                         {currentStep.title}
                       </h3>
                     </div>
