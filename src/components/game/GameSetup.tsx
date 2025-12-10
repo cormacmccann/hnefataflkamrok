@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import { PiecePreview3D } from './PiecePreview3D';
+import { MusicPlayer } from './MusicPlayer';
 
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player) => void;
@@ -103,6 +104,11 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
       style={{ backgroundImage: `url(${vikingBackground})` }}
     >
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+      
+      {/* Music Player in corner */}
+      <div className="fixed top-4 right-4 z-20">
+        <MusicPlayer />
+      </div>
       
       <div className="relative z-10 w-full max-w-4xl">
         <AnimatePresence mode="wait">
