@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { Piece } from '@/types/game';
@@ -18,8 +18,14 @@ useGLTF.preload(defenderModelUrl);
 export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
-  const [targetY] = useState(position[1]);
+  const [currentPos, setCurrentPos] = useState<THREE.Vector3>(new THREE.Vector3(...position));
+  const targetPos = useRef(new THREE.Vector3(...position));
   const { scene } = useGLTF(defenderModelUrl);
+
+  // Update target position when position prop changes
+  useEffect(() => {
+    targetPos.current.set(position[0], position[1], position[2]);
+  }, [position[0], position[1], position[2]]);
 
   const getColor = () => {
     switch (piece.type) {
@@ -35,12 +41,20 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
   useFrame((state) => {
     if (!meshRef.current) return;
 
-    // Floating animation for selected piece
+    // Smooth movement animation
+    const lerpFactor = 0.12;
+    currentPos.lerp(targetPos.current, lerpFactor);
+    
+    // Apply position with floating effect for selected
     if (isSelected) {
-      meshRef.current.position.y = targetY + 0.3 + Math.sin(state.clock.elapsedTime * 3) * 0.05;
+      meshRef.current.position.set(
+        currentPos.x,
+        currentPos.y + 0.3 + Math.sin(state.clock.elapsedTime * 3) * 0.05,
+        currentPos.z
+      );
       meshRef.current.rotation.y += 0.02;
     } else {
-      meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetY, 0.1);
+      meshRef.current.position.copy(currentPos);
       meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, 0, 0.1);
     }
 
@@ -70,57 +84,54 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
     }
   });
 
-  const height = piece.type === 'king' ? 0.6 : 0.45;
   const radius = piece.type === 'king' ? 0.35 : 0.3;
 
   return (
-    <group position={position}>
-      <group
-        ref={meshRef}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        {isDefenderOrKing ? (
-          <primitive 
-            object={clonedScene} 
-            scale={piece.type === 'king' ? 0.5 : 0.4}
-            position={[0, 0, 0]}
+    <group
+      ref={meshRef}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
+      {isDefenderOrKing ? (
+        <primitive 
+          object={clonedScene} 
+          scale={piece.type === 'king' ? 0.5 : 0.4}
+          position={[0, 0, 0]}
+        />
+      ) : (
+        <mesh castShadow>
+          <cylinderGeometry args={[0.24, 0.3, 0.45, 32]} />
+          <meshStandardMaterial
+            color={getColor()}
+            roughness={0.4}
+            metalness={0.2}
+            emissive={isSelected ? '#ffaa00' : hovered ? '#666666' : '#000000'}
+            emissiveIntensity={isSelected ? 0.5 : hovered ? 0.2 : 0}
           />
-        ) : (
-          <mesh castShadow>
-            <cylinderGeometry args={[radius * 0.8, radius, height, 32]} />
-            <meshStandardMaterial
-              color={getColor()}
-              roughness={0.4}
-              metalness={0.2}
-              emissive={isSelected ? '#ffaa00' : hovered ? '#666666' : '#000000'}
-              emissiveIntensity={isSelected ? 0.5 : hovered ? 0.2 : 0}
-            />
-          </mesh>
-        )}
+        </mesh>
+      )}
 
-        {/* Crown for king */}
-        {piece.type === 'king' && (
-          <mesh position={[0, 0.5, 0]} castShadow>
-            <coneGeometry args={[0.12, 0.15, 5]} />
-            <meshStandardMaterial 
-              color="#FFD700" 
-              roughness={0.3} 
-              metalness={0.8}
-              emissive={isSelected ? '#ffaa00' : '#442200'}
-              emissiveIntensity={isSelected ? 0.5 : 0.2}
-            />
-          </mesh>
-        )}
-      </group>
+      {/* Crown for king */}
+      {piece.type === 'king' && (
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <coneGeometry args={[0.12, 0.15, 5]} />
+          <meshStandardMaterial 
+            color="#FFD700" 
+            roughness={0.3} 
+            metalness={0.8}
+            emissive={isSelected ? '#ffaa00' : '#442200'}
+            emissiveIntensity={isSelected ? 0.5 : 0.2}
+          />
+        </mesh>
+      )}
 
       {/* Selected glow ring */}
       {isSelected && (
-        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, -0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[radius + 0.05, radius + 0.15, 32]} />
           <meshStandardMaterial 
             color="#FFD700" 

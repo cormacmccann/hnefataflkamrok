@@ -40,7 +40,7 @@ export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps
   };
 
   return (
-    <group ref={boardRef} rotation={[-Math.PI / 8, 0, 0]}>
+    <group ref={boardRef}>
       {/* Board base */}
       <mesh position={[0, -0.15, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.5, 0.3, boardWidth + 0.5]} />

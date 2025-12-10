@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { GameState, Position } from '@/types/game';
 import { Board3D } from './Board3D';
+import vikingTableBg from '@/assets/viking-table-bg.jpg';
 
 interface Scene3DProps {
   gameState: GameState;
@@ -12,35 +13,36 @@ interface Scene3DProps {
 export function Scene3D({ gameState, onSquareClick, onPieceClick }: Scene3DProps) {
   return (
     <div className="fixed inset-0 w-full h-full">
-      <Canvas shadows className="w-full h-full">
-        <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={35} />
+      {/* Viking table background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${vikingTableBg})` }}
+      />
+      <div className="absolute inset-0 bg-black/30" />
+      
+      <Canvas shadows className="w-full h-full relative z-10">
+        <PerspectiveCamera makeDefault position={[0, 15, 0.01]} fov={45} />
         <OrbitControls 
           enablePan={false}
           enableRotate={false}
-          minDistance={15}
-          maxDistance={25}
+          enableZoom={true}
+          minDistance={10}
+          maxDistance={20}
           target={[0, 0, 0]}
         />
         
-        {/* Environment and lighting - softer, from above */}
-        <color attach="background" args={['#1a1208']} />
-        <fog attach="fog" args={['#1a1208', 25, 50]} />
-        <ambientLight intensity={0.6} />
+        {/* Soft ambient lighting from all directions */}
+        <ambientLight intensity={0.8} />
         <directionalLight
-          position={[0, 20, 0]}
-          intensity={0.8}
+          position={[0, 15, 0]}
+          intensity={0.6}
           castShadow
           shadow-mapSize={[2048, 2048]}
         />
-        <pointLight position={[-8, 10, -8]} intensity={0.3} color="#ff9944" />
-        <pointLight position={[8, 10, -8]} intensity={0.3} color="#ff7733" />
-        <pointLight position={[0, 10, 8]} intensity={0.3} color="#ffaa66" />
-        
-        {/* Ground plane for atmosphere */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-          <planeGeometry args={[50, 50]} />
-          <meshStandardMaterial color="#0d0905" />
-        </mesh>
+        <pointLight position={[-5, 8, -5]} intensity={0.4} color="#ffcc88" />
+        <pointLight position={[5, 8, -5]} intensity={0.4} color="#ffcc88" />
+        <pointLight position={[-5, 8, 5]} intensity={0.4} color="#ffcc88" />
+        <pointLight position={[5, 8, 5]} intensity={0.4} color="#ffcc88" />
         
         <Board3D
           gameState={gameState}
