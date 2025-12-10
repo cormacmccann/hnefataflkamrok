@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
-import { useRef } from 'react';
+import { useRef, useMemo, Suspense } from 'react';
 import * as THREE from 'three';
 import defenderModelUrl from '@/assets/defender-piece.glb?url';
 import attackerModelUrl from '@/assets/attacker-piece.glb?url';
@@ -21,7 +21,7 @@ function RotatingModel({ type }: RotatingModelProps) {
   const attackerGltf = useGLTF(attackerModelUrl);
   const kingGltf = useGLTF(kingModelUrl);
 
-  const getModel = () => {
+  const getModelScene = () => {
     switch (type) {
       case 'king':
       case 'victory':
@@ -47,17 +47,19 @@ function RotatingModel({ type }: RotatingModelProps) {
     }
   };
 
-  const clonedScene = getModel().clone();
-  
-  clonedScene.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      child.material = new THREE.MeshStandardMaterial({
-        color: getColor(),
-        roughness: 0.4,
-        metalness: type === 'king' || type === 'victory' ? 0.6 : 0.3,
-      });
-    }
-  });
+  const clonedScene = useMemo(() => {
+    const scene = getModelScene().clone();
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = new THREE.MeshStandardMaterial({
+          color: getColor(),
+          roughness: 0.4,
+          metalness: type === 'king' || type === 'victory' ? 0.6 : 0.3,
+        });
+      }
+    });
+    return scene;
+  }, [type, defenderGltf, attackerGltf, kingGltf]);
 
   useFrame((state) => {
     if (meshRef.current) {
@@ -69,6 +71,23 @@ function RotatingModel({ type }: RotatingModelProps) {
     <group ref={meshRef}>
       <primitive object={clonedScene} scale={1.2} />
     </group>
+  );
+}
+
+function FallbackBox() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.5;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef}>
+      <cylinderGeometry args={[0.3, 0.4, 0.6, 16]} />
+      <meshStandardMaterial color="#D4B896" />
+    </mesh>
   );
 }
 
@@ -84,7 +103,9 @@ export function PiecePreview3D({ type, className = '' }: PiecePreview3DProps) {
         <ambientLight intensity={0.8} />
         <directionalLight position={[5, 5, 5]} intensity={0.8} />
         <pointLight position={[-5, 3, -5]} intensity={0.4} color="#ffcc88" />
-        <RotatingModel type={type} />
+        <Suspense fallback={<FallbackBox />}>
+          <RotatingModel type={type} />
+        </Suspense>
       </Canvas>
     </div>
   );
