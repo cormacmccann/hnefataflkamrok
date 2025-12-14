@@ -44,6 +44,8 @@ export interface GameVariant {
   description: string;
   origin: string;
   theme: BoardTheme;
+  history: string;
+  era: string;
 }
 
 export type AIDifficulty = 'beginner' | 'easy' | 'medium' | 'valhalla';
