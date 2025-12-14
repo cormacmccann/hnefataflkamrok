@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant } from '@/types/game';
 import { GAME_VARIANTS } from '@/constants/game';
-import { ChevronLeft, ChevronRight, Play, BookOpen, Sparkles, Zap, Brain, Skull, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, BookOpen, Sparkles, Zap, Brain, Skull, Eye, MapPin, Clock } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import tutorialKing from '@/assets/tutorial-king.png';
@@ -295,6 +295,23 @@ export function GameSetup({
                           <span className="text-xs text-muted-foreground">{variant.description}</span>
                         </Button>
                       ))}
+                    </div>
+                    
+                    {/* Historical Context Card */}
+                    <div className="mt-4 p-4 rounded-lg bg-secondary/30 border border-border/50">
+                      <div className="flex items-center gap-4 mb-2">
+                        <div className="flex items-center gap-1.5 text-xs text-primary">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="font-semibold">{selectedVariant.origin}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{selectedVariant.era}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-foreground/80 leading-relaxed">
+                        {selectedVariant.history}
+                      </p>
                     </div>
                   </div>
 

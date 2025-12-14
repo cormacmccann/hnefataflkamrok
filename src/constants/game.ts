@@ -47,6 +47,8 @@ export const GAME_VARIANTS: GameVariant[] = [
     description: 'Quick Irish variant',
     origin: 'Ireland',
     theme: BRANDUB_THEME,
+    era: '7th-12th Century',
+    history: 'Brandub, meaning "black raven" in Old Irish, was played by Celtic nobility in medieval Ireland. Ancient texts describe High Kings playing this game in great halls, with the central piece representing the High King of Tara defending against provincial rivals. The game symbolized the political struggles of early Ireland.',
   },
   {
     id: 'tablut',
@@ -55,6 +57,8 @@ export const GAME_VARIANTS: GameVariant[] = [
     description: 'Classic Swedish game',
     origin: 'Sweden',
     theme: TABLUT_THEME,
+    era: '8th-11th Century',
+    history: 'Tablut was documented by Carl Linnaeus in 1732 while visiting Lapland, where the Sami people still played this ancient game. It represents a Swedish king and his knights defending against Muscovite attackers. This is the best-documented tafl variant, providing the foundation for modern reconstructions.',
   },
   {
     id: 'hnefatafl',
@@ -63,6 +67,8 @@ export const GAME_VARIANTS: GameVariant[] = [
     description: 'Full Viking battle',
     origin: 'Scandinavia',
     theme: HNEFATAFL_THEME,
+    era: '4th-12th Century',
+    history: 'Hnefatafl, the "King\'s Table," was the premier strategy game of the Viking Age. Norsemen carried it across their vast trade routes from Byzantium to Newfoundland. Sagas tell of warriors wagering gold and honor on games played by firelight in longhouses. It remained popular until chess arrived from the East.',
   },
 ];
 
