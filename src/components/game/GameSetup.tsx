@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BoardSize, Player, AIDifficulty, GameMode } from '@/types/game';
+import { BoardSize, Player, AIDifficulty, GameMode, GameVariant } from '@/types/game';
+import { GAME_VARIANTS } from '@/constants/game';
 import { ChevronLeft, ChevronRight, Play, BookOpen, Sparkles, Zap, Brain, Skull, Eye } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
@@ -86,7 +87,7 @@ export function GameSetup({
   onMusicVolumeChange, 
   onSfxVolumeChange 
 }: GameSetupProps) {
-  const [boardSize, setBoardSize] = useState<BoardSize>(9);
+  const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[1]); // Tablut default
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showTutorial, setShowTutorial] = useState(true);
@@ -279,25 +280,21 @@ export function GameSetup({
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
                     <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      Board Size
+                      Game Variant
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        variant={boardSize === 9 ? 'default' : 'outline'}
-                        onClick={() => setBoardSize(9)}
-                        className="h-auto py-4 flex-col"
-                      >
-                        <span className="text-lg font-['Cinzel']">9×9</span>
-                        <span className="text-xs text-muted-foreground">Tablut (Faster)</span>
-                      </Button>
-                      <Button
-                        variant={boardSize === 11 ? 'default' : 'outline'}
-                        onClick={() => setBoardSize(11)}
-                        className="h-auto py-4 flex-col"
-                      >
-                        <span className="text-lg font-['Cinzel']">11×11</span>
-                        <span className="text-xs text-muted-foreground">Classic (Longer)</span>
-                      </Button>
+                    <div className="grid grid-cols-3 gap-3">
+                      {GAME_VARIANTS.map((variant) => (
+                        <Button
+                          key={variant.id}
+                          variant={selectedVariant.id === variant.id ? 'default' : 'outline'}
+                          onClick={() => setSelectedVariant(variant)}
+                          className="h-auto py-4 flex-col"
+                        >
+                          <span className="text-lg font-['Cinzel']">{variant.boardSize}×{variant.boardSize}</span>
+                          <span className="font-['Cinzel'] text-sm">{variant.name}</span>
+                          <span className="text-xs text-muted-foreground">{variant.description}</span>
+                        </Button>
+                      ))}
                     </div>
                   </div>
 
@@ -371,7 +368,7 @@ export function GameSetup({
 
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
-                      onClick={() => onStartGame(boardSize, playerSide, difficulty, 'play')} 
+                      onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play')} 
                       className="h-12 text-lg font-['Cinzel']"
                     >
                       <Play className="w-5 h-5 mr-2" />
@@ -379,7 +376,7 @@ export function GameSetup({
                     </Button>
                     <Button 
                       variant="outline"
-                      onClick={() => onStartGame(boardSize, playerSide, difficulty, 'demo')} 
+                      onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo')} 
                       className="h-12 text-lg font-['Cinzel']"
                     >
                       <Eye className="w-5 h-5 mr-2" />

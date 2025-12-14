@@ -23,7 +23,15 @@ export type Player = 'attacker' | 'defender';
 
 export type GameResult = 'attacker-wins' | 'defender-wins' | null;
 
-export type BoardSize = 9 | 11;
+export type BoardSize = 7 | 9 | 11;
+
+export interface GameVariant {
+  id: string;
+  name: string;
+  boardSize: BoardSize;
+  description: string;
+  origin: string;
+}
 
 export type AIDifficulty = 'beginner' | 'easy' | 'medium' | 'valhalla';
 
