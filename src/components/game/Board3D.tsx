@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { GameState, Position } from '@/types/game';
+import { GameState, Position, BoardTheme } from '@/types/game';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { Piece3D } from './Piece3D';
 import { RUNES } from '@/constants/game';
@@ -10,9 +10,23 @@ interface Board3DProps {
   gameState: GameState;
   onSquareClick: (position: Position) => void;
   onPieceClick: (pieceId: string) => void;
+  theme?: BoardTheme;
 }
 
-export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps) {
+// Default theme (Scandinavian)
+const DEFAULT_THEME: BoardTheme = {
+  boardBase: '#4A3728',
+  boardFrame: '#5D4037',
+  squareLight: '#C4A574',
+  squareDark: '#8B7355',
+  corner: '#8B6914',
+  throne: '#6B4423',
+  circularFrame: '#3D2817',
+  accentRing: '#CD7F32',
+  runeColor: '#FFD700',
+};
+
+export function Board3D({ gameState, onSquareClick, onPieceClick, theme = DEFAULT_THEME }: Board3DProps) {
   const { pieces, selectedPiece, validMoves, boardSize } = gameState;
   const logic = useGameLogic(boardSize);
   const boardRef = useRef<THREE.Group>(null);
@@ -35,9 +49,9 @@ export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps
 
   const getSquareColor = (row: number, col: number) => {
     const pos = { row, col };
-    if (logic.isCorner(pos)) return '#8B6914';
-    if (logic.isThrone(pos)) return '#6B4423';
-    return (row + col) % 2 === 0 ? '#C4A574' : '#8B7355';
+    if (logic.isCorner(pos)) return theme.corner;
+    if (logic.isThrone(pos)) return theme.throne;
+    return (row + col) % 2 === 0 ? theme.squareLight : theme.squareDark;
   };
 
   const circularFrameRadius = (boardWidth / 2) + 0.8;
@@ -48,19 +62,19 @@ export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps
       {/* Circular decorative frame */}
       <mesh position={[0, -0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[circularFrameRadius - 0.3, circularFrameRadius + 0.3, 64]} />
-        <meshStandardMaterial color="#3D2817" roughness={0.7} />
+        <meshStandardMaterial color={theme.circularFrame} roughness={0.7} />
       </mesh>
       
-      {/* Outer gold ring */}
+      {/* Outer accent ring */}
       <mesh position={[0, -0.18, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[circularFrameRadius + 0.25, circularFrameRadius + 0.35, 64]} />
-        <meshStandardMaterial color="#8B6914" emissive="#8B6914" emissiveIntensity={0.2} roughness={0.4} metalness={0.6} />
+        <meshStandardMaterial color={theme.accentRing} emissive={theme.accentRing} emissiveIntensity={0.2} roughness={0.4} metalness={0.6} />
       </mesh>
       
-      {/* Inner gold ring */}
+      {/* Inner accent ring */}
       <mesh position={[0, -0.18, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[circularFrameRadius - 0.35, circularFrameRadius - 0.25, 64]} />
-        <meshStandardMaterial color="#8B6914" emissive="#8B6914" emissiveIntensity={0.2} roughness={0.4} metalness={0.6} />
+        <meshStandardMaterial color={theme.accentRing} emissive={theme.accentRing} emissiveIntensity={0.2} roughness={0.4} metalness={0.6} />
       </mesh>
 
       {/* Runic decorations around circular frame */}
@@ -75,7 +89,7 @@ export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps
             position={[x, -0.12, z]}
             rotation={[-Math.PI / 2, 0, -angle + Math.PI / 2]}
             fontSize={0.25}
-            color="#FFD700"
+            color={theme.runeColor}
             anchorX="center"
             anchorY="middle"
           >
@@ -87,13 +101,13 @@ export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps
       {/* Board base */}
       <mesh position={[0, -0.15, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.5, 0.3, boardWidth + 0.5]} />
-        <meshStandardMaterial color="#4A3728" roughness={0.8} />
+        <meshStandardMaterial color={theme.boardBase} roughness={0.8} />
       </mesh>
 
       {/* Board frame */}
       <mesh position={[0, 0, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.3, 0.1, boardWidth + 0.3]} />
-        <meshStandardMaterial color="#5D4037" roughness={0.7} />
+        <meshStandardMaterial color={theme.boardFrame} roughness={0.7} />
       </mesh>
 
       {/* Squares */}

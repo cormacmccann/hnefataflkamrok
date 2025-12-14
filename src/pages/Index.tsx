@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BoardSize, Player, Position, AIDifficulty, GameMode } from '@/types/game';
+import { BoardSize, Player, Position, AIDifficulty, GameMode, BoardTheme } from '@/types/game';
+import { GAME_VARIANTS } from '@/constants/game';
 import { useGameState } from '@/hooks/useGameState';
 import { useAI } from '@/hooks/useAI';
 import { useVolumeControl } from '@/hooks/useVolumeControl';
@@ -25,6 +26,7 @@ export default function Index() {
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>(GAME_VARIANTS[1].theme);
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
@@ -41,11 +43,13 @@ export default function Index() {
   const ai = useAI(boardSize, difficulty);
   const { demoState, setDemoMove, hidePopup, startDemo, stopDemo } = useDemoMode(boardSize, difficulty);
 
-  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty, mode: GameMode) => {
+  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty, mode: GameMode, variantId: string) => {
+    const variant = GAME_VARIANTS.find(v => v.id === variantId) || GAME_VARIANTS[1];
     setBoardSize(size);
     setPlayerSide(side);
     setDifficulty(diff);
     setGameMode(mode);
+    setBoardTheme(variant.theme);
     setGameStarted(true);
     resetGame(size, side);
     startMusic();
@@ -195,6 +199,7 @@ export default function Index() {
         onPieceClick={handlePieceClick}
         capturePositions={capturePositions}
         onCaptureComplete={clearCapturePositions}
+        theme={boardTheme}
       />
 
       {/* Header Overlay with Logo and Volume */}

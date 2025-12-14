@@ -25,12 +25,25 @@ export type GameResult = 'attacker-wins' | 'defender-wins' | null;
 
 export type BoardSize = 7 | 9 | 11;
 
+export interface BoardTheme {
+  boardBase: string;
+  boardFrame: string;
+  squareLight: string;
+  squareDark: string;
+  corner: string;
+  throne: string;
+  circularFrame: string;
+  accentRing: string;
+  runeColor: string;
+}
+
 export interface GameVariant {
   id: string;
   name: string;
   boardSize: BoardSize;
   description: string;
   origin: string;
+  theme: BoardTheme;
 }
 
 export type AIDifficulty = 'beginner' | 'easy' | 'medium' | 'valhalla';
