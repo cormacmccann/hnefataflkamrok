@@ -1,6 +1,50 @@
-import { BoardConfig, BoardSize } from '@/types/game';
+import { BoardConfig, BoardSize, GameVariant } from '@/types/game';
+
+export const GAME_VARIANTS: GameVariant[] = [
+  {
+    id: 'brandub',
+    name: 'Brandub',
+    boardSize: 7,
+    description: 'Quick Irish variant',
+    origin: 'Ireland',
+  },
+  {
+    id: 'tablut',
+    name: 'Tablut',
+    boardSize: 9,
+    description: 'Classic Swedish game',
+    origin: 'Sweden',
+  },
+  {
+    id: 'hnefatafl',
+    name: 'Hnefatafl',
+    boardSize: 11,
+    description: 'Full Viking battle',
+    origin: 'Scandinavia',
+  },
+];
 
 export const BOARD_CONFIGS: Record<BoardSize, BoardConfig> = {
+  7: {
+    size: 7,
+    corners: [
+      { row: 0, col: 0 },
+      { row: 0, col: 6 },
+      { row: 6, col: 0 },
+      { row: 6, col: 6 },
+    ],
+    throne: { row: 3, col: 3 },
+    kingPosition: { row: 3, col: 3 },
+    initialDefenders: [
+      { row: 2, col: 3 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 4, col: 3 },
+    ],
+    initialAttackers: [
+      { row: 0, col: 3 }, { row: 1, col: 3 },
+      { row: 3, col: 0 }, { row: 3, col: 1 },
+      { row: 3, col: 5 }, { row: 3, col: 6 },
+      { row: 5, col: 3 }, { row: 6, col: 3 },
+    ],
+  },
   9: {
     size: 9,
     corners: [

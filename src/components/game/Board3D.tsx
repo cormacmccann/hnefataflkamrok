@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useRef } from 'react';
 import { GameState, Position } from '@/types/game';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { Piece3D } from './Piece3D';
+import { RUNES } from '@/constants/game';
 import * as THREE from 'three';
+import { Text } from '@react-three/drei';
 
 interface Board3DProps {
   gameState: GameState;
@@ -39,8 +40,50 @@ export function Board3D({ gameState, onSquareClick, onPieceClick }: Board3DProps
     return (row + col) % 2 === 0 ? '#C4A574' : '#8B7355';
   };
 
+  const circularFrameRadius = (boardWidth / 2) + 0.8;
+  const runeCount = boardSize === 7 ? 8 : boardSize === 9 ? 12 : 16;
+
   return (
     <group ref={boardRef}>
+      {/* Circular decorative frame */}
+      <mesh position={[0, -0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[circularFrameRadius - 0.3, circularFrameRadius + 0.3, 64]} />
+        <meshStandardMaterial color="#3D2817" roughness={0.7} />
+      </mesh>
+      
+      {/* Outer gold ring */}
+      <mesh position={[0, -0.18, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[circularFrameRadius + 0.25, circularFrameRadius + 0.35, 64]} />
+        <meshStandardMaterial color="#8B6914" emissive="#8B6914" emissiveIntensity={0.2} roughness={0.4} metalness={0.6} />
+      </mesh>
+      
+      {/* Inner gold ring */}
+      <mesh position={[0, -0.18, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[circularFrameRadius - 0.35, circularFrameRadius - 0.25, 64]} />
+        <meshStandardMaterial color="#8B6914" emissive="#8B6914" emissiveIntensity={0.2} roughness={0.4} metalness={0.6} />
+      </mesh>
+
+      {/* Runic decorations around circular frame */}
+      {Array.from({ length: runeCount }).map((_, i) => {
+        const angle = (i / runeCount) * Math.PI * 2;
+        const x = Math.cos(angle) * circularFrameRadius;
+        const z = Math.sin(angle) * circularFrameRadius;
+        const rune = RUNES[i % RUNES.length];
+        return (
+          <Text
+            key={`rune-${i}`}
+            position={[x, -0.12, z]}
+            rotation={[-Math.PI / 2, 0, -angle + Math.PI / 2]}
+            fontSize={0.25}
+            color="#FFD700"
+            anchorX="center"
+            anchorY="middle"
+          >
+            {rune}
+          </Text>
+        );
+      })}
+
       {/* Board base */}
       <mesh position={[0, -0.15, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.5, 0.3, boardWidth + 0.5]} />
