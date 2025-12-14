@@ -1,4 +1,4 @@
-import { BoardConfig, BoardSize, GameVariant, BoardTheme } from '@/types/game';
+import { BoardConfig, BoardSize, GameVariant, BoardTheme, VariantRules } from '@/types/game';
 
 // Irish Celtic theme - deep greens with gold accents
 const BRANDUB_THEME: BoardTheme = {
@@ -26,6 +26,19 @@ const TABLUT_THEME: BoardTheme = {
   runeColor: '#ADD8E6',
 };
 
+// Welsh theme - deep red and slate grey
+const TAWLBWRDD_THEME: BoardTheme = {
+  boardBase: '#4A4A4A',
+  boardFrame: '#2F2F2F',
+  squareLight: '#A9A9A9',
+  squareDark: '#696969',
+  corner: '#8B0000',
+  throne: '#B22222',
+  circularFrame: '#333333',
+  accentRing: '#DC143C',
+  runeColor: '#FFD700',
+};
+
 // Scandinavian Viking theme - dark oak with bronze/gold accents
 const HNEFATAFL_THEME: BoardTheme = {
   boardBase: '#4A3728',
@@ -39,6 +52,26 @@ const HNEFATAFL_THEME: BoardTheme = {
   runeColor: '#FFD700',
 };
 
+// Anglo-Saxon ecclesiastical theme - purple and gold
+const ALEA_THEME: BoardTheme = {
+  boardBase: '#2E1A47',
+  boardFrame: '#1A0F2E',
+  squareLight: '#9370DB',
+  squareDark: '#663399',
+  corner: '#FFD700',
+  throne: '#4B0082',
+  circularFrame: '#1A0F2E',
+  accentRing: '#FFD700',
+  runeColor: '#E6E6FA',
+};
+
+// Default rules for most variants
+const STANDARD_RULES: VariantRules = {
+  kingArmed: false,
+  edgeEscape: false,
+  shieldwallCapture: false,
+};
+
 export const GAME_VARIANTS: GameVariant[] = [
   {
     id: 'brandub',
@@ -48,7 +81,9 @@ export const GAME_VARIANTS: GameVariant[] = [
     origin: 'Ireland',
     theme: BRANDUB_THEME,
     era: '7th-12th Century',
-    history: 'Brandub, meaning "black raven" in Old Irish, was played by Celtic nobility in medieval Ireland. Ancient texts describe High Kings playing this game in great halls, with the central piece representing the High King of Tara defending against provincial rivals. The game symbolized the political struggles of early Ireland.',
+    history: 'Brandub, meaning "black raven" in Old Irish, was played by Celtic nobility in medieval Ireland. Ancient texts describe High Kings playing this game in great halls, with the central piece representing the High King of Tara defending against provincial rivals.',
+    defaultRules: { ...STANDARD_RULES, kingArmed: true },
+    coordinates: { lat: 53.3, lng: -8.0 },
   },
   {
     id: 'tablut',
@@ -58,7 +93,21 @@ export const GAME_VARIANTS: GameVariant[] = [
     origin: 'Sweden',
     theme: TABLUT_THEME,
     era: '8th-11th Century',
-    history: 'Tablut was documented by Carl Linnaeus in 1732 while visiting Lapland, where the Sami people still played this ancient game. It represents a Swedish king and his knights defending against Muscovite attackers. This is the best-documented tafl variant, providing the foundation for modern reconstructions.',
+    history: 'Tablut was documented by Carl Linnaeus in 1732 while visiting Lapland, where the Sami people still played this ancient game. It represents a Swedish king defending against Muscovite attackers. This is the best-documented tafl variant.',
+    defaultRules: STANDARD_RULES,
+    coordinates: { lat: 68.4, lng: 18.5 },
+  },
+  {
+    id: 'tawlbwrdd',
+    name: 'Tawlbwrdd',
+    boardSize: 11,
+    description: 'Welsh "throw-board"',
+    origin: 'Wales',
+    theme: TAWLBWRDD_THEME,
+    era: '10th-13th Century',
+    history: 'Tawlbwrdd, the Welsh "throw-board," was described in medieval Welsh law texts. It was considered one of the 24 feats a gentleman must master. The game held such importance that special boards were treasured heirlooms passed down through noble families.',
+    defaultRules: { ...STANDARD_RULES, kingArmed: true },
+    coordinates: { lat: 52.1, lng: -3.8 },
   },
   {
     id: 'hnefatafl',
@@ -68,7 +117,21 @@ export const GAME_VARIANTS: GameVariant[] = [
     origin: 'Scandinavia',
     theme: HNEFATAFL_THEME,
     era: '4th-12th Century',
-    history: 'Hnefatafl, the "King\'s Table," was the premier strategy game of the Viking Age. Norsemen carried it across their vast trade routes from Byzantium to Newfoundland. Sagas tell of warriors wagering gold and honor on games played by firelight in longhouses. It remained popular until chess arrived from the East.',
+    history: "Hnefatafl, the \"King's Table,\" was the premier strategy game of the Viking Age. Norsemen carried it across their vast trade routes from Byzantium to Newfoundland. Sagas tell of warriors wagering gold and honor on games played by firelight.",
+    defaultRules: { ...STANDARD_RULES, shieldwallCapture: true },
+    coordinates: { lat: 59.9, lng: 10.7 },
+  },
+  {
+    id: 'alea',
+    name: 'Alea Evangelii',
+    boardSize: 19,
+    description: 'Monastic grand variant',
+    origin: 'England',
+    theme: ALEA_THEME,
+    era: '10th-11th Century',
+    history: 'Alea Evangelii, the "Game of the Gospels," was recorded in a 12th-century manuscript from Canterbury. This massive 19×19 variant was played in monasteries, with piece positions tied to religious symbolism. It represents the grandest known tafl game.',
+    defaultRules: { ...STANDARD_RULES, edgeEscape: true },
+    coordinates: { lat: 51.3, lng: 1.1 },
   },
 ];
 
@@ -142,6 +205,49 @@ export const BOARD_CONFIGS: Record<BoardSize, BoardConfig> = {
       { row: 5, col: 9 },
       { row: 10, col: 3 }, { row: 10, col: 4 }, { row: 10, col: 5 }, { row: 10, col: 6 }, { row: 10, col: 7 },
       { row: 9, col: 5 },
+    ],
+  },
+  19: {
+    size: 19,
+    corners: [
+      { row: 0, col: 0 },
+      { row: 0, col: 18 },
+      { row: 18, col: 0 },
+      { row: 18, col: 18 },
+    ],
+    throne: { row: 9, col: 9 },
+    kingPosition: { row: 9, col: 9 },
+    initialDefenders: [
+      // Cross pattern around king
+      { row: 5, col: 9 }, { row: 6, col: 9 }, { row: 7, col: 9 }, { row: 8, col: 9 },
+      { row: 10, col: 9 }, { row: 11, col: 9 }, { row: 12, col: 9 }, { row: 13, col: 9 },
+      { row: 9, col: 5 }, { row: 9, col: 6 }, { row: 9, col: 7 }, { row: 9, col: 8 },
+      { row: 9, col: 10 }, { row: 9, col: 11 }, { row: 9, col: 12 }, { row: 9, col: 13 },
+      // Diagonal guards
+      { row: 7, col: 7 }, { row: 7, col: 11 }, { row: 11, col: 7 }, { row: 11, col: 11 },
+      { row: 6, col: 6 }, { row: 6, col: 12 }, { row: 12, col: 6 }, { row: 12, col: 12 },
+    ],
+    initialAttackers: [
+      // Top edge
+      { row: 0, col: 5 }, { row: 0, col: 6 }, { row: 0, col: 7 }, { row: 0, col: 8 }, { row: 0, col: 9 },
+      { row: 0, col: 10 }, { row: 0, col: 11 }, { row: 0, col: 12 }, { row: 0, col: 13 },
+      { row: 1, col: 7 }, { row: 1, col: 9 }, { row: 1, col: 11 },
+      { row: 2, col: 9 },
+      // Bottom edge
+      { row: 18, col: 5 }, { row: 18, col: 6 }, { row: 18, col: 7 }, { row: 18, col: 8 }, { row: 18, col: 9 },
+      { row: 18, col: 10 }, { row: 18, col: 11 }, { row: 18, col: 12 }, { row: 18, col: 13 },
+      { row: 17, col: 7 }, { row: 17, col: 9 }, { row: 17, col: 11 },
+      { row: 16, col: 9 },
+      // Left edge
+      { row: 5, col: 0 }, { row: 6, col: 0 }, { row: 7, col: 0 }, { row: 8, col: 0 }, { row: 9, col: 0 },
+      { row: 10, col: 0 }, { row: 11, col: 0 }, { row: 12, col: 0 }, { row: 13, col: 0 },
+      { row: 7, col: 1 }, { row: 9, col: 1 }, { row: 11, col: 1 },
+      { row: 9, col: 2 },
+      // Right edge
+      { row: 5, col: 18 }, { row: 6, col: 18 }, { row: 7, col: 18 }, { row: 8, col: 18 }, { row: 9, col: 18 },
+      { row: 10, col: 18 }, { row: 11, col: 18 }, { row: 12, col: 18 }, { row: 13, col: 18 },
+      { row: 7, col: 17 }, { row: 9, col: 17 }, { row: 11, col: 17 },
+      { row: 9, col: 16 },
     ],
   },
 };

@@ -23,7 +23,13 @@ export type Player = 'attacker' | 'defender';
 
 export type GameResult = 'attacker-wins' | 'defender-wins' | null;
 
-export type BoardSize = 7 | 9 | 11;
+export type BoardSize = 7 | 9 | 11 | 19;
+
+export interface VariantRules {
+  kingArmed: boolean; // Can king participate in captures
+  edgeEscape: boolean; // King escapes to any edge (vs corners only)
+  shieldwallCapture: boolean; // Capture against board edge
+}
 
 export interface BoardTheme {
   boardBase: string;
@@ -46,6 +52,8 @@ export interface GameVariant {
   theme: BoardTheme;
   history: string;
   era: string;
+  defaultRules: VariantRules;
+  coordinates: { lat: number; lng: number };
 }
 
 export type AIDifficulty = 'beginner' | 'easy' | 'medium' | 'valhalla';
