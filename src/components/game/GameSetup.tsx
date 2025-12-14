@@ -15,7 +15,7 @@ import tutorialVictory from '@/assets/tutorial-victory.png';
 import { VolumeControl } from './VolumeControl';
 
 interface GameSetupProps {
-  onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode) => void;
+  onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
   musicVolume: number;
   sfxVolume: number;
   onMusicVolumeChange: (volume: number) => void;
@@ -368,7 +368,7 @@ export function GameSetup({
 
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
-                      onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play')} 
+                      onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play', selectedVariant.id)} 
                       className="h-12 text-lg font-['Cinzel']"
                     >
                       <Play className="w-5 h-5 mr-2" />
@@ -376,7 +376,7 @@ export function GameSetup({
                     </Button>
                     <Button 
                       variant="outline"
-                      onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo')} 
+                      onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)} 
                       className="h-12 text-lg font-['Cinzel']"
                     >
                       <Eye className="w-5 h-5 mr-2" />

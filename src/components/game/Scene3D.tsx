@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { GameState, Position } from '@/types/game';
+import { GameState, Position, BoardTheme } from '@/types/game';
 import { Board3D } from './Board3D';
 import { CaptureParticles } from './CaptureParticles';
 import vikingTableBg from '@/assets/viking-table-bg.jpg';
@@ -17,6 +17,7 @@ interface Scene3DProps {
   onPieceClick: (pieceId: string) => void;
   capturePositions?: CapturePosition[];
   onCaptureComplete?: () => void;
+  theme?: BoardTheme;
 }
 
 export function Scene3D({ 
@@ -24,7 +25,8 @@ export function Scene3D({
   onSquareClick, 
   onPieceClick, 
   capturePositions = [], 
-  onCaptureComplete 
+  onCaptureComplete,
+  theme
 }: Scene3DProps) {
   const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
 
@@ -93,6 +95,7 @@ export function Scene3D({
           gameState={gameState}
           onSquareClick={onSquareClick}
           onPieceClick={onPieceClick}
+          theme={theme}
         />
 
         {/* Capture particle effects */}
