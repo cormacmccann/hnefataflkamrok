@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BoardSize, Player, AIDifficulty, GameMode, GameVariant } from '@/types/game';
+import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS } from '@/constants/game';
-import { ChevronLeft, ChevronRight, Play, BookOpen, Sparkles, Zap, Brain, Skull, Eye, MapPin, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, BookOpen, Sparkles, Zap, Brain, Skull, Eye, MapPin, Clock, Map, Shield, Crown, Sword } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import tutorialKing from '@/assets/tutorial-king.png';
@@ -13,7 +13,8 @@ import tutorialAttacker from '@/assets/tutorial-attacker.png';
 import tutorialCapturing from '@/assets/tutorial-capturing.png';
 import tutorialVictory from '@/assets/tutorial-victory.png';
 import { VolumeControl } from './VolumeControl';
-
+import { TaflHistoryMap } from './TaflHistoryMap';
+import { Switch } from '@/components/ui/switch';
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
   musicVolume: number;
@@ -92,6 +93,14 @@ export function GameSetup({
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showTutorial, setShowTutorial] = useState(true);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [showMap, setShowMap] = useState(false);
+  const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[1].defaultRules);
+
+  // Update rules when variant changes
+  const handleVariantChange = (variant: GameVariant) => {
+    setSelectedVariant(variant);
+    setRules(variant.defaultRules);
+  };
 
   const nextStep = () => {
     if (tutorialStep < tutorialSteps.length - 1) {
@@ -279,26 +288,37 @@ export function GameSetup({
                 
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
-                    <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      Game Variant
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                        Game Variant
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowMap(true)}
+                        className="gap-1.5 text-xs text-muted-foreground hover:text-primary"
+                      >
+                        <Map className="w-3.5 h-3.5" />
+                        View Map
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
                       {GAME_VARIANTS.map((variant) => (
                         <Button
                           key={variant.id}
                           variant={selectedVariant.id === variant.id ? 'default' : 'outline'}
-                          onClick={() => setSelectedVariant(variant)}
-                          className="h-auto py-4 flex-col"
+                          onClick={() => handleVariantChange(variant)}
+                          className="h-auto py-3 flex-col text-center"
+                          size="sm"
                         >
-                          <span className="text-lg font-['Cinzel']">{variant.boardSize}×{variant.boardSize}</span>
-                          <span className="font-['Cinzel'] text-sm">{variant.name}</span>
-                          <span className="text-xs text-muted-foreground">{variant.description}</span>
+                          <span className="text-sm font-['Cinzel']">{variant.boardSize}×{variant.boardSize}</span>
+                          <span className="font-['Cinzel'] text-xs">{variant.name}</span>
                         </Button>
                       ))}
                     </div>
                     
                     {/* Historical Context Card */}
-                    <div className="mt-4 p-4 rounded-lg bg-secondary/30 border border-border/50">
+                    <div className="mt-3 p-3 rounded-lg bg-secondary/30 border border-border/50">
                       <div className="flex items-center gap-4 mb-2">
                         <div className="flex items-center gap-1.5 text-xs text-primary">
                           <MapPin className="w-3.5 h-3.5" />
@@ -309,9 +329,57 @@ export function GameSetup({
                           <span>{selectedVariant.era}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-foreground/80 leading-relaxed">
+                      <p className="text-xs text-foreground/80 leading-relaxed">
                         {selectedVariant.history}
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Variant Rules */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      Variant Rules
+                    </label>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/20">
+                        <div className="flex items-center gap-2">
+                          <Crown className="w-4 h-4 text-primary" />
+                          <div>
+                            <span className="text-sm">King Armed</span>
+                            <p className="text-xs text-muted-foreground">King can participate in captures</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={rules.kingArmed}
+                          onCheckedChange={(checked) => setRules({ ...rules, kingArmed: checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/20">
+                        <div className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-primary" />
+                          <div>
+                            <span className="text-sm">Edge Escape</span>
+                            <p className="text-xs text-muted-foreground">King escapes to any edge square</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={rules.edgeEscape}
+                          onCheckedChange={(checked) => setRules({ ...rules, edgeEscape: checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/20">
+                        <div className="flex items-center gap-2">
+                          <Sword className="w-4 h-4 text-primary" />
+                          <div>
+                            <span className="text-sm">Shieldwall Capture</span>
+                            <p className="text-xs text-muted-foreground">Capture pieces against board edge</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={rules.shieldwallCapture}
+                          onCheckedChange={(checked) => setRules({ ...rules, shieldwallCapture: checked })}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -418,6 +486,18 @@ export function GameSetup({
                 </CardContent>
               </Card>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* History Map Modal */}
+        <AnimatePresence>
+          {showMap && (
+            <TaflHistoryMap
+              variants={GAME_VARIANTS}
+              selectedVariant={selectedVariant}
+              onSelectVariant={handleVariantChange}
+              onClose={() => setShowMap(false)}
+            />
           )}
         </AnimatePresence>
       </div>
