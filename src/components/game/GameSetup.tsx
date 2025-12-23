@@ -158,10 +158,10 @@ export function GameSetup({
                     className="h-16 mx-auto mb-2"
                   />
                   <CardTitle className="text-2xl font-['Cinzel'] text-primary">
-                    Learn the Game
+                    {t.learnGame}
                   </CardTitle>
                   <CardDescription>
-                    Step {tutorialStep + 1} of {tutorialSteps.length}
+                    {t.stepOf.replace('{current}', String(tutorialStep + 1)).replace('{total}', String(tutorialSteps.length))}
                   </CardDescription>
                 </CardHeader>
                 
@@ -243,7 +243,7 @@ export function GameSetup({
                       className="gap-2"
                     >
                       <ChevronLeft className="w-4 h-4" />
-                      Previous
+                      {t.previous}
                     </Button>
 
                     <Button
@@ -251,18 +251,18 @@ export function GameSetup({
                       onClick={() => setShowTutorial(false)}
                       className="text-muted-foreground"
                     >
-                      Skip Tutorial
+                      {t.skipTutorial}
                     </Button>
 
                     <Button onClick={nextStep} className="gap-2">
                       {tutorialStep === tutorialSteps.length - 1 ? (
                         <>
-                          Start Playing
+                          {t.startPlaying}
                           <Play className="w-4 h-4" />
                         </>
                       ) : (
                         <>
-                          Next
+                          {t.next}
                           <ChevronRight className="w-4 h-4" />
                         </>
                       )}
@@ -304,7 +304,7 @@ export function GameSetup({
                         className="gap-1.5 text-xs text-muted-foreground hover:text-primary"
                       >
                         <Map className="w-3.5 h-3.5" />
-                        View Map
+                        {t.viewMap}
                       </Button>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -363,8 +363,8 @@ export function GameSetup({
                         <div className="flex items-center gap-2">
                           <Shield className="w-4 h-4 text-primary" />
                           <div>
-                            <span className="text-sm">Edge Escape</span>
-                            <p className="text-xs text-muted-foreground">King escapes to any edge square</p>
+                            <span className="text-sm">{t.edgeEscape}</span>
+                            <p className="text-xs text-muted-foreground">{t.edgeEscapeDesc}</p>
                           </div>
                         </div>
                         <Switch
@@ -376,8 +376,8 @@ export function GameSetup({
                         <div className="flex items-center gap-2">
                           <Sword className="w-4 h-4 text-primary" />
                           <div>
-                            <span className="text-sm">Shieldwall Capture</span>
-                            <p className="text-xs text-muted-foreground">Capture pieces against board edge</p>
+                            <span className="text-sm">{t.shieldwallCapture}</span>
+                            <p className="text-xs text-muted-foreground">{t.shieldwallCaptureDesc}</p>
                           </div>
                         </div>
                         <Switch
@@ -390,7 +390,7 @@ export function GameSetup({
 
                   <div className="space-y-3">
                     <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      Play As
+                      {t.playAs}
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <Button
@@ -401,8 +401,8 @@ export function GameSetup({
                         <div className="w-8 h-8 rounded-full bg-[hsl(var(--piece-defender))] border-2 border-[hsl(var(--piece-defender-accent))] flex items-center justify-center">
                           <span className="text-xs text-[hsl(var(--background))]">♔</span>
                         </div>
-                        <span className="font-['Cinzel']">Defenders</span>
-                        <span className="text-xs text-muted-foreground">Protect the King</span>
+                        <span className="font-['Cinzel']">{t.defenders}</span>
+                        <span className="text-xs text-muted-foreground">{t.protectKing}</span>
                       </Button>
                       <Button
                         variant={playerSide === 'attacker' ? 'default' : 'outline'}
@@ -410,8 +410,8 @@ export function GameSetup({
                         className="h-auto py-4 flex-col gap-2"
                       >
                         <div className="w-8 h-8 rounded-full bg-[hsl(var(--piece-attacker))] border-2 border-[hsl(var(--piece-attacker-accent))]" />
-                        <span className="font-['Cinzel']">Attackers</span>
-                        <span className="text-xs text-muted-foreground">Capture the King</span>
+                        <span className="font-['Cinzel']">{t.attackers}</span>
+                        <span className="text-xs text-muted-foreground">{t.captureKing}</span>
                       </Button>
                     </div>
                   </div>
@@ -481,12 +481,12 @@ export function GameSetup({
                       className="gap-2 text-muted-foreground"
                     >
                       <BookOpen className="w-4 h-4" />
-                      View Tutorial Again
+                      {t.viewTutorialAgain}
                     </Button>
                   </div>
 
                   <div className="text-center text-xs text-muted-foreground">
-                    <p>Attackers move first. {playerSide === 'attacker' ? 'You start!' : 'AI starts.'}</p>
+                    <p>{t.attackersFirst} {playerSide === 'attacker' ? t.youStart : t.aiStarts}</p>
                   </div>
                 </CardContent>
               </Card>
