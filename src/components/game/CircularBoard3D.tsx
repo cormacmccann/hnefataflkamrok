@@ -252,7 +252,6 @@ export function CircularBoard3D({
         color={runeColor}
         anchorX="center"
         anchorY="middle"
-        font="/fonts/Cinzel-Regular.ttf"
       >
         FIDCHELL
       </Text>
