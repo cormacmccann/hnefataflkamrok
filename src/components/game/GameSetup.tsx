@@ -15,6 +15,9 @@ import tutorialVictory from '@/assets/tutorial-victory.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
 import { Switch } from '@/components/ui/switch';
+import { LanguageSelector } from './LanguageSelector';
+import { useLanguage } from '@/i18n/LanguageContext';
+
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
   musicVolume: number;
@@ -88,13 +91,14 @@ export function GameSetup({
   onMusicVolumeChange, 
   onSfxVolumeChange 
 }: GameSetupProps) {
-  const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[1]); // Tablut default
+  const { t } = useLanguage();
+  const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[2]); // Brandub default (after Fidchell)
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showTutorial, setShowTutorial] = useState(true);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showMap, setShowMap] = useState(false);
-  const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[1].defaultRules);
+  const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
 
   // Update rules when variant changes
   const handleVariantChange = (variant: GameVariant) => {
@@ -125,8 +129,9 @@ export function GameSetup({
     >
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
       
-      {/* Volume Control in corner */}
-      <div className="fixed top-4 right-4 z-20">
+      {/* Controls in corner */}
+      <div className="fixed top-4 right-4 z-20 flex items-center gap-3">
+        <LanguageSelector />
         <VolumeControl
           musicVolume={musicVolume}
           sfxVolume={sfxVolume}
@@ -278,11 +283,11 @@ export function GameSetup({
                 <CardHeader className="text-center">
                   <img 
                     src={hnefataflLogo} 
-                    alt="Hnefatafl" 
+                    alt={t.appName}
                     className="h-20 mx-auto mb-2"
                   />
-                  <p className="text-muted-foreground mt-2">
-                    The Viking Game of Strategy
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    {t.subtitle}
                   </p>
                 </CardHeader>
                 
@@ -290,7 +295,7 @@ export function GameSetup({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                        Game Variant
+                        {t.selectVariant}
                       </label>
                       <Button
                         variant="ghost"
@@ -302,17 +307,17 @@ export function GameSetup({
                         View Map
                       </Button>
                     </div>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                       {GAME_VARIANTS.map((variant) => (
                         <Button
                           key={variant.id}
                           variant={selectedVariant.id === variant.id ? 'default' : 'outline'}
                           onClick={() => handleVariantChange(variant)}
-                          className="h-auto py-3 flex-col text-center"
+                          className="h-auto py-2 flex-col text-center"
                           size="sm"
                         >
-                          <span className="text-sm font-['Cinzel']">{variant.boardSize}×{variant.boardSize}</span>
-                          <span className="font-['Cinzel'] text-xs">{variant.name}</span>
+                          <span className="text-xs font-['Cinzel']">{variant.boardSize}×{variant.boardSize}</span>
+                          <span className="font-['Cinzel'] text-[10px]">{variant.name}</span>
                         </Button>
                       ))}
                     </div>
@@ -338,15 +343,15 @@ export function GameSetup({
                   {/* Variant Rules */}
                   <div className="space-y-3">
                     <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      Variant Rules
+                      {t.variantRules}
                     </label>
                     <div className="grid grid-cols-1 gap-2">
                       <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/20">
                         <div className="flex items-center gap-2">
                           <Crown className="w-4 h-4 text-primary" />
                           <div>
-                            <span className="text-sm">King Armed</span>
-                            <p className="text-xs text-muted-foreground">King can participate in captures</p>
+                            <span className="text-sm">{t.kingArmed}</span>
+                            <p className="text-xs text-muted-foreground">{t.kingArmedDesc}</p>
                           </div>
                         </div>
                         <Switch
@@ -413,7 +418,7 @@ export function GameSetup({
 
                   <div className="space-y-3">
                     <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      AI Difficulty
+                      {t.difficulty}
                     </label>
                     <div className="grid grid-cols-4 gap-2">
                       <Button
@@ -422,7 +427,7 @@ export function GameSetup({
                         className="h-auto py-3 flex-col gap-1"
                       >
                         <Sparkles className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-xs">Beginner</span>
+                        <span className="font-['Cinzel'] text-xs">{t.beginner}</span>
                       </Button>
                       <Button
                         variant={difficulty === 'easy' ? 'default' : 'outline'}
@@ -430,7 +435,7 @@ export function GameSetup({
                         className="h-auto py-3 flex-col gap-1"
                       >
                         <Zap className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-xs">Easy</span>
+                        <span className="font-['Cinzel'] text-xs">{t.easy}</span>
                       </Button>
                       <Button
                         variant={difficulty === 'medium' ? 'default' : 'outline'}
@@ -438,7 +443,7 @@ export function GameSetup({
                         className="h-auto py-3 flex-col gap-1"
                       >
                         <Brain className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-xs">Medium</span>
+                        <span className="font-['Cinzel'] text-xs">{t.medium}</span>
                       </Button>
                       <Button
                         variant={difficulty === 'valhalla' ? 'default' : 'outline'}
@@ -446,7 +451,7 @@ export function GameSetup({
                         className="h-auto py-3 flex-col gap-1 text-destructive"
                       >
                         <Skull className="w-5 h-5" />
-                        <span className="font-['Cinzel'] text-xs">Valhalla</span>
+                        <span className="font-['Cinzel'] text-xs">{t.valhalla}</span>
                       </Button>
                     </div>
                   </div>
@@ -457,7 +462,7 @@ export function GameSetup({
                       className="h-12 text-lg font-['Cinzel']"
                     >
                       <Play className="w-5 h-5 mr-2" />
-                      Play
+                      {t.play}
                     </Button>
                     <Button 
                       variant="outline"
@@ -465,7 +470,7 @@ export function GameSetup({
                       className="h-12 text-lg font-['Cinzel']"
                     >
                       <Eye className="w-5 h-5 mr-2" />
-                      Demo
+                      {t.watchDemo}
                     </Button>
                   </div>
 

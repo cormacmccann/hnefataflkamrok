@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import vikingBackground from '@/assets/viking-background.jpg';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface LogoIntroProps {
   onComplete: () => void;
@@ -9,6 +10,7 @@ interface LogoIntroProps {
 
 export function LogoIntro({ onComplete }: LogoIntroProps) {
   const [showLogo, setShowLogo] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,7 +45,7 @@ export function LogoIntro({ onComplete }: LogoIntroProps) {
           >
             <motion.img 
               src={hnefataflLogo} 
-              alt="Hnefatafl" 
+              alt={t.appName}
               className="h-32 sm:h-40 md:h-48 drop-shadow-2xl"
               animate={{ 
                 filter: ['drop-shadow(0 0 20px hsl(var(--primary)/0.3))', 'drop-shadow(0 0 40px hsl(var(--primary)/0.5))', 'drop-shadow(0 0 20px hsl(var(--primary)/0.3))']
@@ -58,9 +60,9 @@ export function LogoIntro({ onComplete }: LogoIntroProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
-              className="mt-6 text-lg text-muted-foreground font-['Cinzel'] tracking-widest"
+              className="mt-6 text-lg text-muted-foreground font-['Cinzel'] tracking-widest text-center max-w-md px-4"
             >
-              The Viking Game of Strategy
+              {t.subtitle}
             </motion.p>
           </motion.div>
         )}

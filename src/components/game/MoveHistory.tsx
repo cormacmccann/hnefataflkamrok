@@ -1,22 +1,25 @@
 import { Move } from '@/types/game';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface MoveHistoryProps {
   moves: Move[];
 }
 
 export function MoveHistory({ moves }: MoveHistoryProps) {
+  const { t } = useLanguage();
+  
   return (
     <div className="flex flex-col h-full bg-card/90 backdrop-blur border border-border rounded-lg overflow-hidden shadow-lg">
       <div className="p-3 border-b border-border bg-secondary/50">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-center font-['Cinzel']">
-          Move History
+          {t.moveHistory}
         </h3>
       </div>
       <ScrollArea className="flex-1 p-2">
         {moves.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-4">
-            No moves yet
+            {t.noMovesYet}
           </div>
         ) : (
           <div className="space-y-1">

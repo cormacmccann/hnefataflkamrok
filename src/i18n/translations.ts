@@ -4,6 +4,7 @@ export interface Translations {
   // App title and branding
   appName: string;
   tagline: string;
+  subtitle: string;
   
   // Game setup
   selectVariant: string;
@@ -127,8 +128,9 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
-    appName: 'Hnefatafl',
+    appName: 'Tafl',
     tagline: 'The Ancient Game of Strategy',
+    subtitle: 'Norse & Celtic Board Games of the Ancient World',
     selectVariant: 'Select Variant',
     chooseSide: 'Choose Your Side',
     attacker: 'Attacker',
@@ -225,8 +227,9 @@ export const translations: Record<Language, Translations> = {
   },
   
   swe: {
-    appName: 'Hnefatafl',
+    appName: 'Tafl',
     tagline: 'Det Forntida Strategispelet',
+    subtitle: 'Nordiska & Keltiska Brädspel från Forntiden',
     selectVariant: 'Välj Variant',
     chooseSide: 'Välj Din Sida',
     attacker: 'Angripare',
@@ -323,8 +326,9 @@ export const translations: Record<Language, Translations> = {
   },
   
   ga: {
-    appName: 'Brandub',
+    appName: 'Ficheall',
     tagline: 'Cluiche Ársa na Straitéise',
+    subtitle: 'Cluichí Cláir Lochlannach & Ceilteach ón Sean-Domhan',
     selectVariant: 'Roghnaigh Leagan',
     chooseSide: 'Roghnaigh Do Thaobh',
     attacker: 'Ionsaitheoir',
@@ -421,8 +425,9 @@ export const translations: Record<Language, Translations> = {
   },
   
   gd: {
-    appName: 'Tawlbwrdd',
+    appName: 'Tafl',
     tagline: 'Geama Àrsaidh na Ro-innleachd',
+    subtitle: 'Geamannan Bùird Lochlannach & Ceilteach bhon t-Seann Shaoghal',
     selectVariant: 'Tagh Tionndadh',
     chooseSide: 'Tagh Do Thaobh',
     attacker: 'Ionnsaigheach',
@@ -521,6 +526,7 @@ export const translations: Record<Language, Translations> = {
   cy: {
     appName: 'Tawlbwrdd',
     tagline: 'Gêm Hynafol Strategaeth',
+    subtitle: 'Gemau Bwrdd Llychlynaidd a Cheltaidd o\'r Hen Fyd',
     selectVariant: 'Dewis Amrywiad',
     chooseSide: 'Dewis Eich Ochr',
     attacker: 'Ymosodwr',
@@ -617,8 +623,9 @@ export const translations: Record<Language, Translations> = {
   },
   
   ang: {
-    appName: 'Hnefatafl',
+    appName: 'Tæfl',
     tagline: 'Þæt Ealde Tæflspel',
+    subtitle: 'Norþmanna & Wēala Tæflspelas fram Ealddagum',
     selectVariant: 'Cēos Cynren',
     chooseSide: 'Cēos Þīne Sīdan',
     attacker: 'Onwinnend',
