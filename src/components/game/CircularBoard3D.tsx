@@ -229,7 +229,7 @@ export function CircularBoard3D({
 
             {/* Connection path glow */}
             {isPath && (
-              <mesh position={[0, 0.05, 0]}>
+              <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.15, 0.25, 16]} />
                 <meshStandardMaterial 
                   color="#9F7AEA"
