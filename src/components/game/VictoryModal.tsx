@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { GameResult, Player } from '@/types/game';
 import { Trophy, Skull } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface VictoryModalProps {
   result: GameResult;
@@ -11,10 +12,12 @@ interface VictoryModalProps {
 }
 
 export function VictoryModal({ result, playerSide, onPlayAgain, onClose }: VictoryModalProps) {
+  const { t } = useLanguage();
+  
   if (!result) return null;
 
   const playerWon = result === `${playerSide}-wins`;
-  const winner = result === 'attacker-wins' ? 'Attackers' : 'Defenders';
+  const winner = result === 'attacker-wins' ? t.attackers : t.defenders;
 
   return (
     <Dialog open={!!result} onOpenChange={() => onClose()}>
@@ -24,20 +27,20 @@ export function VictoryModal({ result, playerSide, onPlayAgain, onClose }: Victo
             {playerWon ? (
               <>
                 <Trophy className="w-8 h-8 text-primary" />
-                Victory!
+                {t.victory}
               </>
             ) : (
               <>
                 <Skull className="w-8 h-8 text-destructive" />
-                Defeat
+                {t.defeat}
               </>
             )}
           </DialogTitle>
           <DialogDescription className="text-lg pt-2">
             {playerWon ? (
-              <span>You have triumphed! The {winner} are victorious.</span>
+              <span>{t.youTriumphed} {winner} {t.areVictorious}</span>
             ) : (
-              <span>You have fallen. The {winner} have claimed victory.</span>
+              <span>{t.youFallen} {winner} {t.haveClaimedVictory}</span>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -55,10 +58,10 @@ export function VictoryModal({ result, playerSide, onPlayAgain, onClose }: Victo
 
         <div className="flex gap-3 justify-center">
           <Button onClick={onPlayAgain} className="gap-2">
-            Play Again
+            {t.playAgain}
           </Button>
           <Button variant="outline" onClick={onClose}>
-            Review Board
+            {t.backToSetup}
           </Button>
         </div>
       </DialogContent>

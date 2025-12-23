@@ -199,11 +199,11 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
           </g>
           
           {/* Title plaque */}
-          <rect x="20" y="300" width="200" height="40" rx="4" fill="#2a2a2a" stroke="#555" />
-          <text x="120" y="322" textAnchor="middle" fill="#ddd" fontSize="11" fontFamily="Cinzel, serif">
-            Viking Age Trade Routes
+          <rect x="20" y="300" width="220" height="40" rx="4" fill="#2a2a2a" stroke="#555" />
+          <text x="130" y="322" textAnchor="middle" fill="#ddd" fontSize="11" fontFamily="Cinzel, serif">
+            Norse & Celtic Trade Routes
           </text>
-          <text x="120" y="334" textAnchor="middle" fill="#888" fontSize="8">
+          <text x="130" y="334" textAnchor="middle" fill="#888" fontSize="8">
             Click a location to select variant
           </text>
         </svg>

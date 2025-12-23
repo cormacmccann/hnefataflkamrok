@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { RotateCcw, RefreshCw, BookOpen } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface GameControlsProps {
   onUndo: () => void;
@@ -10,6 +11,8 @@ interface GameControlsProps {
 }
 
 export function GameControls({ onUndo, onNewGame, onShowRules, canUndo, isGameOver }: GameControlsProps) {
+  const { t } = useLanguage();
+  
   return (
     <div className="flex flex-col gap-2 bg-card/90 backdrop-blur p-3 rounded-lg border border-border shadow-lg">
       <Button 
@@ -19,7 +22,7 @@ export function GameControls({ onUndo, onNewGame, onShowRules, canUndo, isGameOv
         className="gap-2"
       >
         <RotateCcw className="w-4 h-4" />
-        Undo
+        {t.undo}
       </Button>
       <Button 
         variant="outline" 
@@ -27,7 +30,7 @@ export function GameControls({ onUndo, onNewGame, onShowRules, canUndo, isGameOv
         className="gap-2"
       >
         <RefreshCw className="w-4 h-4" />
-        New Game
+        {t.newGame}
       </Button>
       <Button 
         variant="secondary" 
@@ -35,7 +38,7 @@ export function GameControls({ onUndo, onNewGame, onShowRules, canUndo, isGameOv
         className="gap-2"
       >
         <BookOpen className="w-4 h-4" />
-        Rules
+        {t.rules}
       </Button>
     </div>
   );

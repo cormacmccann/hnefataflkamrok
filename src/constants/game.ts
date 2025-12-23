@@ -65,6 +65,19 @@ const ALEA_THEME: BoardTheme = {
   runeColor: '#E6E6FA',
 };
 
+// Celtic Fidchell theme - mystical purple and silver
+const FIDCHELL_THEME: BoardTheme = {
+  boardBase: '#2A2040',
+  boardFrame: '#1A1030',
+  squareLight: '#9F8FBF',
+  squareDark: '#6A5A8A',
+  corner: '#C0C0C0',
+  throne: '#483D8B',
+  circularFrame: '#1A1030',
+  accentRing: '#DDA0DD',
+  runeColor: '#E6E6FA',
+};
+
 // Default rules for most variants
 const STANDARD_RULES: VariantRules = {
   kingArmed: false,
@@ -73,6 +86,18 @@ const STANDARD_RULES: VariantRules = {
 };
 
 export const GAME_VARIANTS: GameVariant[] = [
+  {
+    id: 'fidchell',
+    name: 'Fidchell',
+    boardSize: 7,
+    description: 'Celtic "wood-wisdom"',
+    origin: 'Ireland/Wales',
+    theme: FIDCHELL_THEME,
+    era: '5th-12th Century',
+    history: 'Fidchell ("wood-wisdom") was the most prestigious Celtic board game, mentioned in Irish mythology as invented by the god Lugh. High Kings wagered kingdoms on its outcome. Welsh legends call it Gwyddbwyll, played by heroes in the Mabinogion.',
+    defaultRules: { ...STANDARD_RULES, kingArmed: true },
+    coordinates: { lat: 53.5, lng: -7.5 },
+  },
   {
     id: 'brandub',
     name: 'Brandub',
