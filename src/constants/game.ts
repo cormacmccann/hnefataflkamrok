@@ -65,17 +65,17 @@ const ALEA_THEME: BoardTheme = {
   runeColor: '#E6E6FA',
 };
 
-// Celtic Fidchell theme - mystical purple and silver
+// Celtic Fidchell theme - mystical purple and silver (circular board)
 const FIDCHELL_THEME: BoardTheme = {
-  boardBase: '#2A2040',
-  boardFrame: '#1A1030',
-  squareLight: '#9F8FBF',
-  squareDark: '#6A5A8A',
+  boardBase: '#1A1428',
+  boardFrame: '#0D0A14',
+  squareLight: '#7B68B0',
+  squareDark: '#4A3D6A',
   corner: '#C0C0C0',
-  throne: '#483D8B',
-  circularFrame: '#1A1030',
-  accentRing: '#DDA0DD',
-  runeColor: '#E6E6FA',
+  throne: '#6B4EAB',
+  circularFrame: '#2A1F3D',
+  accentRing: '#9F7AEA',
+  runeColor: '#DDA0DD',
 };
 
 // Default rules for most variants
@@ -83,6 +83,15 @@ const STANDARD_RULES: VariantRules = {
   kingArmed: false,
   edgeEscape: false,
   shieldwallCapture: false,
+  victoryType: 'escape',
+};
+
+// Fidchell connection-based rules
+const FIDCHELL_RULES: VariantRules = {
+  kingArmed: true,
+  edgeEscape: false,
+  shieldwallCapture: false,
+  victoryType: 'connection',
 };
 
 export const GAME_VARIANTS: GameVariant[] = [
@@ -90,18 +99,20 @@ export const GAME_VARIANTS: GameVariant[] = [
     id: 'fidchell',
     name: 'Fidchell',
     boardSize: 7,
-    description: 'Celtic "wood-wisdom"',
+    boardType: 'circular',
+    description: 'Celtic "wood-wisdom" - Connection game',
     origin: 'Ireland/Wales',
     theme: FIDCHELL_THEME,
     era: '5th-12th Century',
-    history: 'Fidchell ("wood-wisdom") was the most prestigious Celtic board game, mentioned in Irish mythology as invented by the god Lugh. High Kings wagered kingdoms on its outcome. Welsh legends call it Gwyddbwyll, played by heroes in the Mabinogion.',
-    defaultRules: { ...STANDARD_RULES, kingArmed: true },
+    history: 'Fidchell ("wood-wisdom") was the most prestigious Celtic board game, played on a sacred circular "web" representing the cosmos. White pieces must create an unbroken connection from the central Navel Stone to the outer edge. Mentioned in the Mabinogion as Gwyddbwyll, it was invented by the god Lugh.',
+    defaultRules: FIDCHELL_RULES,
     coordinates: { lat: 53.5, lng: -7.5 },
   },
   {
     id: 'brandub',
     name: 'Brandub',
     boardSize: 7,
+    boardType: 'square',
     description: 'Quick Irish variant',
     origin: 'Ireland',
     theme: BRANDUB_THEME,
@@ -114,6 +125,7 @@ export const GAME_VARIANTS: GameVariant[] = [
     id: 'tablut',
     name: 'Tablut',
     boardSize: 9,
+    boardType: 'square',
     description: 'Classic Swedish game',
     origin: 'Sweden',
     theme: TABLUT_THEME,
@@ -126,6 +138,7 @@ export const GAME_VARIANTS: GameVariant[] = [
     id: 'tawlbwrdd',
     name: 'Tawlbwrdd',
     boardSize: 11,
+    boardType: 'square',
     description: 'Welsh "throw-board"',
     origin: 'Wales',
     theme: TAWLBWRDD_THEME,
@@ -138,6 +151,7 @@ export const GAME_VARIANTS: GameVariant[] = [
     id: 'hnefatafl',
     name: 'Hnefatafl',
     boardSize: 11,
+    boardType: 'square',
     description: 'Full Viking battle',
     origin: 'Scandinavia',
     theme: HNEFATAFL_THEME,
@@ -150,6 +164,7 @@ export const GAME_VARIANTS: GameVariant[] = [
     id: 'alea',
     name: 'Alea Evangelii',
     boardSize: 19,
+    boardType: 'square',
     description: 'Monastic grand variant',
     origin: 'England',
     theme: ALEA_THEME,
@@ -278,3 +293,30 @@ export const BOARD_CONFIGS: Record<BoardSize, BoardConfig> = {
 };
 
 export const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ'];
+
+// Ogham script for Fidchell (Celtic alphabet)
+export const OGHAM = ['ᚁ', 'ᚂ', 'ᚃ', 'ᚄ', 'ᚅ', 'ᚆ', 'ᚇ', 'ᚈ', 'ᚉ', 'ᚊ', 'ᚋ', 'ᚌ', 'ᚍ', 'ᚎ', 'ᚏ', 'ᚐ'];
+
+// Fidchell circular board configuration
+// 5 rings (center navel + 4 outer), 16 spokes = 49 total positions
+export const FIDCHELL_CONFIG: CircularBoardConfig = {
+  rings: 5,
+  spokes: 16,
+  totalNodes: 49, // 1 center + 16*3 (rings 1-3 have all 16) = 49 (ring 4 has 16)
+  piecesPerSide: 12,
+  navelPosition: { ring: 0, spoke: 0 },
+  // White pieces start on inner rings (will make connection from center)
+  initialWhite: [
+    { ring: 1, spoke: 0 }, { ring: 1, spoke: 4 }, { ring: 1, spoke: 8 }, { ring: 1, spoke: 12 },
+    { ring: 2, spoke: 2 }, { ring: 2, spoke: 6 }, { ring: 2, spoke: 10 }, { ring: 2, spoke: 14 },
+    { ring: 2, spoke: 0 }, { ring: 2, spoke: 4 }, { ring: 2, spoke: 8 }, { ring: 2, spoke: 12 },
+  ],
+  // Black pieces start on outer rings (will block connections)
+  initialBlack: [
+    { ring: 3, spoke: 1 }, { ring: 3, spoke: 3 }, { ring: 3, spoke: 5 }, { ring: 3, spoke: 7 },
+    { ring: 3, spoke: 9 }, { ring: 3, spoke: 11 }, { ring: 3, spoke: 13 }, { ring: 3, spoke: 15 },
+    { ring: 4, spoke: 0 }, { ring: 4, spoke: 4 }, { ring: 4, spoke: 8 }, { ring: 4, spoke: 12 },
+  ],
+};
+
+import { CircularBoardConfig } from '@/types/game';
