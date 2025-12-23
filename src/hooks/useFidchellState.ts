@@ -16,11 +16,11 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
   const logic = useFidchellLogic();
   const { playSelect, playMove, playCapture } = useSoundEffects(sfxVolume);
 
-  // Create initial pieces
+  // Create initial pieces - Fidchell has no king, it's a connection game
   const createInitialPieces = useCallback((): Piece[] => {
     const pieces: Piece[] = [];
     
-    // White pieces (defenders/connection makers)
+    // White pieces (defenders/connection makers) - starts on inner rings
     FIDCHELL_CONFIG.initialWhite.forEach((pos, idx) => {
       pieces.push({
         id: `white-${idx}`,
@@ -30,15 +30,7 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
       });
     });
     
-    // Add a "king" piece at center (Navel Stone)
-    pieces.push({
-      id: 'navel',
-      type: 'king',
-      position: { row: 0, col: 0 },
-      circularPosition: { ring: 0, spoke: 0 },
-    });
-    
-    // Black pieces (attackers/blockers)
+    // Black pieces (attackers/blockers) - starts on outer rings
     FIDCHELL_CONFIG.initialBlack.forEach((pos, idx) => {
       pieces.push({
         id: `black-${idx}`,
