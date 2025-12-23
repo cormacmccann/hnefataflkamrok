@@ -39,6 +39,10 @@ export interface Translations {
   previous: string;
   next: string;
   skipTutorial: string;
+  learnGame: string;
+  stepOf: string;
+  startPlaying: string;
+  viewTutorialAgain: string;
   
   // Rules
   rules: string;
@@ -88,6 +92,13 @@ export interface Translations {
   noMovesYet: string;
   newGame: string;
   undo: string;
+  playAs: string;
+  protectKing: string;
+  captureKing: string;
+  attackersFirst: string;
+  youStart: string;
+  aiStarts: string;
+  viewMap: string;
   
   // Victory
   victory: string;
@@ -124,6 +135,19 @@ export interface Translations {
   
   // Language names
   languageName: string;
+  
+  // Fidchell-specific
+  fidchell: {
+    navelStone: string;
+    sacredWeb: string;
+    connectionVictory: string;
+    circularBoard: string;
+    whiteConnects: string;
+    blackBlocks: string;
+    equalForces: string;
+    createPath: string;
+    blockPath: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -224,6 +248,28 @@ export const translations: Record<Language, Translations> = {
     sfx: 'SFX',
     startGame: 'Start Game',
     languageName: 'English',
+    learnGame: 'Learn the Game',
+    stepOf: 'Step {current} of {total}',
+    startPlaying: 'Start Playing',
+    viewTutorialAgain: 'View Tutorial Again',
+    playAs: 'Play As',
+    protectKing: 'Protect the King',
+    captureKing: 'Capture the King',
+    attackersFirst: 'Attackers move first.',
+    youStart: 'You start!',
+    aiStarts: 'AI starts.',
+    viewMap: 'View Map',
+    fidchell: {
+      navelStone: 'Navel Stone',
+      sacredWeb: 'The Sacred Web',
+      connectionVictory: 'Connection Victory',
+      circularBoard: 'Circular Board',
+      whiteConnects: 'White creates a path from center to edge',
+      blackBlocks: 'Black blocks the connection',
+      equalForces: 'Equal Forces',
+      createPath: 'Create an unbroken chain to the outer edge',
+      blockPath: 'Block white from reaching the edge',
+    },
   },
   
   swe: {
@@ -323,6 +369,28 @@ export const translations: Record<Language, Translations> = {
     sfx: 'Ljud',
     startGame: 'Starta Spel',
     languageName: 'Svenska',
+    learnGame: 'Lär dig spelet',
+    stepOf: 'Steg {current} av {total}',
+    startPlaying: 'Börja Spela',
+    viewTutorialAgain: 'Se handledning igen',
+    playAs: 'Spela som',
+    protectKing: 'Skydda Kungen',
+    captureKing: 'Fånga Kungen',
+    attackersFirst: 'Angriparna börjar.',
+    youStart: 'Du börjar!',
+    aiStarts: 'AI börjar.',
+    viewMap: 'Visa Karta',
+    fidchell: {
+      navelStone: 'Navelstenen',
+      sacredWeb: 'Det Heliga Nätet',
+      connectionVictory: 'Förbindelseseger',
+      circularBoard: 'Cirkulärt Bräde',
+      whiteConnects: 'Vit skapar en väg från centrum till kant',
+      blackBlocks: 'Svart blockerar förbindelsen',
+      equalForces: 'Lika Styrkor',
+      createPath: 'Skapa en obruten kedja till ytterkanten',
+      blockPath: 'Blockera vit från att nå kanten',
+    },
   },
   
   ga: {
@@ -422,6 +490,28 @@ export const translations: Record<Language, Translations> = {
     sfx: 'Fuaim',
     startGame: 'Tosaigh Cluiche',
     languageName: 'Gaeilge',
+    learnGame: 'Foghlaim an Cluiche',
+    stepOf: 'Céim {current} de {total}',
+    startPlaying: 'Tosaigh ag Imirt',
+    viewTutorialAgain: 'Féach ar an Teagasc Arís',
+    playAs: 'Imir Mar',
+    protectKing: 'Cosain an Rí',
+    captureKing: 'Gabh an Rí',
+    attackersFirst: 'Ionsaitheoirí ar dtús.',
+    youStart: 'Tosaíonn tú!',
+    aiStarts: 'Tosaíonn an AI.',
+    viewMap: 'Féach ar Léarscáil',
+    fidchell: {
+      navelStone: 'Cloch an Imleacáin',
+      sacredWeb: 'An Gréasán Naofa',
+      connectionVictory: 'Bua Ceangail',
+      circularBoard: 'Clár Ciorclach',
+      whiteConnects: 'Cruthaíonn bán cosán ón lár go dtí an imeall',
+      blackBlocks: 'Blocálann dubh an ceangal',
+      equalForces: 'Fórsaí Comhionanna',
+      createPath: 'Cruthaigh slabhra gan bhriseadh go dtí an t-imeall amuigh',
+      blockPath: 'Bac bán ó shroicheadh an t-imeall',
+    },
   },
   
   gd: {
@@ -521,6 +611,28 @@ export const translations: Record<Language, Translations> = {
     sfx: 'Fuaim',
     startGame: 'Tòisich Geama',
     languageName: 'Gàidhlig',
+    learnGame: 'Ionnsaich an Geama',
+    stepOf: 'Ceum {current} de {total}',
+    startPlaying: 'Tòisich a\' Cluich',
+    viewTutorialAgain: 'Faic an Oideachadh A-rithist',
+    playAs: 'Cluich Mar',
+    protectKing: 'Dìon an Rìgh',
+    captureKing: 'Glac an Rìgh',
+    attackersFirst: 'Luchd-ionnsaigh an toiseach.',
+    youStart: 'Tha thu a\' tòiseachadh!',
+    aiStarts: 'Tha an AI a\' tòiseachadh.',
+    viewMap: 'Faic Mapa',
+    fidchell: {
+      navelStone: 'Clach an Imleig',
+      sacredWeb: 'An Lìon Naomh',
+      connectionVictory: 'Buaidh Ceangail',
+      circularBoard: 'Bòrd Cruinn',
+      whiteConnects: 'Bidh geal a\' cruthachadh slighe bhon mheadhan chun oir',
+      blackBlocks: 'Bidh dubh a\' bacadh a\' cheangail',
+      equalForces: 'Feachdan Co-ionann',
+      createPath: 'Cruthaich slabhraidh gun bhriseadh chun oir a-muigh',
+      blockPath: 'Bac geal bho ruigsinn an oir',
+    },
   },
   
   cy: {
@@ -620,6 +732,28 @@ export const translations: Record<Language, Translations> = {
     sfx: 'Sain',
     startGame: 'Dechrau Gêm',
     languageName: 'Cymraeg',
+    learnGame: 'Dysgwch y Gêm',
+    stepOf: 'Cam {current} o {total}',
+    startPlaying: 'Dechrau Chwarae',
+    viewTutorialAgain: 'Gweld y Tiwtorial Eto',
+    playAs: 'Chwarae Fel',
+    protectKing: 'Amddiffyn y Brenin',
+    captureKing: 'Dal y Brenin',
+    attackersFirst: 'Ymosodwyr yn gyntaf.',
+    youStart: 'Chi\'n dechrau!',
+    aiStarts: 'AI yn dechrau.',
+    viewMap: 'Gweld Map',
+    fidchell: {
+      navelStone: 'Carreg y Bogail',
+      sacredWeb: 'Y We Sanctaidd',
+      connectionVictory: 'Buddugoliaeth Cysylltiad',
+      circularBoard: 'Bwrdd Crwn',
+      whiteConnects: 'Mae gwyn yn creu llwybr o\'r canol i\'r ymyl',
+      blackBlocks: 'Mae du yn blocio\'r cysylltiad',
+      equalForces: 'Lluoedd Cyfartal',
+      createPath: 'Crëwch gadwyn ddi-dor i\'r ymyl allanol',
+      blockPath: 'Rhwystrwch wyn rhag cyrraedd yr ymyl',
+    },
   },
   
   ang: {
@@ -719,6 +853,28 @@ export const translations: Record<Language, Translations> = {
     sfx: 'Swēg',
     startGame: 'Ongin Spel',
     languageName: 'Eald Englisc',
+    learnGame: 'Leorna þæt Spel',
+    stepOf: 'Stæpe {current} of {total}',
+    startPlaying: 'Ongin Plegan',
+    viewTutorialAgain: 'Gesēoh Lāreow Eft',
+    playAs: 'Plega Swā',
+    protectKing: 'Weriga þone Cyning',
+    captureKing: 'Gefōh þone Cyning',
+    attackersFirst: 'Onwinnendas ǣrest.',
+    youStart: 'Þū onginnest!',
+    aiStarts: 'Cræftiga onginneþ.',
+    viewMap: 'Gesēoh Mapan',
+    fidchell: {
+      navelStone: 'Nafolan Stān',
+      sacredWeb: 'Þæt Hālige Webb',
+      connectionVictory: 'Gefēgsige',
+      circularBoard: 'Hringbord',
+      whiteConnects: 'Hwīt wyrcþ pæþ fram middan tō ecge',
+      blackBlocks: 'Sweart forwyrnþ þone gefēg',
+      equalForces: 'Efenwerod',
+      createPath: 'Wyrce ungebrocen rǣw tō ūterran ecge',
+      blockPath: 'Forwyrne hwīt fram ecge geræcanne',
+    },
   },
 };
 

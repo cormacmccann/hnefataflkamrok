@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BoardSize, Player, Position, AIDifficulty, GameMode, BoardTheme } from '@/types/game';
+import { BoardSize, Player, Position, AIDifficulty, GameMode, BoardTheme, FidchellPosition, BoardType } from '@/types/game';
 import { GAME_VARIANTS } from '@/constants/game';
 import { useGameState } from '@/hooks/useGameState';
 import { useAI } from '@/hooks/useAI';
 import { useVolumeControl } from '@/hooks/useVolumeControl';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useDemoMode } from '@/hooks/useDemoMode';
+import { useFidchellState } from '@/hooks/useFidchellState';
+import { useFidchellAI } from '@/hooks/useFidchellAI';
 import { Scene3D } from '@/components/game/Scene3D';
 import { TurnIndicator } from '@/components/game/TurnIndicator';
 import { MoveHistory } from '@/components/game/MoveHistory';
@@ -17,9 +19,11 @@ import { GameSetup } from '@/components/game/GameSetup';
 import { VolumeControl } from '@/components/game/VolumeControl';
 import { LogoIntro } from '@/components/game/LogoIntro';
 import { DemoMovePopup } from '@/components/game/DemoMovePopup';
+import { useLanguage } from '@/i18n/LanguageContext';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 
 export default function Index() {
+  const { t } = useLanguage();
   const [showIntro, setShowIntro] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameMode, setGameMode] = useState<GameMode>('play');
@@ -27,6 +31,8 @@ export default function Index() {
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [boardTheme, setBoardTheme] = useState<BoardTheme>(GAME_VARIANTS[1].theme);
+  const [boardType, setBoardType] = useState<BoardType>('square');
+  const [variantId, setVariantId] = useState<string>('tablut');
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
@@ -39,19 +45,38 @@ export default function Index() {
     startMusic();
   };
 
-  const { gameState, selectPiece, makeMove, undoMove, resetGame, logic, capturePositions, clearCapturePositions } = useGameState(boardSize, playerSide, sfxVolume);
-  const ai = useAI(boardSize, difficulty);
+  // Standard Tafl game state (for square boards)
+  const taflState = useGameState(boardSize, playerSide, sfxVolume);
+  const taflAI = useAI(boardSize, difficulty);
+  
+  // Fidchell game state (for circular board)
+  const fidchellState = useFidchellState(playerSide, sfxVolume);
+  const fidchellAI = useFidchellAI(difficulty);
+  
+  // Select the appropriate game state based on board type
+  const isFidchell = boardType === 'circular';
+  const gameState = isFidchell ? fidchellState.gameState : taflState.gameState;
+  const selectPiece = isFidchell ? fidchellState.selectPiece : taflState.selectPiece;
+  
   const { demoState, setDemoMove, hidePopup, startDemo, stopDemo } = useDemoMode(boardSize, difficulty);
 
-  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty, mode: GameMode, variantId: string) => {
-    const variant = GAME_VARIANTS.find(v => v.id === variantId) || GAME_VARIANTS[1];
+  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty, mode: GameMode, selectedVariantId: string) => {
+    const variant = GAME_VARIANTS.find(v => v.id === selectedVariantId) || GAME_VARIANTS[1];
     setBoardSize(size);
     setPlayerSide(side);
     setDifficulty(diff);
     setGameMode(mode);
     setBoardTheme(variant.theme);
+    setBoardType(variant.boardType);
+    setVariantId(selectedVariantId);
     setGameStarted(true);
-    resetGame(size, side);
+    
+    if (variant.boardType === 'circular') {
+      fidchellState.resetGame(side);
+    } else {
+      taflState.resetGame(size, side);
+    }
+    
     startMusic();
     
     if (mode === 'demo') {
@@ -66,8 +91,17 @@ export default function Index() {
     stopDemo();
   };
 
+  // Handle move for both board types
+  const makeMove = useCallback((position: Position) => {
+    if (isFidchell) {
+      const fidchellPos: FidchellPosition = { ring: position.row, col: position.col } as any;
+      return fidchellState.makeMove({ ring: position.row, spoke: position.col });
+    }
+    return taflState.makeMove(position);
+  }, [isFidchell, fidchellState, taflState]);
+
   const handleSquareClick = useCallback((position: Position) => {
-    if (gameMode === 'demo') return; // No interaction in demo mode
+    if (gameMode === 'demo') return;
     if (!gameState.isPlayerTurn || gameState.gameResult) return;
 
     if (gameState.selectedPiece) {
@@ -86,7 +120,7 @@ export default function Index() {
   }, [gameMode, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
 
   const handlePieceClick = useCallback((pieceId: string) => {
-    if (gameMode === 'demo') return; // No interaction in demo mode
+    if (gameMode === 'demo') return;
     if (!gameState.isPlayerTurn || gameState.gameResult) return;
 
     const piece = gameState.pieces.find(p => p.id === pieceId);
@@ -99,18 +133,53 @@ export default function Index() {
     }
   }, [gameMode, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
 
-  // Demo mode: AI plays both sides
+  // Demo mode & AI: plays both sides
   useEffect(() => {
     if (!gameStarted || gameState.gameResult) return;
     
+    // Fidchell uses different AI
+    if (isFidchell) {
+      if (gameMode === 'demo') {
+        const currentPlayer = gameState.currentPlayer;
+        const timeoutId = setTimeout(() => {
+          const bestMove = fidchellAI.getBestMove(gameState.pieces, currentPlayer);
+          if (bestMove && bestMove.piece.circularPosition) {
+            const explanation = currentPlayer === 'defender' 
+              ? t.defendersManeuver
+              : t.attackersSiege;
+            setDemoMove(bestMove.piece, { row: bestMove.to.ring, col: bestMove.to.spoke }, currentPlayer, explanation);
+            selectPiece(bestMove.piece);
+            
+            setTimeout(() => {
+              fidchellState.makeMove(bestMove.to);
+              setTimeout(() => hidePopup(), 1500);
+            }, 1200);
+          }
+        }, 2000);
+        return () => clearTimeout(timeoutId);
+      } else {
+        if (gameState.isPlayerTurn) return;
+        const aiSide: Player = playerSide === 'attacker' ? 'defender' : 'attacker';
+        const timeoutId = setTimeout(() => {
+          const bestMove = fidchellAI.getBestMove(gameState.pieces, aiSide);
+          if (bestMove) {
+            selectPiece(bestMove.piece);
+            setTimeout(() => {
+              fidchellState.makeMove(bestMove.to);
+            }, 300);
+          }
+        }, 500);
+        return () => clearTimeout(timeoutId);
+      }
+    }
+    
+    // Standard Tafl AI
     if (gameMode === 'demo') {
-      // In demo mode, AI plays for both sides
       const currentPlayer = gameState.currentPlayer;
       
       const timeoutId = setTimeout(() => {
-        const bestMove = ai.getBestMove(gameState.pieces, currentPlayer);
+        const bestMove = taflAI.getBestMove(gameState.pieces, currentPlayer);
         if (bestMove) {
-          // Generate explanation
           const isKingMove = bestMove.piece.type === 'king';
           const corners = [
             { row: 0, col: 0 },
@@ -128,20 +197,18 @@ export default function Index() {
           
           let explanation = '';
           if (isKingMove) {
-            explanation = movesTowardsCorner 
-              ? "The King advances toward a corner escape square."
-              : "The King repositions to create escape opportunities.";
+            explanation = movesTowardsCorner ? t.kingAdvances : t.kingRepositions;
           } else if (currentPlayer === 'attacker') {
-            explanation = "Attackers tighten the siege around the King's forces.";
+            explanation = t.attackersSiege;
           } else {
-            explanation = "Defenders maneuver to protect the King's escape route.";
+            explanation = t.defendersManeuver;
           }
           
           setDemoMove(bestMove.piece, bestMove.to, currentPlayer, explanation);
           selectPiece(bestMove.piece);
           
           setTimeout(() => {
-            makeMove(bestMove.to);
+            taflState.makeMove(bestMove.to);
             setTimeout(() => hidePopup(), 1500);
           }, 1200);
         }
@@ -149,24 +216,23 @@ export default function Index() {
 
       return () => clearTimeout(timeoutId);
     } else {
-      // Normal play mode: AI plays opponent only
       if (gameState.isPlayerTurn) return;
       
       const aiSide: Player = playerSide === 'attacker' ? 'defender' : 'attacker';
       
       const timeoutId = setTimeout(() => {
-        const bestMove = ai.getBestMove(gameState.pieces, aiSide);
+        const bestMove = taflAI.getBestMove(gameState.pieces, aiSide);
         if (bestMove) {
           selectPiece(bestMove.piece);
           setTimeout(() => {
-            makeMove(bestMove.to);
+            taflState.makeMove(bestMove.to);
           }, 300);
         }
       }, 500);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [gameStarted, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, ai, selectPiece, makeMove, setDemoMove, hidePopup]);
+  }, [gameStarted, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, isFidchell, taflAI, fidchellAI, selectPiece, taflState, fidchellState, setDemoMove, hidePopup, t]);
 
   useEffect(() => {
     if (gameState.gameResult) {
@@ -197,9 +263,11 @@ export default function Index() {
         gameState={gameState} 
         onSquareClick={handleSquareClick} 
         onPieceClick={handlePieceClick}
-        capturePositions={capturePositions}
-        onCaptureComplete={clearCapturePositions}
+        capturePositions={taflState.capturePositions}
+        onCaptureComplete={taflState.clearCapturePositions}
         theme={boardTheme}
+        boardType={boardType}
+        connectionPath={isFidchell ? fidchellState.connectionPath : undefined}
       />
 
       {/* Header Overlay with Logo and Volume */}
@@ -211,7 +279,7 @@ export default function Index() {
         <div className="flex-1" />
         <img 
           src={hnefataflLogo} 
-          alt="Hnefatafl" 
+          alt={t.appName}
           className="h-12 sm:h-16 drop-shadow-lg"
         />
         <div className="flex-1 flex justify-end">
@@ -239,28 +307,28 @@ export default function Index() {
               playerSide={playerSide} 
             />
             <GameControls 
-              onUndo={undoMove} 
+              onUndo={isFidchell ? () => {} : taflState.undoMove} 
               onNewGame={handleNewGame} 
               onShowRules={() => setShowRules(true)} 
-              canUndo={gameState.moveHistory.length >= 2 && gameState.isPlayerTurn} 
+              canUndo={!isFidchell && gameState.moveHistory.length >= 2 && gameState.isPlayerTurn} 
               isGameOver={!!gameState.gameResult} 
             />
           </>
         ) : (
           <div className="bg-card/90 backdrop-blur p-3 rounded-lg border border-border shadow-lg">
-            <div className="text-center font-['Cinzel'] text-primary text-sm mb-2">Demo Mode</div>
-            <p className="text-xs text-muted-foreground text-center mb-3">Watch the AI play both sides</p>
+            <div className="text-center font-['Cinzel'] text-primary text-sm mb-2">{t.demoMode}</div>
+            <p className="text-xs text-muted-foreground text-center mb-3">{t.watchAI}</p>
             <button 
               onClick={handleNewGame}
               className="w-full text-sm bg-secondary hover:bg-secondary/80 px-3 py-2 rounded-lg transition-colors"
             >
-              Exit Demo
+              {t.exitDemo}
             </button>
           </div>
         )}
       </motion.div>
 
-      {/* Right Panel - Move History - positioned below header/volume */}
+      {/* Right Panel - Move History */}
       <motion.div 
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -275,7 +343,7 @@ export default function Index() {
         onClick={() => setShowHistory(!showHistory)}
         className="fixed top-20 right-4 z-20 lg:hidden bg-card/90 backdrop-blur p-2 rounded-lg border border-border"
       >
-        <span className="text-sm font-['Cinzel']">📜 History</span>
+        <span className="text-sm font-['Cinzel']">📜 {t.moveHistory}</span>
       </button>
 
       {/* Mobile History Panel */}
@@ -301,11 +369,11 @@ export default function Index() {
       >
         <div className="flex items-center gap-2 bg-card/90 backdrop-blur px-4 py-2 rounded-full border border-border shadow-lg">
           <div className="w-3 h-3 rounded-full bg-[hsl(var(--piece-attacker))]" />
-          <span className="text-foreground/90">Attackers: {gameState.pieces.filter(p => p.type === 'attacker').length}</span>
+          <span className="text-foreground/90">{t.attackers}: {gameState.pieces.filter(p => p.type === 'attacker').length}</span>
         </div>
         <div className="flex items-center gap-2 bg-card/90 backdrop-blur px-4 py-2 rounded-full border border-border shadow-lg">
           <div className="w-3 h-3 rounded-full bg-[hsl(var(--piece-defender))]" />
-          <span className="text-foreground/90">Defenders: {gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
+          <span className="text-foreground/90">{t.defenders}: {gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
         </div>
       </motion.div>
 

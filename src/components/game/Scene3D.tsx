@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { GameState, Position, BoardTheme } from '@/types/game';
+import { GameState, Position, BoardTheme, BoardType, FidchellPosition } from '@/types/game';
 import { Board3D } from './Board3D';
+import { CircularBoard3D } from './CircularBoard3D';
 import { CaptureParticles } from './CaptureParticles';
 import vikingTableBg from '@/assets/viking-table-bg.jpg';
 
@@ -18,6 +19,8 @@ interface Scene3DProps {
   capturePositions?: CapturePosition[];
   onCaptureComplete?: () => void;
   theme?: BoardTheme;
+  boardType?: BoardType;
+  connectionPath?: FidchellPosition[];
 }
 
 export function Scene3D({ 
@@ -26,7 +29,9 @@ export function Scene3D({
   onPieceClick, 
   capturePositions = [], 
   onCaptureComplete,
-  theme
+  theme,
+  boardType = 'square',
+  connectionPath = []
 }: Scene3DProps) {
   const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
 
@@ -56,9 +61,17 @@ export function Scene3D({
     }
   };
 
+  // Handle circular board node clicks
+  const handleNodeClick = (fidchellPos: FidchellPosition) => {
+    // Convert to Position format for compatibility
+    onSquareClick({ row: fidchellPos.ring, col: fidchellPos.spoke });
+  };
+
+  const isCircular = boardType === 'circular';
+
   return (
     <div className="fixed inset-0 w-full h-full">
-      {/* Viking table background */}
+      {/* Background */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${vikingTableBg})` }}
@@ -78,7 +91,7 @@ export function Scene3D({
           target={[0, 0, 0]}
         />
         
-        {/* Soft ambient lighting from all directions */}
+        {/* Lighting */}
         <ambientLight intensity={0.8} />
         <directionalLight
           position={[0, 15, 0]}
@@ -91,15 +104,26 @@ export function Scene3D({
         <pointLight position={[-5, 8, 5]} intensity={0.4} color="#ffcc88" />
         <pointLight position={[5, 8, 5]} intensity={0.4} color="#ffcc88" />
         
-        <Board3D
-          gameState={gameState}
-          onSquareClick={onSquareClick}
-          onPieceClick={onPieceClick}
-          theme={theme}
-        />
+        {/* Conditional board rendering */}
+        {isCircular ? (
+          <CircularBoard3D
+            gameState={gameState}
+            onNodeClick={handleNodeClick}
+            onPieceClick={onPieceClick}
+            theme={theme}
+            connectionPath={connectionPath}
+          />
+        ) : (
+          <Board3D
+            gameState={gameState}
+            onSquareClick={onSquareClick}
+            onPieceClick={onPieceClick}
+            theme={theme}
+          />
+        )}
 
-        {/* Capture particle effects */}
-        {capturePositions.map((cp, idx) => {
+        {/* Capture particle effects (square board only) */}
+        {!isCircular && capturePositions.map((cp, idx) => {
           const key = `${cp.position.row}-${cp.position.col}-${idx}`;
           if (completedParticles.has(key)) return null;
           
