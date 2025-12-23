@@ -12,6 +12,7 @@ interface Piece3DProps {
   position: [number, number, number];
   isSelected: boolean;
   onClick: () => void;
+  boardType?: 'square' | 'circular';
 }
 
 // Preload all models
@@ -29,9 +30,10 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) {
+export function Piece3D({ piece, position, isSelected, onClick, boardType = 'square' }: Piece3DProps) {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
+  const useSimpleGeometry = boardType === 'circular';
   
   // Animation state
   const animationRef = useRef({
@@ -161,6 +163,10 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
   const radius = piece.type === 'king' ? 0.35 : 0.3;
   const modelScale = piece.type === 'king' ? 0.5 : 0.4;
 
+  // Simple geometry colors for circular board
+  const simpleColor = piece.type === 'attacker' ? '#1a1a1a' : '#f5f5dc';
+  const simpleEmissive = isSelected ? '#ffaa00' : hovered ? '#666666' : '#000000';
+
   return (
     <group
       ref={meshRef}
@@ -171,15 +177,30 @@ export function Piece3D({ piece, position, isSelected, onClick }: Piece3DProps) 
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      <primitive 
-        object={clonedScene} 
-        scale={modelScale}
-        position={[0, 0, 0]}
-      />
+      {useSimpleGeometry ? (
+        /* Simple cylinder geometry for circular board - ensures correct horizontal orientation */
+        <mesh rotation={[-Math.PI / 2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.25, 0.28, 0.15, 32]} />
+          <meshStandardMaterial 
+            color={simpleColor}
+            roughness={0.4}
+            metalness={0.3}
+            emissive={simpleEmissive}
+            emissiveIntensity={isSelected ? 0.5 : hovered ? 0.2 : 0}
+          />
+        </mesh>
+      ) : (
+        /* GLB model for square board */
+        <primitive 
+          object={clonedScene} 
+          scale={modelScale}
+          position={[0, 0, 0]}
+        />
+      )}
 
       {/* Selected glow ring */}
       {isSelected && (
-        <mesh position={[0, -0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, useSimpleGeometry ? 0 : -0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[radius + 0.05, radius + 0.15, 32]} />
           <meshStandardMaterial 
             color="#FFD700" 
