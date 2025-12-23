@@ -95,27 +95,39 @@ export function useFidchellLogic(): FidchellLogicReturn {
     return moves;
   }, [getPieceAt]);
 
-  // BFS to check if white has a connection from center to edge
+  // BFS to check if white has a connection from center (ring 1) to edge
+  // The Navel Stone (center) counts as a connection point for any white piece on ring 1
   const checkConnection = useCallback((pieces: Piece[]): { connected: boolean; path: FidchellPosition[] } => {
-    const whitePieces = pieces.filter(p => p.type === 'defender' || p.type === 'king');
+    const whitePieces = pieces.filter(p => p.type === 'defender');
     const whitePositions = new Set(
       whitePieces
         .filter(p => p.circularPosition)
         .map(p => `${p.circularPosition!.ring}-${p.circularPosition!.spoke}`)
     );
     
-    // Check if there's a white piece at center
-    const hasCenter = whitePieces.some(p => p.circularPosition?.ring === 0);
-    if (!hasCenter) {
+    // Check if there's a white piece touching the center (ring 1)
+    const hasRing1 = whitePieces.some(p => p.circularPosition?.ring === 1);
+    if (!hasRing1) {
       return { connected: false, path: [] };
     }
     
-    // BFS from center
+    // BFS from all ring 1 white pieces (they connect to the Navel Stone)
     const visited = new Set<string>();
-    const queue: { pos: FidchellPosition; path: FidchellPosition[] }[] = [
-      { pos: { ring: 0, spoke: 0 }, path: [{ ring: 0, spoke: 0 }] }
-    ];
-    visited.add('0-0');
+    const queue: { pos: FidchellPosition; path: FidchellPosition[] }[] = [];
+    
+    // Start from all white pieces on ring 1 (connected to center)
+    for (const piece of whitePieces) {
+      if (piece.circularPosition?.ring === 1) {
+        const key = `${piece.circularPosition.ring}-${piece.circularPosition.spoke}`;
+        if (!visited.has(key)) {
+          visited.add(key);
+          queue.push({ 
+            pos: piece.circularPosition, 
+            path: [{ ring: 0, spoke: 0 }, piece.circularPosition] // Include center in path
+          });
+        }
+      }
+    }
     
     while (queue.length > 0) {
       const { pos, path } = queue.shift()!;
@@ -128,29 +140,22 @@ export function useFidchellLogic(): FidchellLogicReturn {
       // Get adjacent positions
       const neighbors: FidchellPosition[] = [];
       
-      if (pos.ring === 0) {
-        // Center connects to all ring 1
-        for (let spoke = 0; spoke < FIDCHELL_CONFIG.spokes; spoke++) {
-          neighbors.push({ ring: 1, spoke });
-        }
-      } else {
-        // Radial neighbors
-        if (pos.ring > 1) {
-          neighbors.push({ ring: pos.ring - 1, spoke: pos.spoke });
-        }
-        if (pos.ring < FIDCHELL_CONFIG.rings - 1) {
-          neighbors.push({ ring: pos.ring + 1, spoke: pos.spoke });
-        }
-        // Circular neighbors
-        neighbors.push({ 
-          ring: pos.ring, 
-          spoke: (pos.spoke + 1) % FIDCHELL_CONFIG.spokes 
-        });
-        neighbors.push({ 
-          ring: pos.ring, 
-          spoke: (pos.spoke - 1 + FIDCHELL_CONFIG.spokes) % FIDCHELL_CONFIG.spokes 
-        });
+      // Radial neighbors
+      if (pos.ring > 1) {
+        neighbors.push({ ring: pos.ring - 1, spoke: pos.spoke });
       }
+      if (pos.ring < FIDCHELL_CONFIG.rings - 1) {
+        neighbors.push({ ring: pos.ring + 1, spoke: pos.spoke });
+      }
+      // Circular neighbors
+      neighbors.push({ 
+        ring: pos.ring, 
+        spoke: (pos.spoke + 1) % FIDCHELL_CONFIG.spokes 
+      });
+      neighbors.push({ 
+        ring: pos.ring, 
+        spoke: (pos.spoke - 1 + FIDCHELL_CONFIG.spokes) % FIDCHELL_CONFIG.spokes 
+      });
       
       for (const neighbor of neighbors) {
         const key = `${neighbor.ring}-${neighbor.spoke}`;
@@ -270,8 +275,8 @@ export function useFidchellLogic(): FidchellLogicReturn {
     }
     
     // Black wins if white has too few pieces to possibly connect
-    const whitePieces = pieces.filter(p => p.type === 'defender' || p.type === 'king');
-    const minPiecesForConnection = FIDCHELL_CONFIG.rings; // Need at least 5 pieces for 5 rings
+    const whitePieces = pieces.filter(p => p.type === 'defender');
+    const minPiecesForConnection = FIDCHELL_CONFIG.rings - 1; // Need at least 4 pieces for rings 1-4
     
     if (whitePieces.length < minPiecesForConnection) {
       return { gameOver: true, winner: 'attacker' };

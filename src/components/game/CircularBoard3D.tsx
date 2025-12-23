@@ -223,7 +223,7 @@ export function CircularBoard3D({
                 piece={piece}
                 isSelected={gameState.selectedPiece?.id === piece.id}
                 onClick={() => onPieceClick(piece.id)}
-                position={[0, 0, 0]}
+                position={[0, 0.2, 0]}
               />
             )}
 
