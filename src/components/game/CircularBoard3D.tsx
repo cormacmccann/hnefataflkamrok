@@ -79,7 +79,8 @@ export function CircularBoard3D({
   return (
     <group ref={groupRef}>
       {/* Board base - circular platform */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+      {/* NOTE: CylinderGeometry is already Y-up (height on Y), so it should NOT be rotated. */}
+      <mesh position={[0, -0.1, 0]} receiveShadow>
         <cylinderGeometry args={[6, 6.2, 0.3, 64]} />
         <meshStandardMaterial color={baseColor} roughness={0.8} />
       </mesh>
