@@ -96,7 +96,7 @@ export function CircularBoard3D({
         <mesh 
           key={`ring-${ringIdx}`} 
           rotation={[-Math.PI / 2, 0, 0]} 
-          position={[0, 0.01, 0]}
+          position={[0, 0.06, 0]}
         >
           <torusGeometry args={[ringIdx * ringScale, 0.03, 8, 64]} />
           <meshStandardMaterial 
@@ -118,12 +118,12 @@ export function CircularBoard3D({
             key={`spoke-${spokeIdx}`}
             position={[
               Math.cos(angle) * length / 2,
-              0.01,
+              0.06,
               Math.sin(angle) * length / 2
             ]}
             rotation={[0, -angle, 0]}
           >
-            <boxGeometry args={[length, 0.02, 0.04]} />
+            <boxGeometry args={[length, 0.03, 0.04]} />
             <meshStandardMaterial color={accentColor} metalness={0.3} roughness={0.6} />
           </mesh>
         );
