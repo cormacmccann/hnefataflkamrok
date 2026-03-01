@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
-import { GAME_VARIANTS } from '@/constants/game';
-import { Play, Sparkles, Zap, Brain, Skull, Eye, MapPin, Clock, Map, Shield, Crown, Sword, Circle, Link, ChevronRight, Users } from 'lucide-react';
+import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
+import { Play, Eye, Map, Swords, Shield } from 'lucide-react';
 import vikingBackground from '@/assets/viking-background.jpg';
-import hnefataflLogo from '@/assets/hnefatafl-logo.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
-import { Switch } from '@/components/ui/switch';
 import { LanguageSelector } from './LanguageSelector';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
@@ -21,77 +17,18 @@ interface GameSetupProps {
   onSfxVolumeChange: (volume: number) => void;
 }
 
-// Variant-specific rules information
-const getVariantRulesInfo = (variant: GameVariant, t: any) => {
-  const baseRules = [
-    {
-      icon: Crown,
-      label: variant.defaultRules.kingArmed ? t.kingArmed : t.kingUnarmed,
-      description: variant.defaultRules.kingArmed ? t.kingArmedDesc : t.kingUnarmedDesc,
-      enabled: variant.defaultRules.kingArmed,
-    },
-    {
-      icon: Shield,
-      label: variant.defaultRules.edgeEscape ? t.edgeEscape : t.cornerEscape,
-      description: variant.defaultRules.edgeEscape ? t.edgeEscapeDesc : t.cornerEscapeDesc,
-      enabled: variant.defaultRules.edgeEscape,
-    },
-    {
-      icon: Sword,
-      label: variant.defaultRules.shieldwallCapture ? t.shieldwallCapture : t.custodialCapture,
-      description: variant.defaultRules.shieldwallCapture ? t.shieldwallCaptureDesc : t.custodialCaptureDesc,
-      enabled: variant.defaultRules.shieldwallCapture,
-    },
-  ];
+const DIFFICULTY_MAP: { key: AIDifficulty; label: string; vikingName: string }[] = [
+  { key: 'easy', label: 'Easy', vikingName: 'Thrall' },
+  { key: 'medium', label: 'Normal', vikingName: 'Karl' },
+  { key: 'valhalla', label: 'Hard', vikingName: 'Jarl' },
+];
 
-  // Add Fidchell-specific rules
-  if (variant.id === 'fidchell') {
-    return [
-      {
-        icon: Circle,
-        label: t.circularBoard || 'Circular Sacred Web',
-        description: t.circularBoardDesc || 'Pieces move along rings and spokes on a cosmic web',
-        enabled: true,
-      },
-      {
-        icon: Link,
-        label: t.connectionVictory || 'Connection Victory',
-        description: t.connectionVictoryDesc || 'White wins by connecting the Navel Stone to the outer edge',
-        enabled: true,
-      },
-      {
-        icon: Users,
-        label: t.equalForces || 'Equal Forces',
-        description: t.equalForcesDesc || 'Both sides have 12 pieces - a balanced mystical battle',
-        enabled: true,
-      },
-    ];
-  }
-
-  return baseRules;
-};
-
-// Get victory conditions based on variant
-const getVictoryConditions = (variant: GameVariant, t: any) => {
-  if (variant.id === 'fidchell') {
-    return {
-      white: t.fidchellWhiteWins || 'Create unbroken path from Navel to edge',
-      black: t.fidchellBlackWins || 'Reduce White below 7 pieces',
-    };
-  }
-  
-  return {
-    white: variant.defaultRules.edgeEscape ? t.kingEscapesEdge : t.kingEscapesCorner,
-    black: t.surroundKing,
-  };
-};
-
-export function GameSetup({ 
-  onStartGame, 
-  musicVolume, 
-  sfxVolume, 
-  onMusicVolumeChange, 
-  onSfxVolumeChange 
+export function GameSetup({
+  onStartGame,
+  musicVolume,
+  sfxVolume,
+  onMusicVolumeChange,
+  onSfxVolumeChange,
 }: GameSetupProps) {
   const { t } = useLanguage();
   const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[2]);
@@ -105,18 +42,29 @@ export function GameSetup({
     setRules(variant.defaultRules);
   };
 
-  const variantRulesInfo = getVariantRulesInfo(selectedVariant, t);
-  const victoryConditions = getVictoryConditions(selectedVariant, t);
+  const boardConfig = BOARD_CONFIGS[selectedVariant.boardSize];
+  const attackerCount = boardConfig?.initialAttackers?.length ?? 0;
+  const defenderCount = (boardConfig?.initialDefenders?.length ?? 0) + 1; // +1 for king
+  const isFidchell = selectedVariant.id === 'fidchell';
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${vikingBackground})` }}
+    <div
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ backgroundImage: `url(${vikingBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      
-      {/* Controls in corner */}
-      <div className="fixed top-4 right-4 z-20 flex items-center gap-3">
+      {/* Vignette overlay */}
+      <div className="absolute inset-0 vignette z-[1]" />
+      <div className="absolute inset-0 bg-black/50 z-[1]" />
+
+      {/* Top-right controls */}
+      <div className="fixed top-4 right-4 z-30 flex items-center gap-3">
+        <button
+          onClick={() => setShowMap(true)}
+          className="p-2 rounded-lg carved-button text-foreground hover:text-primary transition-colors"
+          title="History Map"
+        >
+          <Map className="w-4 h-4" />
+        </button>
         <LanguageSelector />
         <VolumeControl
           musicVolume={musicVolume}
@@ -125,342 +73,222 @@ export function GameSetup({
           onSfxVolumeChange={onSfxVolumeChange}
         />
       </div>
-      
-      <div className="relative z-10 w-full max-w-6xl">
-        {/* Logo Header */}
+
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-5xl px-4 py-8 flex flex-col items-center gap-8">
+
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
+          transition={{ duration: 0.6 }}
+          className="text-center"
         >
-          <img 
-            src={hnefataflLogo} 
-            alt={t.appName}
-            className="h-16 mx-auto mb-2"
-          />
-          <p className="text-muted-foreground text-sm">{t.subtitle}</p>
+          <Swords className="w-10 h-10 mx-auto mb-2 text-primary" />
+          <h1 className="text-4xl md:text-5xl font-['Cinzel'] font-bold text-primary drop-shadow-[0_0_24px_hsl(38_60%_50%/0.5)]">
+            HNEFATAFL
+          </h1>
+          <p className="text-xs md:text-sm uppercase tracking-[0.3em] text-primary/70 mt-1 font-['Cinzel']">
+            Ancient Strategy of Kings
+          </p>
         </motion.div>
 
-        {/* Main Layout: Three Columns */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-4 viking-border bg-card/95 backdrop-blur rounded-xl p-4"
-        >
-          {/* LEFT: Game Selection */}
-          <div className="lg:col-span-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-['Cinzel']">
-                {t.selectVariant}
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMap(true)}
-                className="gap-1 text-xs text-muted-foreground hover:text-primary p-1 h-auto"
-              >
-                <Map className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-            
-            <ScrollArea className="h-[400px] pr-2">
-              <div className="space-y-2">
-                {GAME_VARIANTS.map((variant) => (
-                  <motion.button
-                    key={variant.id}
-                    onClick={() => handleVariantChange(variant)}
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full text-left p-3 rounded-lg border transition-all ${
-                      selectedVariant.id === variant.id
-                        ? 'bg-primary/20 border-primary/50 shadow-lg shadow-primary/10'
-                        : 'bg-secondary/20 border-border/30 hover:bg-secondary/40 hover:border-border/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {variant.boardType === 'circular' ? (
-                          <Circle className="w-4 h-4 text-primary" />
-                        ) : (
-                          <div 
-                            className="w-4 h-4 border-2 rounded-sm"
-                            style={{ borderColor: variant.theme.corner }}
-                          />
-                        )}
-                        <span className="font-['Cinzel'] text-sm font-medium">{variant.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{variant.boardSize}×{variant.boardSize}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1 pl-6">{variant.description}</p>
-                    {selectedVariant.id === variant.id && (
-                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
+        {/* Center area: Parchment + Settings */}
+        <div className="flex flex-col lg:flex-row gap-6 w-full items-start justify-center">
 
-          {/* MIDDLE: Variant Details & Rules */}
-          <div className="lg:col-span-5 space-y-4 border-x border-border/30 px-4">
+          {/* Parchment Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="parchment rounded-lg p-6 md:p-8 max-w-md w-full -rotate-1 relative"
+          >
+            {/* Decorative corner brackets */}
+            <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-800/40" />
+            <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-800/40" />
+            <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-amber-800/40" />
+            <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-amber-800/40" />
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedVariant.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
               >
-                {/* Variant Header */}
-                <div className="text-center pb-3 border-b border-border/30">
-                  <h2 className="text-2xl font-['Cinzel'] text-primary">{selectedVariant.name}</h2>
-                  <div className="flex items-center justify-center gap-4 mt-2 text-xs">
-                    <span className="flex items-center gap-1 text-primary">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {selectedVariant.origin}
-                    </span>
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="w-3.5 h-3.5" />
-                      {selectedVariant.era}
-                    </span>
+                <p className="text-xs uppercase tracking-[0.2em] text-amber-700 font-semibold mb-1">
+                  Current Variant
+                </p>
+                <h2 className="text-3xl md:text-4xl font-['Cinzel'] font-bold text-amber-950 mb-3">
+                  {selectedVariant.name}
+                </h2>
+                <p className="text-sm text-amber-900/80 italic leading-relaxed mb-6 font-['Crimson_Text']">
+                  "{selectedVariant.history.slice(0, 180)}…"
+                </p>
+
+                {/* Stats row */}
+                <div className="flex justify-between border-t border-amber-800/20 pt-4">
+                  <div className="text-center">
+                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">Board</p>
+                    <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
+                      {isFidchell ? '7 rings' : `${selectedVariant.boardSize}×${selectedVariant.boardSize}`}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">
+                      {isFidchell ? 'Black' : 'Attackers'}
+                    </p>
+                    <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
+                      {isFidchell ? 12 : attackerCount}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">
+                      {isFidchell ? 'White' : 'Defenders'}
+                    </p>
+                    <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
+                      {isFidchell ? '12' : `${defenderCount}`}
+                    </p>
                   </div>
                 </div>
-
-                {/* History */}
-                <div className="p-3 rounded-lg bg-secondary/20 border border-border/30">
-                  <p className="text-sm text-foreground/90 leading-relaxed">{selectedVariant.history}</p>
-                </div>
-
-                {/* Variant-Specific Rules */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-['Cinzel']">
-                    {selectedVariant.id === 'fidchell' ? t.fidchellRules || 'Fidchell Rules' : t.variantRules}
-                  </h3>
-                  <div className="space-y-2">
-                    {variantRulesInfo.map((rule, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className={`flex items-start gap-3 p-2 rounded-lg ${
-                          rule.enabled ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/20 border border-border/20'
-                        }`}
-                      >
-                        <rule.icon className={`w-4 h-4 mt-0.5 ${rule.enabled ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <div>
-                          <span className="text-sm font-medium">{rule.label}</span>
-                          <p className="text-xs text-muted-foreground">{rule.description}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Victory Conditions */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-['Cinzel']">
-                    {t.victoryConditions}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 rounded-lg bg-[hsl(var(--piece-defender))]/20 border border-[hsl(var(--piece-defender))]/30">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-[hsl(var(--piece-defender))]" />
-                        <span className="text-xs font-medium">{selectedVariant.id === 'fidchell' ? 'White' : t.defenders}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{victoryConditions.white}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-[hsl(var(--piece-attacker))]/20 border border-[hsl(var(--piece-attacker))]/30">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-[hsl(var(--piece-attacker))]" />
-                        <span className="text-xs font-medium">{selectedVariant.id === 'fidchell' ? 'Black' : t.attackers}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{victoryConditions.black}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rule Toggles (only for non-Fidchell) */}
-                {selectedVariant.id !== 'fidchell' && (
-                  <div className="space-y-2 pt-2 border-t border-border/30">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t.customizeRules || 'Customize Rules'}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-1">
-                      <div className="flex items-center justify-between p-2 rounded bg-secondary/10">
-                        <span className="text-xs">{t.kingArmed}</span>
-                        <Switch
-                          checked={rules.kingArmed}
-                          onCheckedChange={(checked) => setRules({ ...rules, kingArmed: checked })}
-                          className="scale-75"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-2 rounded bg-secondary/10">
-                        <span className="text-xs">{t.edgeEscape}</span>
-                        <Switch
-                          checked={rules.edgeEscape}
-                          onCheckedChange={(checked) => setRules({ ...rules, edgeEscape: checked })}
-                          className="scale-75"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-2 rounded bg-secondary/10">
-                        <span className="text-xs">{t.shieldwallCapture}</span>
-                        <Switch
-                          checked={rules.shieldwallCapture}
-                          onCheckedChange={(checked) => setRules({ ...rules, shieldwallCapture: checked })}
-                          className="scale-75"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </motion.div>
             </AnimatePresence>
+          </motion.div>
+
+          {/* Right Settings Panel */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="w-full max-w-xs space-y-5"
+          >
+            {/* Play As */}
+            <div className="space-y-2">
+              <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
+                Play As
+              </h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setPlayerSide('defender')}
+                  className={`carved-button w-full px-4 py-3 rounded-lg flex items-center gap-3 text-left ${
+                    playerSide === 'defender' ? 'active' : 'text-foreground'
+                  }`}
+                >
+                  <Shield className="w-5 h-5 shrink-0" />
+                  <div>
+                    <p className="font-['Cinzel'] text-sm font-semibold">
+                      {isFidchell ? 'White' : t.defenders}
+                    </p>
+                    <p className={`text-[10px] ${playerSide === 'defender' ? 'opacity-70' : 'text-muted-foreground'}`}>
+                      {isFidchell ? 'Connect Navel to edge' : t.protectKing}
+                    </p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setPlayerSide('attacker')}
+                  className={`carved-button w-full px-4 py-3 rounded-lg flex items-center gap-3 text-left ${
+                    playerSide === 'attacker' ? 'active' : 'text-foreground'
+                  }`}
+                >
+                  <Swords className="w-5 h-5 shrink-0" />
+                  <div>
+                    <p className="font-['Cinzel'] text-sm font-semibold">
+                      {isFidchell ? 'Black' : t.attackers}
+                    </p>
+                    <p className={`text-[10px] ${playerSide === 'attacker' ? 'opacity-70' : 'text-muted-foreground'}`}>
+                      {isFidchell ? 'Block the connection' : t.captureKing}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Difficulty */}
+            <div className="space-y-2">
+              <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
+                Difficulty
+              </h3>
+              <div className="space-y-2">
+                {DIFFICULTY_MAP.map((d) => (
+                  <button
+                    key={d.key}
+                    onClick={() => setDifficulty(d.key)}
+                    className={`carved-button w-full px-4 py-2.5 rounded-lg text-left ${
+                      difficulty === d.key ? 'active' : 'text-foreground'
+                    }`}
+                  >
+                    <span className="font-['Cinzel'] text-sm font-semibold">{d.vikingName}</span>
+                    <span className={`text-[10px] ml-2 ${difficulty === d.key ? 'opacity-70' : 'text-muted-foreground'}`}>
+                      ({d.label})
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Begin Battle */}
+            <button
+              onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play', selectedVariant.id)}
+              className="w-full py-3.5 rounded-lg font-['Cinzel'] font-bold text-lg uppercase tracking-wider
+                bg-gradient-to-b from-primary to-[hsl(35_55%_38%)] text-primary-foreground
+                shadow-[0_0_20px_hsl(38_60%_50%/0.4)] hover:shadow-[0_0_30px_hsl(38_60%_50%/0.6)]
+                transition-shadow flex items-center justify-center gap-2"
+            >
+              <Play className="w-5 h-5" />
+              Begin Battle
+            </button>
+
+            {/* Demo link */}
+            <button
+              onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
+              className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Watch Demo
+            </button>
+          </motion.div>
+        </div>
+
+        {/* Bottom Variant Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.45 }}
+          className="w-full"
+        >
+          {/* Label with decorative lines */}
+          <div className="flex items-center gap-4 mb-4 justify-center">
+            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-primary/40" />
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/70 font-['Cinzel'] font-semibold whitespace-nowrap">
+              Select Your Saga
+            </p>
+            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
           </div>
 
-          {/* RIGHT: Game Options */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Side Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-['Cinzel']">
-                {t.playAs}
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={playerSide === 'defender' ? 'default' : 'outline'}
-                  onClick={() => setPlayerSide('defender')}
-                  className="h-auto py-3 flex-col gap-1"
+          {/* Tiles */}
+          <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-center flex-wrap">
+            {GAME_VARIANTS.map((variant) => {
+              const isActive = selectedVariant.id === variant.id;
+              return (
+                <motion.button
+                  key={variant.id}
+                  onClick={() => handleVariantChange(variant)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  className={`carved-button px-5 py-3 rounded-lg text-center shrink-0 min-w-[100px] transition-all ${
+                    isActive
+                      ? 'active ring-2 ring-primary/40 scale-105'
+                      : 'text-foreground'
+                  }`}
                 >
-                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--piece-defender))] border-2 border-[hsl(var(--piece-defender-accent))] flex items-center justify-center">
-                    <span className="text-[10px] text-[hsl(var(--background))]">♔</span>
-                  </div>
-                  <span className="font-['Cinzel'] text-xs">
-                    {selectedVariant.id === 'fidchell' ? 'White' : t.defenders}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {selectedVariant.id === 'fidchell' ? t.makeConnection || 'Make Connection' : t.protectKing}
-                  </span>
-                </Button>
-                <Button
-                  variant={playerSide === 'attacker' ? 'default' : 'outline'}
-                  onClick={() => setPlayerSide('attacker')}
-                  className="h-auto py-3 flex-col gap-1"
-                >
-                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--piece-attacker))] border-2 border-[hsl(var(--piece-attacker-accent))]" />
-                  <span className="font-['Cinzel'] text-xs">
-                    {selectedVariant.id === 'fidchell' ? 'Black' : t.attackers}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {selectedVariant.id === 'fidchell' ? t.blockConnection || 'Block Connection' : t.captureKing}
-                  </span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Difficulty Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-['Cinzel']">
-                {t.difficulty}
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={difficulty === 'beginner' ? 'default' : 'outline'}
-                  onClick={() => setDifficulty('beginner')}
-                  className="h-auto py-2 flex-col gap-1"
-                  size="sm"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span className="font-['Cinzel'] text-[10px]">{t.beginner}</span>
-                </Button>
-                <Button
-                  variant={difficulty === 'easy' ? 'default' : 'outline'}
-                  onClick={() => setDifficulty('easy')}
-                  className="h-auto py-2 flex-col gap-1"
-                  size="sm"
-                >
-                  <Zap className="w-4 h-4" />
-                  <span className="font-['Cinzel'] text-[10px]">{t.easy}</span>
-                </Button>
-                <Button
-                  variant={difficulty === 'medium' ? 'default' : 'outline'}
-                  onClick={() => setDifficulty('medium')}
-                  className="h-auto py-2 flex-col gap-1"
-                  size="sm"
-                >
-                  <Brain className="w-4 h-4" />
-                  <span className="font-['Cinzel'] text-[10px]">{t.medium}</span>
-                </Button>
-                <Button
-                  variant={difficulty === 'valhalla' ? 'default' : 'outline'}
-                  onClick={() => setDifficulty('valhalla')}
-                  className="h-auto py-2 flex-col gap-1 text-destructive"
-                  size="sm"
-                >
-                  <Skull className="w-4 h-4" />
-                  <span className="font-['Cinzel'] text-[10px]">{t.valhalla}</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Board Preview Indicator */}
-            <div className="p-3 rounded-lg bg-secondary/20 border border-border/30 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                {selectedVariant.boardType === 'circular' ? (
-                  <>
-                    <Circle className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-['Cinzel']">{t.circularBoard || 'Circular Board'}</span>
-                  </>
-                ) : (
-                  <>
-                    <div 
-                      className="w-5 h-5 border-2 rounded"
-                      style={{ 
-                        borderColor: selectedVariant.theme.corner,
-                        backgroundColor: selectedVariant.theme.squareDark
-                      }}
-                    />
-                    <span className="text-sm font-['Cinzel']">{selectedVariant.boardSize}×{selectedVariant.boardSize} {t.board || 'Board'}</span>
-                  </>
-                )}
-              </div>
-              <div 
-                className="w-full h-2 rounded-full"
-                style={{ 
-                  background: `linear-gradient(to right, ${selectedVariant.theme.squareLight}, ${selectedVariant.theme.corner}, ${selectedVariant.theme.throne})`
-                }}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-2 pt-2">
-              <Button 
-                onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play', selectedVariant.id)} 
-                className="w-full h-12 text-lg font-['Cinzel'] gap-2"
-              >
-                <Play className="w-5 h-5" />
-                {t.play} {selectedVariant.name}
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)} 
-                className="w-full h-10 font-['Cinzel'] gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                {t.watchDemo}
-              </Button>
-            </div>
-
-            {/* Turn Order Info */}
-            <div className="text-center text-xs text-muted-foreground pt-2">
-              <p>
-                {selectedVariant.id === 'fidchell' 
-                  ? (playerSide === 'attacker' ? 'Black moves first • You start' : 'Black moves first • AI starts')
-                  : `${t.attackersFirst} ${playerSide === 'attacker' ? t.youStart : t.aiStarts}`
-                }
-              </p>
-            </div>
+                  <p className="font-['Cinzel'] text-sm font-semibold">{variant.name}</p>
+                  <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
+                    {variant.boardType === 'circular' ? 'Circular' : `${variant.boardSize}×${variant.boardSize}`}
+                  </p>
+                </motion.button>
+              );
+            })}
           </div>
         </motion.div>
       </div>
