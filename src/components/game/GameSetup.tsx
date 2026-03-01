@@ -47,7 +47,7 @@ export function GameSetup({
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showMap, setShowMap] = useState(false);
   const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
-  const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
+  const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null); // info panel state
 
   const handleVariantChange = (variant: GameVariant) => {
     setSelectedVariant(variant);
