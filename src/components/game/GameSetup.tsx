@@ -350,6 +350,19 @@ export function GameSetup({
         </motion.div>
       </div>
 
+      {/* Built with Lovable badge */}
+      <a
+        href="https://lovable.dev/invite/8MUK1UP"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-4 right-4 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg 
+          bg-black/40 backdrop-blur-sm border border-primary/20 
+          text-xs text-primary/80 hover:text-primary hover:border-primary/40 
+          transition-colors font-['Cinzel']"
+      >
+        Built with Lovable
+      </a>
+
       {/* History Map Modal */}
       <AnimatePresence>
         {showMap && (
