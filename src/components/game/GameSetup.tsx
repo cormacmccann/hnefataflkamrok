@@ -2,7 +2,18 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield } from 'lucide-react';
+import { Play, Eye, Map, Swords, Shield, Info, X } from 'lucide-react';
+
+const VARIANT_FLAGS: Record<string, string> = {
+  fidchell: '🇮🇪',
+  brandub: '🇮🇪',
+  tablut: '🇸🇪',
+  tawlbwrdd: '🏴\u200D☠️',  // Wales doesn't have a standard emoji; use 🏴󠁧󠁢󠁷󠁬󠁳󠁿 workaround
+  hnefatafl: '🇳🇴',
+  alea: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+};
+// Better Wales flag via regional indicator
+try { VARIANT_FLAGS['tawlbwrdd'] = '🏴󠁧󠁢󠁷󠁬󠁳󠁿'; } catch {};
 import vikingBackground from '@/assets/viking-background.jpg';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
@@ -36,6 +47,7 @@ export function GameSetup({
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showMap, setShowMap] = useState(false);
   const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
+  const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
 
   const handleVariantChange = (variant: GameVariant) => {
     setSelectedVariant(variant);
@@ -270,26 +282,71 @@ export function GameSetup({
           <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-center flex-wrap">
             {GAME_VARIANTS.map((variant) => {
               const isActive = selectedVariant.id === variant.id;
+              const flag = VARIANT_FLAGS[variant.id] || '🏳️';
               return (
-                <motion.button
-                  key={variant.id}
-                  onClick={() => handleVariantChange(variant)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  className={`carved-button px-5 py-3 rounded-lg text-center shrink-0 min-w-[100px] transition-all ${
-                    isActive
-                      ? 'active ring-2 ring-primary/40 scale-105'
-                      : 'text-foreground'
-                  }`}
-                >
-                  <p className="font-['Cinzel'] text-sm font-semibold">{variant.name}</p>
-                  <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
-                    {variant.boardType === 'circular' ? 'Circular' : `${variant.boardSize}×${variant.boardSize}`}
-                  </p>
-                </motion.button>
+                <div key={variant.id} className="relative shrink-0">
+                  <motion.button
+                    onClick={() => handleVariantChange(variant)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`carved-button px-5 py-3 rounded-lg text-center min-w-[110px] transition-all ${
+                      isActive
+                        ? 'active ring-2 ring-primary/40 scale-105'
+                        : 'text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
+                      <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
+                    </div>
+                    <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
+                      {variant.boardType === 'circular' ? 'Circular' : `${variant.boardSize}×${variant.boardSize}`}
+                    </p>
+                  </motion.button>
+                  {/* Info button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInfoVariant(infoVariant?.id === variant.id ? null : variant);
+                    }}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary/80 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10"
+                    title={`Info about ${variant.name}`}
+                  >
+                    <Info className="w-3 h-3" />
+                  </button>
+                </div>
               );
             })}
           </div>
+
+          {/* Info popup */}
+          <AnimatePresence>
+            {infoVariant && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="mt-4 mx-auto max-w-lg carved-button rounded-lg p-4 relative"
+              >
+                <button
+                  onClick={() => setInfoVariant(null)}
+                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{VARIANT_FLAGS[infoVariant.id] || '🏳️'}</span>
+                  <h4 className="font-['Cinzel'] text-primary font-semibold">{infoVariant.name}</h4>
+                  <span className="text-xs text-muted-foreground">— {infoVariant.origin}, {infoVariant.era}</span>
+                </div>
+                <p className="text-sm text-foreground/90 leading-relaxed">{infoVariant.history}</p>
+                <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                  <span>Board: {infoVariant.boardType === 'circular' ? 'Circular web' : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
+                  <span>Victory: {infoVariant.defaultRules.victoryType === 'connection' ? 'Connection' : 'King escape'}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 
