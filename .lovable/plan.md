@@ -1,18 +1,28 @@
 
+# Add "Built with Lovable" Badge
 
-# Fix Fidchell Board Lines Visibility
+## Change
+Add a small "Built with Lovable" link/badge in the bottom-right corner of the GameSetup landing page, linking to the user's referral URL.
 
-## Problem
-The concentric rings (torus geometries) and radial spokes (box geometries) are positioned at `y=0.01`, but the board base platform's top surface sits at `y=0.05` (center at `y=-0.1`, height `0.3`). This means all the web lines are hidden inside the board.
+## Implementation in `src/components/game/GameSetup.tsx`
 
-## Solution
-Raise the Y position of rings and spokes above the board surface.
+Add a fixed-position element in the bottom-right corner (similar to how the top-right controls are positioned), just before the closing `</div>` of the root container:
 
-## Changes in `src/components/game/CircularBoard3D.tsx`
+```tsx
+<a
+  href="https://lovable.dev/invite/8MUK1UP"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="fixed bottom-4 right-4 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg 
+    bg-black/40 backdrop-blur-sm border border-primary/20 
+    text-xs text-primary/80 hover:text-primary hover:border-primary/40 
+    transition-colors font-['Cinzel']"
+>
+  Built with Lovable
+</a>
+```
 
-1. **Concentric rings** (line 99): Change `position={[0, 0.01, 0]}` to `position={[0, 0.06, 0]}`
-2. **Radial spokes** (line 121): Change the Y component from `0.01` to `0.06`
-3. **Spoke box geometry** (line 126): Increase height from `0.02` to `0.03` for better visibility
+This places a subtle, styled badge that matches the Viking aesthetic (dark translucent background, gold text, Cinzel font) in the bottom-right corner without interfering with any game UI.
 
-These three small coordinate fixes will make the entire web pattern visible on top of the board surface.
-
+## File Modified
+- `src/components/game/GameSetup.tsx` -- add the badge element
