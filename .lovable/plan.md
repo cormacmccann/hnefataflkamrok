@@ -1,82 +1,68 @@
 
 
-# Translate All Hardcoded English Strings
+# Mobile Optimization + "Built with Lovable" Badge Image
 
-## Problem
-Many UI strings throughout the app are hardcoded in English and don't change when the language is switched. The translation system (`t` object) exists and has translations for 6 languages, but several components still use raw English text.
+## Overview
+Two areas of work: (1) optimize the entire app for mobile viewports, and (2) replace the text-only "Built with Lovable" badge with the uploaded image badge linking to the referral URL.
 
-## Scope of Changes
+---
 
-### 1. Add new translation keys to `src/i18n/translations.ts`
+## 1. Replace "Built with Lovable" Badge with Image
 
-New keys needed (with translations for all 6 languages: en, swe, ga, gd, cy, ang):
+**File: `src/components/game/GameSetup.tsx`**
 
-| Key | English value |
-|-----|---------------|
-| `ancientStrategy` | "Ancient Strategy of Kings" |
-| `currentVariant` | "Current Variant" |
-| `selectYourSaga` | "Select Your Saga" |
-| `beginBattle` | "Begin Battle" |
-| `rings` | "rings" |
-| `white` | "White" |
-| `black` | "Black" |
-| `circular` | "Circular" |
-| `circularWeb` | "Circular web" |
-| `connection` | "Connection" |
-| `kingEscape` | "King escape" |
-| `connectNavelToEdge` | "Connect Navel to edge" |
-| `blockTheConnection` | "Block the connection" |
-| `kingEscapedCorner` | "The King has escaped to the corner!" |
-| `kingCaptured` | "The King has been captured!" |
-| `moveOf` | "'s Move" (for demo popup) |
-| `piece` | "Piece" |
-| `thrall` | "Thrall" |
-| `karl` | "Karl" |
-| `jarl` | "Jarl" |
-| `infoAbout` | "Info about" |
-| `historyMapTitle` | "History Map" |
+- Copy `user-uploads://builtwith.png` to `src/assets/builtwith.png`
+- Import the image in GameSetup
+- Replace the text `<a>` badge (lines 352-363) with an `<img>` tag using the uploaded badge image
+- Keep the same fixed positioning (`fixed bottom-4 right-4 z-30`) and link to `https://lovable.dev/invite/8MUK1UP`
 
-### 2. Update `src/components/game/GameSetup.tsx`
+---
 
-Replace all hardcoded strings with `t.xxx` references:
-- Line 101: `HNEFATAFL` -> `t.appName` (uppercased)
-- Line 104: `"Ancient Strategy of Kings"` -> `t.ancientStrategy`
-- Line 133: `"Current Variant"` -> `t.currentVariant`
-- Line 145: `"Board"` -> `t.board`
-- Line 147: `'7 rings'` -> `t.rings` equivalent
-- Line 152: `'Black'` / `'Attackers'` -> `t.black` / `t.attackers`
-- Line 160: `'White'` / `'Defenders'` -> `t.white` / `t.defenders`
-- Line 181: `"Play As"` -> `t.playAs`
-- Line 193: `'White'` -> `t.white`
-- Line 196: `'Connect Navel to edge'` -> `t.connectNavelToEdge`
-- Line 209: `'Black'` -> `t.black`
-- Line 212: `'Block the connection'` -> `t.blockTheConnection`
-- Line 222: `"Difficulty"` -> `t.difficulty`
-- Lines 32-34: `DIFFICULTY_MAP` labels -> use `t` keys
-- Line 251: `"Begin Battle"` -> `t.beginBattle`
-- Line 260: `"Watch Demo"` -> `t.watchDemo`
-- Line 276: `"Select Your Saga"` -> `t.selectYourSaga`
-- Line 303: `'Circular'` -> `t.circular`
-- Line 344: `'Board:'`, `'Victory:'`, `'Connection'`, `'King escape'` -> translated
-- Line 77: `"History Map"` title -> `t.historyMapTitle`
+## 2. Mobile Optimization
 
-### 3. Update `src/components/game/VictoryModal.tsx`
+### 2a. GameSetup Screen (`src/components/game/GameSetup.tsx`)
 
-- Lines 53-55: `'The King has escaped to the corner!'` and `'The King has been captured!'` -> `t.kingEscapedCorner` / `t.kingCaptured`
+The setup screen uses `flex-col lg:flex-row` for the parchment + settings layout, which works. Issues to fix:
 
-### 4. Update `src/components/game/DemoMovePopup.tsx`
+- **Header text**: `text-4xl md:text-5xl` is too large on small screens -- reduce to `text-2xl sm:text-3xl md:text-5xl`
+- **Parchment card**: `max-w-md` with `p-6 md:p-8` is fine but add responsive padding `p-4 sm:p-6 md:p-8`
+- **Top-right controls cluster**: The Map button, LanguageSelector, and VolumeControl all sit in a row at `fixed top-4 right-4`. On mobile these can overflow. Reduce gaps and make icons smaller on mobile.
+- **Variant tiles at bottom**: Use horizontal scroll on mobile instead of `flex-wrap` so tiles don't push the page too tall. Change to `flex-nowrap overflow-x-auto` on small screens, `flex-wrap` on larger.
+- **Container padding**: `px-4 py-8` -- reduce vertical padding on mobile: `py-4 sm:py-8`
 
-- Lines 14-17: `getPieceTypeName` returns hardcoded 'King', 'Defender', 'Attacker', 'Piece' -> use translation context
-- Line 29: `'Attackers'` / `'Defenders'` -> translated
-- Line 47: `"'s Move"` -> translated phrase
+### 2b. In-Game Screen (`src/pages/Index.tsx`)
 
-### 5. Translations for all 6 languages
+- **Left panel** (Turn Indicator + Controls): `fixed top-20 left-4 w-48` is too wide on mobile. Change to `w-36 sm:w-48` and reduce padding. On very small screens, make controls more compact.
+- **Turn Indicator** (`TurnIndicator.tsx`): Reduce piece indicator size and text on mobile. Use `text-sm sm:text-lg` for player name, `w-6 h-6 sm:w-8 sm:h-8` for the colored circle.
+- **Header logo**: Already has `h-12 sm:h-16` -- good.
+- **Bottom stats bar**: `fixed bottom-4` with `px-4 py-2` pills can overlap on narrow screens. Make text smaller on mobile: `text-xs` and reduce horizontal padding. Use `gap-2 sm:gap-4`.
+- **Demo mode popup** (`DemoMovePopup.tsx`): `fixed bottom-24` with `max-w-md` -- add `mx-4` for side padding and reduce text sizes on mobile.
+- **Mobile history panel**: Already exists with `lg:hidden` toggle -- this is good.
 
-Each new key will be translated into Swedish, Irish Gaelic, Scots Gaelic, Welsh, and Old English, following the existing translation patterns and culturally appropriate terminology already established in the file.
+### 2c. 3D Scene Camera (`src/components/game/Scene3D.tsx`)
 
-## Files Modified
-1. `src/i18n/translations.ts` -- add ~20 new keys to `Translations` interface and all 6 language objects
-2. `src/components/game/GameSetup.tsx` -- replace ~20 hardcoded strings with `t.xxx`
-3. `src/components/game/VictoryModal.tsx` -- replace 2 hardcoded strings
-4. `src/components/game/DemoMovePopup.tsx` -- replace ~5 hardcoded strings, add `useLanguage` hook
+- The camera is at `position={[0, 12, 8]}` with `minDistance={8}`. On mobile the board can appear too far. No code change needed here as OrbitControls allows pinch-to-zoom, but consider starting the camera slightly closer on mobile or adjusting FOV.
+
+### 2d. Modals
+
+- **VictoryModal**: Already uses `sm:max-w-md` which is responsive.
+- **RulesModal**: Uses `sm:max-w-2xl max-h-[85vh]` -- fine.
+- **TaflHistoryMap**: `max-w-3xl` may be too wide. Add `max-w-[95vw] sm:max-w-3xl` and ensure `p-4 sm:p-6` padding.
+
+### 2e. Global CSS / Meta
+
+- The `index.html` should have proper viewport meta tag (likely already present). Verify.
+- Add `touch-action: manipulation` on interactive areas to prevent double-tap zoom delays on mobile.
+
+---
+
+## Files to Modify
+
+1. **Copy asset**: `user-uploads://builtwith.png` to `src/assets/builtwith.png`
+2. **`src/components/game/GameSetup.tsx`** -- mobile-responsive classes, badge image replacement
+3. **`src/pages/Index.tsx`** -- responsive overlay panel widths and spacing
+4. **`src/components/game/TurnIndicator.tsx`** -- compact mobile layout
+5. **`src/components/game/DemoMovePopup.tsx`** -- mobile padding
+6. **`src/components/game/TaflHistoryMap.tsx`** -- constrain width on mobile
+7. **`src/index.css`** -- add touch-action utility if needed
 
