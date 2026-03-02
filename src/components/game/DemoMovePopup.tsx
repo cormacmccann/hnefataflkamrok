@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Piece, Position, Player } from '@/types/game';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface DemoMovePopupProps {
   piece: Piece | null;
@@ -9,24 +10,22 @@ interface DemoMovePopupProps {
   visible: boolean;
 }
 
-function getPieceTypeName(type: string): string {
-  switch (type) {
-    case 'king': return 'King';
-    case 'defender': return 'Defender';
-    case 'attacker': return 'Attacker';
-    default: return 'Piece';
-  }
-}
-
 function getColumnLetter(col: number): string {
   return String.fromCharCode(97 + col);
 }
 
 export function DemoMovePopup({ piece, to, player, explanation, visible }: DemoMovePopupProps) {
+  const { t } = useLanguage();
+  
   if (!piece || !to) return null;
 
   const notation = `${getColumnLetter(piece.position.col)}${piece.position.row + 1} → ${getColumnLetter(to.col)}${to.row + 1}`;
-  const playerName = player === 'attacker' ? 'Attackers' : 'Defenders';
+  const playerName = player === 'attacker' ? t.attackers : t.defenders;
+
+  // Get translated piece type name
+  const displayPieceType = piece.type === 'king' 
+    ? t.tutorialSteps.king.title
+    : piece.type === 'defender' ? t.defender : t.attacker;
 
   return (
     <AnimatePresence>
@@ -44,11 +43,11 @@ export function DemoMovePopup({ piece, to, player, explanation, visible }: DemoM
                   ? 'bg-[hsl(var(--piece-attacker))]' 
                   : 'bg-[hsl(var(--piece-defender))]'
               }`} />
-              <span className="font-['Cinzel'] text-lg text-primary">{playerName}'s Move</span>
+              <span className="font-['Cinzel'] text-lg text-primary">{playerName}{t.moveOf}</span>
             </div>
             
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-muted-foreground">{getPieceTypeName(piece.type)}:</span>
+              <span className="text-muted-foreground">{displayPieceType}:</span>
               <span className="font-mono text-foreground bg-secondary/50 px-2 py-1 rounded">{notation}</span>
             </div>
             

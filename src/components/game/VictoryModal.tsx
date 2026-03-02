@@ -51,8 +51,8 @@ export function VictoryModal({ result, playerSide, onPlayAgain, onClose }: Victo
           </div>
           <p className="text-muted-foreground">
             {result === 'defender-wins' 
-              ? 'The King has escaped to the corner!' 
-              : 'The King has been captured!'}
+              ? t.kingEscapedCorner
+              : t.kingCaptured}
           </p>
         </div>
 

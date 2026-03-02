@@ -8,11 +8,10 @@ const VARIANT_FLAGS: Record<string, string> = {
   fidchell: '🇮🇪',
   brandub: '🇮🇪',
   tablut: '🇸🇪',
-  tawlbwrdd: '🏴\u200D☠️',  // Wales doesn't have a standard emoji; use 🏴󠁧󠁢󠁷󠁬󠁳󠁿 workaround
+  tawlbwrdd: '🏴‍☠️',
   hnefatafl: '🇳🇴',
   alea: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
 };
-// Better Wales flag via regional indicator
 try { VARIANT_FLAGS['tawlbwrdd'] = '🏴󠁧󠁢󠁷󠁬󠁳󠁿'; } catch {};
 import vikingBackground from '@/assets/viking-background.jpg';
 import { VolumeControl } from './VolumeControl';
@@ -28,12 +27,6 @@ interface GameSetupProps {
   onSfxVolumeChange: (volume: number) => void;
 }
 
-const DIFFICULTY_MAP: { key: AIDifficulty; label: string; vikingName: string }[] = [
-  { key: 'easy', label: 'Easy', vikingName: 'Thrall' },
-  { key: 'medium', label: 'Normal', vikingName: 'Karl' },
-  { key: 'valhalla', label: 'Hard', vikingName: 'Jarl' },
-];
-
 export function GameSetup({
   onStartGame,
   musicVolume,
@@ -47,7 +40,13 @@ export function GameSetup({
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showMap, setShowMap] = useState(false);
   const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
-  const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null); // info panel state
+  const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
+
+  const difficultyMap = [
+    { key: 'easy' as AIDifficulty, label: t.easy, vikingName: t.thrall },
+    { key: 'medium' as AIDifficulty, label: t.medium, vikingName: t.karl },
+    { key: 'valhalla' as AIDifficulty, label: t.hard, vikingName: t.jarl },
+  ];
 
   const handleVariantChange = (variant: GameVariant) => {
     setSelectedVariant(variant);
@@ -56,7 +55,7 @@ export function GameSetup({
 
   const boardConfig = BOARD_CONFIGS[selectedVariant.boardSize];
   const attackerCount = boardConfig?.initialAttackers?.length ?? 0;
-  const defenderCount = (boardConfig?.initialDefenders?.length ?? 0) + 1; // +1 for king
+  const defenderCount = (boardConfig?.initialDefenders?.length ?? 0) + 1;
   const isFidchell = selectedVariant.id === 'fidchell';
 
   return (
@@ -73,7 +72,7 @@ export function GameSetup({
         <button
           onClick={() => setShowMap(true)}
           className="p-2 rounded-lg carved-button text-foreground hover:text-primary transition-colors"
-          title="History Map"
+          title={t.historyMapTitle}
         >
           <Map className="w-4 h-4" />
         </button>
@@ -98,10 +97,10 @@ export function GameSetup({
         >
           <Swords className="w-10 h-10 mx-auto mb-2 text-primary" />
           <h1 className="text-4xl md:text-5xl font-['Cinzel'] font-bold text-primary drop-shadow-[0_0_24px_hsl(38_60%_50%/0.5)]">
-            HNEFATAFL
+            {t.appName.toUpperCase()}
           </h1>
           <p className="text-xs md:text-sm uppercase tracking-[0.3em] text-primary/70 mt-1 font-['Cinzel']">
-            Ancient Strategy of Kings
+            {t.ancientStrategy}
           </p>
         </motion.div>
 
@@ -130,7 +129,7 @@ export function GameSetup({
                 transition={{ duration: 0.25 }}
               >
                 <p className="text-xs uppercase tracking-[0.2em] text-amber-700 font-semibold mb-1">
-                  Current Variant
+                  {t.currentVariant}
                 </p>
                 <h2 className="text-3xl md:text-4xl font-['Cinzel'] font-bold text-amber-950 mb-3">
                   {selectedVariant.name}
@@ -142,14 +141,14 @@ export function GameSetup({
                 {/* Stats row */}
                 <div className="flex justify-between border-t border-amber-800/20 pt-4">
                   <div className="text-center">
-                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">Board</p>
+                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">{t.boardLabel}</p>
                     <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
-                      {isFidchell ? '7 rings' : `${selectedVariant.boardSize}×${selectedVariant.boardSize}`}
+                      {isFidchell ? `7 ${t.rings}` : `${selectedVariant.boardSize}×${selectedVariant.boardSize}`}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">
-                      {isFidchell ? 'Black' : 'Attackers'}
+                      {isFidchell ? t.black : t.attackers}
                     </p>
                     <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
                       {isFidchell ? 12 : attackerCount}
@@ -157,7 +156,7 @@ export function GameSetup({
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">
-                      {isFidchell ? 'White' : 'Defenders'}
+                      {isFidchell ? t.white : t.defenders}
                     </p>
                     <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
                       {isFidchell ? '12' : `${defenderCount}`}
@@ -178,7 +177,7 @@ export function GameSetup({
             {/* Play As */}
             <div className="space-y-2">
               <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
-                Play As
+                {t.playAs}
               </h3>
               <div className="space-y-2">
                 <button
@@ -190,10 +189,10 @@ export function GameSetup({
                   <Shield className="w-5 h-5 shrink-0" />
                   <div>
                     <p className="font-['Cinzel'] text-sm font-semibold">
-                      {isFidchell ? 'White' : t.defenders}
+                      {isFidchell ? t.white : t.defenders}
                     </p>
                     <p className={`text-[10px] ${playerSide === 'defender' ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {isFidchell ? 'Connect Navel to edge' : t.protectKing}
+                      {isFidchell ? t.connectNavelToEdge : t.protectKing}
                     </p>
                   </div>
                 </button>
@@ -206,10 +205,10 @@ export function GameSetup({
                   <Swords className="w-5 h-5 shrink-0" />
                   <div>
                     <p className="font-['Cinzel'] text-sm font-semibold">
-                      {isFidchell ? 'Black' : t.attackers}
+                      {isFidchell ? t.black : t.attackers}
                     </p>
                     <p className={`text-[10px] ${playerSide === 'attacker' ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {isFidchell ? 'Block the connection' : t.captureKing}
+                      {isFidchell ? t.blockTheConnection : t.captureKing}
                     </p>
                   </div>
                 </button>
@@ -219,10 +218,10 @@ export function GameSetup({
             {/* Difficulty */}
             <div className="space-y-2">
               <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
-                Difficulty
+                {t.difficulty}
               </h3>
               <div className="space-y-2">
-                {DIFFICULTY_MAP.map((d) => (
+                {difficultyMap.map((d) => (
                   <button
                     key={d.key}
                     onClick={() => setDifficulty(d.key)}
@@ -248,7 +247,7 @@ export function GameSetup({
                 transition-shadow flex items-center justify-center gap-2"
             >
               <Play className="w-5 h-5" />
-              Begin Battle
+              {t.beginBattle}
             </button>
 
             {/* Demo link */}
@@ -257,7 +256,7 @@ export function GameSetup({
               className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1.5"
             >
               <Eye className="w-3.5 h-3.5" />
-              Watch Demo
+              {t.watchDemo}
             </button>
           </motion.div>
         </div>
@@ -273,7 +272,7 @@ export function GameSetup({
           <div className="flex items-center gap-4 mb-4 justify-center">
             <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-primary/40" />
             <p className="text-xs uppercase tracking-[0.3em] text-primary/70 font-['Cinzel'] font-semibold whitespace-nowrap">
-              Select Your Saga
+              {t.selectYourSaga}
             </p>
             <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
           </div>
@@ -300,7 +299,7 @@ export function GameSetup({
                       <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
                     </div>
                     <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {variant.boardType === 'circular' ? 'Circular' : `${variant.boardSize}×${variant.boardSize}`}
+                      {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`}
                     </p>
                   </motion.button>
                   {/* Info button */}
@@ -310,7 +309,7 @@ export function GameSetup({
                       setInfoVariant(infoVariant?.id === variant.id ? null : variant);
                     }}
                     className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary/80 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10"
-                    title={`Info about ${variant.name}`}
+                    title={`${t.infoAbout} ${variant.name}`}
                   >
                     <Info className="w-3 h-3" />
                   </button>
@@ -341,8 +340,8 @@ export function GameSetup({
                 </div>
                 <p className="text-sm text-foreground/90 leading-relaxed">{infoVariant.history}</p>
                 <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                  <span>Board: {infoVariant.boardType === 'circular' ? 'Circular web' : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
-                  <span>Victory: {infoVariant.defaultRules.victoryType === 'connection' ? 'Connection' : 'King escape'}</span>
+                  <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
+                  <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
                 </div>
               </motion.div>
             )}
