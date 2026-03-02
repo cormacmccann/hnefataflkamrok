@@ -14,6 +14,7 @@ const VARIANT_FLAGS: Record<string, string> = {
 };
 try { VARIANT_FLAGS['tawlbwrdd'] = '🏴󠁧󠁢󠁷󠁬󠁳󠁿'; } catch {};
 import vikingBackground from '@/assets/viking-background.jpg';
+import builtwithImg from '@/assets/builtwith.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
 import { LanguageSelector } from './LanguageSelector';
@@ -68,7 +69,7 @@ export function GameSetup({
       <div className="absolute inset-0 bg-black/50 z-[1]" />
 
       {/* Top-right controls */}
-      <div className="fixed top-4 right-4 z-30 flex items-center gap-3">
+      <div className="fixed top-4 right-4 z-30 flex items-center gap-1.5 sm:gap-3">
         <button
           onClick={() => setShowMap(true)}
           className="p-2 rounded-lg carved-button text-foreground hover:text-primary transition-colors"
@@ -86,7 +87,7 @@ export function GameSetup({
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 w-full max-w-5xl px-4 py-8 flex flex-col items-center gap-8">
+      <div className="relative z-10 w-full max-w-5xl px-4 py-4 sm:py-8 flex flex-col items-center gap-6 sm:gap-8">
 
         {/* Header */}
         <motion.div
@@ -96,7 +97,7 @@ export function GameSetup({
           className="text-center"
         >
           <Swords className="w-10 h-10 mx-auto mb-2 text-primary" />
-          <h1 className="text-4xl md:text-5xl font-['Cinzel'] font-bold text-primary drop-shadow-[0_0_24px_hsl(38_60%_50%/0.5)]">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-['Cinzel'] font-bold text-primary drop-shadow-[0_0_24px_hsl(38_60%_50%/0.5)]">
             {t.appName.toUpperCase()}
           </h1>
           <p className="text-xs md:text-sm uppercase tracking-[0.3em] text-primary/70 mt-1 font-['Cinzel']">
@@ -112,7 +113,7 @@ export function GameSetup({
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="parchment rounded-lg p-6 md:p-8 max-w-md w-full -rotate-1 relative"
+            className="parchment rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full -rotate-1 relative"
           >
             {/* Decorative corner brackets */}
             <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-800/40" />
@@ -278,7 +279,7 @@ export function GameSetup({
           </div>
 
           {/* Tiles */}
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-center flex-wrap">
+          <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0">
             {GAME_VARIANTS.map((variant) => {
               const isActive = selectedVariant.id === variant.id;
               const flag = VARIANT_FLAGS[variant.id] || '🏳️';
@@ -354,12 +355,9 @@ export function GameSetup({
         href="https://lovable.dev/invite/8MUK1UP"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg 
-          bg-black/40 backdrop-blur-sm border border-primary/20 
-          text-xs text-primary/80 hover:text-primary hover:border-primary/40 
-          transition-colors font-['Cinzel']"
+        className="fixed bottom-4 right-4 z-30"
       >
-        Built with Lovable
+        <img src={builtwithImg} alt="Built with Lovable" className="h-8 sm:h-10 w-auto drop-shadow-lg" />
       </a>
 
       {/* History Map Modal */}

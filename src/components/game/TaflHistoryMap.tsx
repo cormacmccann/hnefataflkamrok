@@ -48,7 +48,7 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative bg-card border border-border rounded-xl p-6 max-w-3xl w-full"
+        className="relative bg-card border border-border rounded-xl p-4 sm:p-6 max-w-[95vw] sm:max-w-3xl w-full"
         onClick={e => e.stopPropagation()}
       >
         <button

@@ -159,4 +159,12 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .touch-action-manipulation {
+    touch-action: manipulation;
+  }
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
 }

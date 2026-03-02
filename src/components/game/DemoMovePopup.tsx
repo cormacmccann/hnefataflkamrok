@@ -34,7 +34,7 @@ export function DemoMovePopup({ piece, to, player, explanation, visible }: DemoM
           initial={{ opacity: 0, y: 20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.9 }}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 max-w-md"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 max-w-md mx-4 w-[calc(100%-2rem)] sm:w-auto"
         >
           <div className="bg-card/95 backdrop-blur-lg border border-primary/30 rounded-xl p-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-2">
@@ -43,7 +43,7 @@ export function DemoMovePopup({ piece, to, player, explanation, visible }: DemoM
                   ? 'bg-[hsl(var(--piece-attacker))]' 
                   : 'bg-[hsl(var(--piece-defender))]'
               }`} />
-              <span className="font-['Cinzel'] text-lg text-primary">{playerName}{t.moveOf}</span>
+              <span className="font-['Cinzel'] text-base sm:text-lg text-primary">{playerName}{t.moveOf}</span>
             </div>
             
             <div className="flex items-center gap-2 mb-3">
