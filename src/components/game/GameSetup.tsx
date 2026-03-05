@@ -15,6 +15,7 @@ const VARIANT_FLAGS: Record<string, string> = {
 try { VARIANT_FLAGS['tawlbwrdd'] = '🏴󠁧󠁢󠁷󠁬󠁳󠁿'; } catch {};
 import vikingBackground from '@/assets/viking-background.jpg';
 import builtwithImg from '@/assets/builtwith.png';
+import kamrokLogo from '@/assets/kamrok-logo.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
 import { LanguageSelector } from './LanguageSelector';
@@ -345,6 +346,16 @@ export function GameSetup({
           </motion.div>
         </div>
       </div>
+
+      {/* Kamrok logo */}
+      <a
+        href="https://kamrok.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-3 left-3 z-30"
+      >
+        <img src={kamrokLogo} alt="Kamrok" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
+      </a>
 
       {/* Built with Lovable badge */}
       <a
