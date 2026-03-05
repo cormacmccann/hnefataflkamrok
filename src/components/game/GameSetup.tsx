@@ -351,9 +351,9 @@ export function GameSetup({
         href="https://lovable.dev/invite/8MUK1UP"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 z-30"
+        className="fixed bottom-3 right-3 z-30"
       >
-        <img src={builtwithImg} alt="Built with Lovable" className="h-8 sm:h-10 w-auto drop-shadow-lg" />
+        <img src={builtwithImg} alt="Built with Lovable" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
       </a>
 
       {/* History Map Modal */}

@@ -21,6 +21,7 @@ import { LogoIntro } from '@/components/game/LogoIntro';
 import { DemoMovePopup } from '@/components/game/DemoMovePopup';
 import { useLanguage } from '@/i18n/LanguageContext';
 import hnefataflLogo from '@/assets/hnefatafl-logo.png';
+import builtwithImg from '@/assets/builtwith.png';
 
 export default function Index() {
   const { t } = useLanguage();
@@ -396,6 +397,16 @@ export default function Index() {
         onClose={() => setShowVictory(false)} 
       />
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
+
+      {/* Built with Lovable badge */}
+      <a
+        href="https://lovable.dev/invite/8MUK1UP"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-3 right-3 z-30"
+      >
+        <img src={builtwithImg} alt="Built with Lovable" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
+      </a>
     </div>
   );
 }
