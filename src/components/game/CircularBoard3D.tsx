@@ -136,7 +136,7 @@ export function CircularBoard3D({
           color="#C0C0C0" 
           metalness={0.8} 
           roughness={0.2}
-          emissive="#9F7AEA"
+          emissive="#50C878"
           emissiveIntensity={0.4}
         />
       </mesh>
@@ -195,8 +195,8 @@ export function CircularBoard3D({
               >
                 <cylinderGeometry args={[0.12, 0.12, 0.04, 16]} />
                 <meshStandardMaterial 
-                  color={isValid ? '#22C55E' : isPath ? '#9F7AEA' : isEdge ? '#C0C0C0' : '#4A3D6A'}
-                  emissive={isValid ? '#22C55E' : isPath ? '#9F7AEA' : undefined}
+                  color={isValid ? '#22C55E' : isPath ? '#50C878' : isEdge ? '#C0C0C0' : '#2D5A3D'}
+                  emissive={isValid ? '#22C55E' : isPath ? '#50C878' : undefined}
                   emissiveIntensity={isValid || isPath ? 0.5 : 0}
                   transparent={!isValid && !isPath}
                   opacity={isValid || isPath ? 1 : 0.6}
@@ -234,8 +234,8 @@ export function CircularBoard3D({
               <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.15, 0.25, 16]} />
                 <meshStandardMaterial 
-                  color="#9F7AEA"
-                  emissive="#9F7AEA"
+                  color="#50C878"
+                  emissive="#50C878"
                   emissiveIntensity={0.6}
                   transparent
                   opacity={0.7}
