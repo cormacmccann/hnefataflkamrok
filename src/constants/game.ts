@@ -65,17 +65,17 @@ const ALEA_THEME: BoardTheme = {
   runeColor: '#E6E6FA',
 };
 
-// Celtic Fidchell theme - mystical purple and silver (circular board)
+// Celtic Fidchell theme - forest green with silver (circular board)
 const FIDCHELL_THEME: BoardTheme = {
-  boardBase: '#1A1428',
-  boardFrame: '#0D0A14',
-  squareLight: '#7B68B0',
-  squareDark: '#4A3D6A',
+  boardBase: '#1B3D2F',
+  boardFrame: '#0D1F17',
+  squareLight: '#4A7A5A',
+  squareDark: '#2D5A3D',
   corner: '#C0C0C0',
-  throne: '#6B4EAB',
-  circularFrame: '#2A1F3D',
-  accentRing: '#9F7AEA',
-  runeColor: '#DDA0DD',
+  throne: '#2E8B57',
+  circularFrame: '#1A3D2A',
+  accentRing: '#50C878',
+  runeColor: '#98FB98',
 };
 
 // Default rules for most variants

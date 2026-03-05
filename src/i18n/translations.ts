@@ -188,6 +188,24 @@ export interface Translations {
   boardLabel: string;
   victoryLabel: string;
   
+  // Variant descriptions & histories (translated)
+  variantDescriptions: {
+    fidchell: string;
+    brandub: string;
+    tablut: string;
+    tawlbwrdd: string;
+    hnefatafl: string;
+    alea: string;
+  };
+  variantHistories: {
+    fidchell: string;
+    brandub: string;
+    tablut: string;
+    tawlbwrdd: string;
+    hnefatafl: string;
+    alea: string;
+  };
+
   // Fidchell-specific
   fidchell: {
     navelStone: string;
@@ -357,6 +375,22 @@ export const translations: Record<Language, Translations> = {
     youStart: 'You start!',
     aiStarts: 'AI starts.',
     viewMap: 'View Map',
+    variantDescriptions: {
+      fidchell: 'Celtic "wood-wisdom" - Connection game',
+      brandub: 'Quick Irish variant',
+      tablut: 'Classic Swedish game',
+      tawlbwrdd: 'Welsh "throw-board"',
+      hnefatafl: 'Full Viking battle',
+      alea: 'Monastic grand variant',
+    },
+    variantHistories: {
+      fidchell: 'Fidchell ("wood-wisdom") was the most prestigious Celtic board game, played on a sacred circular "web" representing the cosmos. White pieces must create an unbroken connection from the central Navel Stone to the outer edge. Mentioned in the Mabinogion as Gwyddbwyll, it was invented by the god Lugh.',
+      brandub: 'Brandub, meaning "black raven" in Old Irish, was played by Celtic nobility in medieval Ireland. Ancient texts describe High Kings playing this game in great halls, with the central piece representing the High King of Tara defending against provincial rivals.',
+      tablut: 'Tablut was documented by Carl Linnaeus in 1732 while visiting Lapland, where the Sami people still played this ancient game. It represents a Swedish king defending against Muscovite attackers. This is the best-documented tafl variant.',
+      tawlbwrdd: 'Tawlbwrdd, the Welsh "throw-board," was described in medieval Welsh law texts. It was considered one of the 24 feats a gentleman must master. The game held such importance that special boards were treasured heirlooms passed down through noble families.',
+      hnefatafl: 'Hnefatafl, the "King\'s Table," was the premier strategy game of the Viking Age. Norsemen carried it across their vast trade routes from Byzantium to Newfoundland. Sagas tell of warriors wagering gold and honor on games played by firelight.',
+      alea: 'Alea Evangelii, the "Game of the Gospels," was recorded in a 12th-century manuscript from Canterbury. This massive 19×19 variant was played in monasteries, with piece positions tied to religious symbolism. It represents the grandest known tafl game.',
+    },
     fidchell: {
       navelStone: 'Navel Stone',
       sacredWeb: 'The Sacred Web',
@@ -524,6 +558,22 @@ export const translations: Record<Language, Translations> = {
     youStart: 'Du börjar!',
     aiStarts: 'AI börjar.',
     viewMap: 'Visa Karta',
+    variantDescriptions: {
+      fidchell: 'Keltisk "trädvisdom" - Förbindelsespel',
+      brandub: 'Snabb irländsk variant',
+      tablut: 'Klassiskt svenskt spel',
+      tawlbwrdd: 'Walesisk "kastbräde"',
+      hnefatafl: 'Full vikingastrid',
+      alea: 'Monastisk storvariant',
+    },
+    variantHistories: {
+      fidchell: 'Fidchell ("trädvisdom") var det mest prestigefyllda keltiska brädspelet, spelat på ett heligt cirkulärt "nät" som representerade kosmos. Vita pjäser måste skapa en obruten förbindelse från den centrala Navelstenen till ytterkanten. Nämnt i Mabinogion som Gwyddbwyll, uppfanns det av guden Lugh.',
+      brandub: 'Brandub, som betyder "svart korp" på foririska, spelades av keltisk adel i medeltida Irland. Gamla texter beskriver hur Högkungar spelade detta spel i stora hallar, med den centrala pjäsen som representerade Högkungen av Tara som försvarade sig mot provinsiella rivaler.',
+      tablut: 'Tablut dokumenterades av Carl von Linné 1732 under hans besök i Lappland, där samerna fortfarande spelade detta urgamla spel. Det representerar en svensk kung som försvarar sig mot moskovitiska angripare. Detta är den bäst dokumenterade taflvarianten.',
+      tawlbwrdd: 'Tawlbwrdd, det walesiska "kastbrädet", beskrevs i medeltida walesiska lagtexter. Det ansågs vara en av de 24 bedrifter en gentleman måste bemästra. Spelet hade sådan betydelse att speciella brädor var skattade arvegods som gick i arv genom adliga familjer.',
+      hnefatafl: 'Hnefatafl, "Kungabordet", var det främsta strategispelet under vikingatiden. Nordbor bar det över sina vidsträckta handelsvägar från Bysans till Newfoundland. Sagor berättar om krigare som satsade guld och ära på spel vid eldskenet.',
+      alea: 'Alea Evangelii, "Evangeliernas Spel", nedtecknades i ett 1100-talsmanuskript från Canterbury. Denna massiva 19×19-variant spelades i kloster, med pjäspositioner knutna till religiös symbolik. Det representerar det största kända taflspelet.',
+    },
     fidchell: {
       navelStone: 'Navelstenen',
       sacredWeb: 'Det Heliga Nätet',
@@ -691,6 +741,22 @@ export const translations: Record<Language, Translations> = {
     youStart: 'Tosaíonn tú!',
     aiStarts: 'Tosaíonn an AI.',
     viewMap: 'Féach ar Léarscáil',
+    variantDescriptions: {
+      fidchell: 'Ficheall Cheilteach - Cluiche ceangail',
+      brandub: 'Leagan tapaidh Éireannach',
+      tablut: 'Cluiche clasaiceach Sualannach',
+      tawlbwrdd: '"Clár caitheamh" Breatnach',
+      hnefatafl: 'Cath iomlán Lochlannach',
+      alea: 'Mórleagan mainistreach',
+    },
+    variantHistories: {
+      fidchell: 'Ba é Fidchell ("eagna adhmaid") an cluiche cláir Ceilteach ba mhó gradam, a imríodh ar "ghréasán" naofa ciorclach a léirigh an chruinne. Caithfidh píosaí bána ceangal gan bhriseadh a chruthú ón gCloch Imleacáin lárnaigh go dtí an t-imeall seachtrach. Luadh sa Mabinogion mar Gwyddbwyll, cheap an dia Lugh é.',
+      brandub: 'D\'imir uaisle Ceilteacha Brandub, a chiallaíonn "fiach dubh" sa tSean-Ghaeilge, in Éirinn na meánaoise. Déanann seantéacsanna cur síos ar Ard-Ríthe ag imirt an chluiche seo i hallaí móra, leis an bpíosa lárnach ag seasamh d\'Ard-Rí Teamhrach ag cosaint in aghaidh iomaitheoirí cúigeacha.',
+      tablut: 'Dhoiciméadaigh Carl Linnaeus Tablut i 1732 agus é ag tabhairt cuairt ar an Laplainn, áit ar imir muintir na Sámi an seanchluiche seo fós. Léiríonn sé rí Sualannach ag cosaint in aghaidh ionsaitheoirí Moscóiveacha. Is é seo an leagan tafl is fearr doiciméadaithe.',
+      tawlbwrdd: 'Déantar cur síos ar Tawlbwrdd, "clár caitheamh" na Breataine Bige, i dtéacsanna dlí meánaoiseacha Breatnaise. Measadh gur ceann de na 24 éacht a chaithfeadh duine uasal a mháistriú é. Bhí an oiread tábhacht ag an gcluiche gur oidhreachtaí luachmhara iad na cláir speisialta a tugadh anuas trí theaghlaigh uaisle.',
+      hnefatafl: 'Ba é Hnefatafl, "Bord an Rí", príomhchluiche straitéise Ré na Lochlannach. D\'iompair Lochlannaigh é trasna a mbealaí trádála leathana ó Byzantium go Talamh an Éisc. Insíonn scéalta faoi laochra ag cur geall ar ór agus onóir ar chluichí a imríodh le solas tine.',
+      alea: 'Taifeadadh Alea Evangelii, "Cluiche na Soiscéal", i lámhscríbhinn ón 12ú haois ó Canterbury. Imríodh an mórleagan 19×19 seo i mainistreacha, le suímh na bpíosaí ceangailte le siombalachas reiligiúnach. Is é an cluiche tafl is mó ar a bhfuil aithne air.',
+    },
     fidchell: {
       navelStone: 'Cloch an Imleacáin',
       sacredWeb: 'An Gréasán Naofa',
@@ -858,6 +924,22 @@ export const translations: Record<Language, Translations> = {
     youStart: 'Tha thu a\' tòiseachadh!',
     aiStarts: 'Tha an AI a\' tòiseachadh.',
     viewMap: 'Faic Mapa',
+    variantDescriptions: {
+      fidchell: 'Ceilteach "gliocas fiodha" - Geama ceangail',
+      brandub: 'Tionndadh luath Èireannach',
+      tablut: 'Geama clasaigeach Suaineach',
+      tawlbwrdd: '"Bòrd tilgidh" Cuimreach',
+      hnefatafl: 'Blàr Lochlannach slàn',
+      alea: 'Mòr-thionndadh manachail',
+    },
+    variantHistories: {
+      fidchell: 'B\' e Fidchell ("gliocas fiodha") an geama bùird Ceilteach a b\' àirde cliù, air a chluich air "lìon" naomh cruinn a\' riochdachadh an t-saoghail. Feumaidh pìosan geala ceangal gun bhriseadh a chruthachadh bhon Chloich Imleig mheadhanach chun an oir a-muigh. Air ainmeachadh anns a\' Mabinogion mar Gwyddbwyll, chaidh a chruthachadh leis an dia Lugh.',
+      brandub: 'Chluich uaislean Ceilteach Brandub, a\' ciallachadh "fitheach dubh" ann an t-Seann Ghàidhlig Èireannach, ann an Èirinn nam meadhan-aoisean. Tha seann-teacsaichean a\' toirt iomradh air Àrd-Rìghrean a\' cluich a\' gheama seo ann an tallachan mòra, leis a\' phìos mheadhanach a\' riochdachadh Àrd-Rìgh Teamhrach a\' dìon an aghaidh nàimhdean roinneil.',
+      tablut: 'Chlàraich Carl Linnaeus Tablut ann an 1732 fhad \'s a bha e a\' tadhal air Lapland, far an robh na Sámi fhathast a\' cluich an t-seann gheama seo. Tha e a\' riochdachadh rìgh Suaineach a\' dìon an aghaidh luchd-ionnsaigh Moscoiveach. Is e seo an tionndadh tafl as fheàrr clàraichte.',
+      tawlbwrdd: 'Chaidh Tawlbwrdd, "bòrd tilgidh" Cuimreach, a mhìneachadh ann an teacsaichean lagh meadhan-aoiseil Cuimreach. Bha e air a mheas mar aon de na 24 euchd a dh\'fheumadh duine-uasal a mhaistreadh. Bha an geama cho cudromach \'s gum b\' e dìleab luachmhor a bh\' ann am bùird shònraichte a chaidh sìos tro theaghlaichean uaisle.',
+      hnefatafl: 'B\' e Hnefatafl, "Bòrd an Rìgh", prìomh gheama ro-innleachd Linn nan Lochlannach. Ghiùlain Lochlannaich e thar na slighean malairt farsaing aca bho Bhysantium gu Talamh an Èisg. Tha sagas ag innse mu ghaisgich a\' cur geall air òr agus urram air geamannan a chaidh a chluich ri solas teine.',
+      alea: 'Chaidh Alea Evangelii, "Geama nan Soisgeul", a chlàradh ann an làmh-sgrìobhainn bhon 12mh linn à Canterbury. Chaidh an tionndadh mòr 19×19 seo a chluich ann am manachainnean, le suidheachaidhean phìosan ceangailte ri samhlachas cràbhach. Tha e a\' riochdachadh an geama tafl as motha a tha aithnichte.',
+    },
     fidchell: {
       navelStone: 'Clach an Imleig',
       sacredWeb: 'An Lìon Naomh',
@@ -1025,6 +1107,22 @@ export const translations: Record<Language, Translations> = {
     youStart: 'Chi\'n dechrau!',
     aiStarts: 'AI yn dechrau.',
     viewMap: 'Gweld Map',
+    variantDescriptions: {
+      fidchell: 'Gwyddbwyll Geltaidd - Gêm cysylltiad',
+      brandub: 'Amrywiad cyflym Gwyddelig',
+      tablut: 'Gêm glasurol Swedaidd',
+      tawlbwrdd: '"Bwrdd taflu" Cymreig',
+      hnefatafl: 'Brwydr Llychlynaidd lawn',
+      alea: 'Amrywiad mawr mynachaidd',
+    },
+    variantHistories: {
+      fidchell: 'Fidchell ("doethineb pren") oedd y gêm fwrdd Geltaidd fwyaf ei bri, a chwaraewyd ar "we" gylchol sanctaidd yn cynrychioli\'r bydysawd. Rhaid i ddarnau gwyn greu cysylltiad di-dor o\'r Garreg Fogail ganolog i\'r ymyl allanol. Crybwyllwyd yn y Mabinogi fel Gwyddbwyll, fe\'i dyfeisiwyd gan y duw Lleu.',
+      brandub: 'Chwaraewyd Brandub, sy\'n golygu "cigfran ddu" yn yr Hen Wyddeleg, gan foneddigion Celtaidd yn Iwerddon ganoloesol. Mae hen destunau yn disgrifio Uchel-Frenhinoedd yn chwarae\'r gêm hon mewn neuaddau mawr, gyda\'r darn canolog yn cynrychioli Uchel-Frenin Tara yn amddiffyn yn erbyn cystadleuwyr taleithiol.',
+      tablut: 'Dogfennwyd Tablut gan Carl Linnaeus yn 1732 wrth ymweld â Lapdir, lle\'r oedd pobl y Sami yn dal i chwarae\'r hen gêm hon. Mae\'n cynrychioli brenin Swedaidd yn amddiffyn yn erbyn ymosodwyr Moscofiaidd. Dyma\'r amrywiad tafl sydd wedi\'i ddogfennu orau.',
+      tawlbwrdd: 'Disgrifiwyd Tawlbwrdd, y "bwrdd taflu" Cymreig, mewn testunau cyfraith canoloesol Cymreig. Fe\'i hystyriwyd yn un o\'r 24 camp y mae\'n rhaid i fonheddwr eu meistroli. Roedd y gêm mor bwysig fel bod byrddau arbennig yn drysorau teuluol a drosglwyddwyd drwy deuluoedd bonheddig.',
+      hnefatafl: 'Hnefatafl, "Bwrdd y Brenin," oedd prif gêm strategaeth Oes y Llychlynwyr. Cludodd y Llychlynwyr ef ar draws eu llwybrau masnach eang o Fysantiwm i Newfoundland. Mae\'r sagas yn sôn am ryfelwyr yn betio aur ac anrhydedd ar gemau a chwaraewyd wrth olau tân.',
+      alea: 'Cofnodwyd Alea Evangelii, "Gêm yr Efengylau," mewn llawysgrif o\'r 12fed ganrif o Gaergaint. Chwaraewyd yr amrywiad enfawr 19×19 hwn mewn mynachlogydd, gyda safleoedd darnau wedi\'u clymu â symbolaeth grefyddol. Mae\'n cynrychioli\'r gêm dafl fwyaf hysbys.',
+    },
     fidchell: {
       navelStone: 'Carreg y Bogail',
       sacredWeb: 'Y We Sanctaidd',
@@ -1192,6 +1290,22 @@ export const translations: Record<Language, Translations> = {
     youStart: 'Þū onginnest!',
     aiStarts: 'Cræftiga onginneþ.',
     viewMap: 'Gesēoh Mapan',
+    variantDescriptions: {
+      fidchell: 'Celtisce "trēowwīsdōm" - Gebindungspel',
+      brandub: 'Hwæt Īrisc cynren',
+      tablut: 'Eald Swēonisc spel',
+      tawlbwrdd: 'Wealisc "weorpbord"',
+      hnefatafl: 'Full Wīcingagefeoht',
+      alea: 'Mynsterlīc grēat cynren',
+    },
+    variantHistories: {
+      fidchell: 'Fidchell ("trēowwīsdōm") wæs þæt mǣste Celtisce bordspel, geplayed on hāligum hringlīcum "webbe" þe þone cosm getācnode. Hwīte tæflas sculon ungebrocen gebindung wyrcan fram þǣm middan Nafelstāne tō þǣm ūtecge. Genemned on þǣm Mabinogion swā Gwyddbwyll, hē wearþ āfunden fram þǣm gode Lugh.',
+      brandub: 'Brandub, þæt mǣnþ "sweart hræfn" on Eald Īrisc, wearþ geplayed fram Celtiscum ǣþelingum on middanweardre Īrlande. Ealde gewritu secgaþ Hēahcyningas þis spel plegiende on grēatum heallum, mid þǣm middan tæfle þone Hēahcyning Temra getācniende.',
+      tablut: 'Tablut wearþ āwriten fram Carl Linnaeus on gēare 1732 þā hē Lapland sōhte, þǣr þā Sami-folc gīet þis ealde spel plegodon. Hit getācnaþ ǣnne Swēoniscne cyning wiþ Moscowiscum onwinnendum werigende. Þis is þæt betste āwritene tafl cynren.',
+      tawlbwrdd: 'Tawlbwrdd, þæt Wealisc "weorpbord", wearþ āwriten on middanweardum Wealiscum ǣlagum. Hit wæs geþōht ān þāra 24 cræfta þe ǣlc ǣþeling cunnan sceolde. Þæt spel wæs swā micel māþm þæt syndrige bord wǣron dȳre yrfeweardnessa.',
+      hnefatafl: 'Hnefatafl, "Cyninges Bord", wæs þæt fōremǣste cræftspel þǣre Wīcinga-ǣlde. Norþmenn hit bǣron ofer hiera wīdan cēapwegas fram Byzantium tō Nīwfundlande. Sagan secgaþ be wigendum þe gold and āre weddodon on spelum þe æt fȳrleohte geplegodon.',
+      alea: 'Alea Evangelii, "Godspella Spel", wearþ āwriten on twelftan-hunde handgewrit fram Cantwarabyrig. Þis micel 19×19 cynren wearþ geplayed on mynstrum, mid tæflstōwum gebundenum tō hāligre getācnunge. Hit getācnaþ þæt grēateste cūþe taflspel.',
+    },
     fidchell: {
       navelStone: 'Nafolan Stān',
       sacredWeb: 'Þæt Hālige Webb',

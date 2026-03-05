@@ -59,6 +59,10 @@ export function GameSetup({
   const defenderCount = (boardConfig?.initialDefenders?.length ?? 0) + 1;
   const isFidchell = selectedVariant.id === 'fidchell';
 
+  const getVariantHistory = (variantId: string, fallback: string) => {
+    return t.variantHistories[variantId as keyof typeof t.variantHistories] || fallback;
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
@@ -105,6 +109,91 @@ export function GameSetup({
           </p>
         </motion.div>
 
+        {/* Variant Carousel (top, under title) */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="w-full"
+        >
+          <div className="flex items-center gap-4 mb-4 justify-center">
+            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-primary/40" />
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/70 font-['Cinzel'] font-semibold whitespace-nowrap">
+              {t.selectYourSaga}
+            </p>
+            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0">
+            {GAME_VARIANTS.map((variant) => {
+              const isActive = selectedVariant.id === variant.id;
+              const flag = VARIANT_FLAGS[variant.id] || '🏳️';
+              return (
+                <div key={variant.id} className="relative shrink-0">
+                  <motion.button
+                    onClick={() => handleVariantChange(variant)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`carved-button px-5 py-3 rounded-lg text-center min-w-[110px] transition-all ${
+                      isActive
+                        ? 'active ring-2 ring-primary/40 scale-105'
+                        : 'text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
+                      <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
+                    </div>
+                    <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
+                      {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`}
+                    </p>
+                  </motion.button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInfoVariant(infoVariant?.id === variant.id ? null : variant);
+                    }}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary/80 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10"
+                    title={`${t.infoAbout} ${variant.name}`}
+                  >
+                    <Info className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <AnimatePresence>
+            {infoVariant && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="mt-4 mx-auto max-w-lg carved-button rounded-lg p-4 relative"
+              >
+                <button
+                  onClick={() => setInfoVariant(null)}
+                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{VARIANT_FLAGS[infoVariant.id] || '🏳️'}</span>
+                  <h4 className="font-['Cinzel'] text-primary font-semibold">{infoVariant.name}</h4>
+                  <span className="text-xs text-muted-foreground">— {infoVariant.origin}, {infoVariant.era}</span>
+                </div>
+                <p className="text-sm text-foreground/90 leading-relaxed">
+                  {getVariantHistory(infoVariant.id, infoVariant.history)}
+                </p>
+                <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                  <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
+                  <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
         {/* Center area: Parchment + Settings */}
         <div className="flex flex-col lg:flex-row gap-6 w-full items-start justify-center">
 
@@ -112,10 +201,9 @@ export function GameSetup({
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
             className="parchment rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full -rotate-1 relative"
           >
-            {/* Decorative corner brackets */}
             <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-800/40" />
             <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-800/40" />
             <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-amber-800/40" />
@@ -136,10 +224,9 @@ export function GameSetup({
                   {selectedVariant.name}
                 </h2>
                 <p className="text-sm text-amber-900/80 italic leading-relaxed mb-6 font-['Crimson_Text']">
-                  "{selectedVariant.history.slice(0, 180)}…"
+                  "{getVariantHistory(selectedVariant.id, selectedVariant.history).slice(0, 180)}…"
                 </p>
 
-                {/* Stats row */}
                 <div className="flex justify-between border-t border-amber-800/20 pt-4">
                   <div className="text-center">
                     <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">{t.boardLabel}</p>
@@ -172,10 +259,9 @@ export function GameSetup({
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
             className="w-full max-w-xs space-y-5"
           >
-            {/* Play As */}
             <div className="space-y-2">
               <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
                 {t.playAs}
@@ -216,7 +302,6 @@ export function GameSetup({
               </div>
             </div>
 
-            {/* Difficulty */}
             <div className="space-y-2">
               <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
                 {t.difficulty}
@@ -239,7 +324,6 @@ export function GameSetup({
               </div>
             </div>
 
-            {/* Begin Battle */}
             <button
               onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play', selectedVariant.id)}
               className="w-full py-3.5 rounded-lg font-['Cinzel'] font-bold text-lg uppercase tracking-wider
@@ -251,7 +335,6 @@ export function GameSetup({
               {t.beginBattle}
             </button>
 
-            {/* Demo link */}
             <button
               onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
               className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1.5"
@@ -261,93 +344,6 @@ export function GameSetup({
             </button>
           </motion.div>
         </div>
-
-        {/* Bottom Variant Carousel */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.45 }}
-          className="w-full"
-        >
-          {/* Label with decorative lines */}
-          <div className="flex items-center gap-4 mb-4 justify-center">
-            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-primary/40" />
-            <p className="text-xs uppercase tracking-[0.3em] text-primary/70 font-['Cinzel'] font-semibold whitespace-nowrap">
-              {t.selectYourSaga}
-            </p>
-            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
-          </div>
-
-          {/* Tiles */}
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0">
-            {GAME_VARIANTS.map((variant) => {
-              const isActive = selectedVariant.id === variant.id;
-              const flag = VARIANT_FLAGS[variant.id] || '🏳️';
-              return (
-                <div key={variant.id} className="relative shrink-0">
-                  <motion.button
-                    onClick={() => handleVariantChange(variant)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`carved-button px-5 py-3 rounded-lg text-center min-w-[110px] transition-all ${
-                      isActive
-                        ? 'active ring-2 ring-primary/40 scale-105'
-                        : 'text-foreground'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
-                      <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
-                    </div>
-                    <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`}
-                    </p>
-                  </motion.button>
-                  {/* Info button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInfoVariant(infoVariant?.id === variant.id ? null : variant);
-                    }}
-                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary/80 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10"
-                    title={`${t.infoAbout} ${variant.name}`}
-                  >
-                    <Info className="w-3 h-3" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Info popup */}
-          <AnimatePresence>
-            {infoVariant && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="mt-4 mx-auto max-w-lg carved-button rounded-lg p-4 relative"
-              >
-                <button
-                  onClick={() => setInfoVariant(null)}
-                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{VARIANT_FLAGS[infoVariant.id] || '🏳️'}</span>
-                  <h4 className="font-['Cinzel'] text-primary font-semibold">{infoVariant.name}</h4>
-                  <span className="text-xs text-muted-foreground">— {infoVariant.origin}, {infoVariant.era}</span>
-                </div>
-                <p className="text-sm text-foreground/90 leading-relaxed">{infoVariant.history}</p>
-                <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                  <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
-                  <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
       </div>
 
       {/* Built with Lovable badge */}
