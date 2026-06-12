@@ -78,6 +78,14 @@ export function GameSetup({
       {/* Top-right controls */}
       <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-30 flex items-center gap-1 sm:gap-3">
         <button
+          onClick={() => setShowRules(true)}
+          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
+          title="How to play"
+          aria-label="How to play"
+        >
+          <BookOpen className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => setShowMap(true)}
           className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
           title={t.historyMapTitle}
