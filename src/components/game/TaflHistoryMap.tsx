@@ -114,7 +114,6 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
             scrollWheelZoom={false}
             touchZoom
             dragging
-            tap
             style={{ height: '100%', width: '100%' }}
           >
             <TileLayer
