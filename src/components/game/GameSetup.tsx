@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield, Info, X } from 'lucide-react';
+import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen } from 'lucide-react';
 
 const VARIANT_FLAGS: Record<string, string> = {
   fidchell: '🇮🇪',
@@ -19,6 +19,7 @@ import kamrokLogo from '@/assets/kamrok-logo.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
 import { LanguageSelector } from './LanguageSelector';
+import { RulesModal } from './RulesModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 interface GameSetupProps {
