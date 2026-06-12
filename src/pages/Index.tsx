@@ -282,7 +282,7 @@ export default function Index() {
         <img 
           src={hnefataflLogo} 
           alt={t.appName}
-          className="h-12 sm:h-16 drop-shadow-lg"
+          className="h-9 sm:h-14 md:h-16 drop-shadow-lg"
         />
         <div className="flex-1 flex justify-end">
           <VolumeControl
@@ -299,7 +299,7 @@ export default function Index() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
-        className="fixed top-20 left-2 sm:left-4 z-20 space-y-2 sm:space-y-3 w-32 sm:w-48"
+        className="fixed top-16 sm:top-20 left-2 sm:left-4 z-20 space-y-2 sm:space-y-3 w-[44vw] max-w-[180px] sm:w-48"
       >
         {!gameMode || gameMode === 'play' ? (
           <>
@@ -343,9 +343,10 @@ export default function Index() {
       {/* Mobile History Toggle */}
       <button
         onClick={() => setShowHistory(!showHistory)}
-        className="fixed top-20 right-4 z-20 lg:hidden bg-card/90 backdrop-blur p-2 rounded-lg border border-border"
+        className="fixed top-16 right-2 z-20 lg:hidden tap-target rounded-full bg-card/90 backdrop-blur border border-border flex items-center justify-center shadow-lg"
+        aria-label={t.moveHistory}
       >
-        <span className="text-sm font-['Cinzel']">📜 {t.moveHistory}</span>
+        <span className="text-lg">📜</span>
       </button>
 
       {/* Mobile History Panel */}
@@ -355,7 +356,7 @@ export default function Index() {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
-            className="fixed top-32 right-4 z-30 w-48 h-64 lg:hidden"
+            className="fixed top-28 right-2 z-30 w-[80vw] max-w-xs h-[60vh] lg:hidden"
           >
             <MoveHistory moves={gameState.moveHistory} />
           </motion.div>
@@ -367,15 +368,16 @@ export default function Index() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-4 text-xs sm:text-sm"
+        className="fixed left-1/2 -translate-x-1/2 z-20 flex gap-1.5 sm:gap-4 text-[11px] sm:text-sm safe-bottom"
+        style={{ bottom: 'max(3rem, calc(env(safe-area-inset-bottom) + 2.75rem))' }}
       >
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-card/90 backdrop-blur px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-border shadow-lg">
-          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--piece-attacker))]" />
-          <span className="text-foreground/90">{t.attackers}: {gameState.pieces.filter(p => p.type === 'attacker').length}</span>
+        <div className="flex items-center gap-1 sm:gap-2 bg-card/90 backdrop-blur px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-border shadow-lg">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--piece-attacker))]" />
+          <span className="text-foreground/90"><span className="hidden sm:inline">{t.attackers}: </span><span className="sm:hidden">A: </span>{gameState.pieces.filter(p => p.type === 'attacker').length}</span>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-card/90 backdrop-blur px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-border shadow-lg">
-          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--piece-defender))]" />
-          <span className="text-foreground/90">{t.defenders}: {gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
+        <div className="flex items-center gap-1 sm:gap-2 bg-card/90 backdrop-blur px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-border shadow-lg">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--piece-defender))]" />
+          <span className="text-foreground/90"><span className="hidden sm:inline">{t.defenders}: </span><span className="sm:hidden">D: </span>{gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
         </div>
       </motion.div>
 
@@ -404,7 +406,7 @@ export default function Index() {
         href="https://kamrok.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-3 left-3 z-30"
+        className="fixed left-3 z-30 safe-bottom"
       >
         <img src={kamrokLogo} alt="Kamrok" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
       </a>
@@ -414,7 +416,7 @@ export default function Index() {
         href="https://lovable.dev/invite/8MUK1UP"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-3 right-3 z-30"
+        className="fixed right-3 z-30 safe-bottom"
       >
         <img src={builtwithImg} alt="Built with Lovable" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
       </a>
