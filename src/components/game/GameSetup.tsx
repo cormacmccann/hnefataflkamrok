@@ -348,13 +348,22 @@ export function GameSetup({
               {t.beginBattle}
             </button>
 
-            <button
-              onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
-              className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              {t.watchDemo}
-            </button>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <button
+                onClick={() => setShowRules(true)}
+                className="text-xs text-primary/90 hover:text-primary transition-colors flex items-center gap-1.5 underline-offset-4 hover:underline"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                How to play
+              </button>
+              <button
+                onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {t.watchDemo}
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
