@@ -54,7 +54,7 @@ export function useDemoMode(boardSize: BoardSize, difficulty: AIDifficulty = 'me
     showPopup: false,
   });
   
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getNextDemoMove = useCallback((pieces: Piece[], currentPlayer: Player, isCorner: (pos: Position) => boolean) => {
     const bestMove = ai.getBestMove(pieces, currentPlayer);
