@@ -399,6 +399,9 @@ export function GameSetup({
           />
         )}
       </AnimatePresence>
+
+      {/* How to play modal */}
+      <RulesModal open={showRules} onClose={() => setShowRules(false)} />
     </div>
   );
 }
