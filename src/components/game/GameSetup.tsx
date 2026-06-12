@@ -74,11 +74,12 @@ export function GameSetup({
       <div className="absolute inset-0 bg-black/50 z-[1]" />
 
       {/* Top-right controls */}
-      <div className="fixed top-4 right-4 z-30 flex items-center gap-1.5 sm:gap-3">
+      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-30 flex items-center gap-1 sm:gap-3">
         <button
           onClick={() => setShowMap(true)}
-          className="p-2 rounded-lg carved-button text-foreground hover:text-primary transition-colors"
+          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
           title={t.historyMapTitle}
+          aria-label={t.historyMapTitle}
         >
           <Map className="w-4 h-4" />
         </button>
@@ -125,17 +126,17 @@ export function GameSetup({
             <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
           </div>
 
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0 -mx-2 sm:mx-0 pb-2">
             {GAME_VARIANTS.map((variant) => {
               const isActive = selectedVariant.id === variant.id;
               const flag = VARIANT_FLAGS[variant.id] || '🏳️';
               return (
-                <div key={variant.id} className="relative shrink-0">
+                <div key={variant.id} className="relative shrink-0 snap-center">
                   <motion.button
                     onClick={() => handleVariantChange(variant)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.97 }}
-                    className={`carved-button px-5 py-3 rounded-lg text-center min-w-[110px] transition-all ${
+                    className={`carved-button px-3 sm:px-5 py-3 rounded-lg text-center min-w-[96px] sm:min-w-[110px] transition-all ${
                       isActive
                         ? 'active ring-2 ring-primary/40 scale-105'
                         : 'text-foreground'
@@ -154,10 +155,11 @@ export function GameSetup({
                       e.stopPropagation();
                       setInfoVariant(infoVariant?.id === variant.id ? null : variant);
                     }}
-                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary/80 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10"
+                    className="absolute -top-2 -right-2 w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-primary/90 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10 shadow-md"
                     title={`${t.infoAbout} ${variant.name}`}
+                    aria-label={`${t.infoAbout} ${variant.name}`}
                   >
-                    <Info className="w-3 h-3" />
+                    <Info className="w-3.5 h-3.5" />
                   </button>
                 </div>
               );
@@ -203,7 +205,7 @@ export function GameSetup({
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="parchment rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full -rotate-1 relative"
+            className="parchment rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full sm:-rotate-1 relative"
           >
             <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-800/40" />
             <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-800/40" />
@@ -327,10 +329,10 @@ export function GameSetup({
 
             <button
               onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play', selectedVariant.id)}
-              className="w-full py-3.5 rounded-lg font-['Cinzel'] font-bold text-lg uppercase tracking-wider
+              className="w-full py-4 sm:py-3.5 rounded-lg font-['Cinzel'] font-bold text-lg uppercase tracking-wider
                 bg-gradient-to-b from-primary to-[hsl(35_55%_38%)] text-primary-foreground
                 shadow-[0_0_20px_hsl(38_60%_50%/0.4)] hover:shadow-[0_0_30px_hsl(38_60%_50%/0.6)]
-                transition-shadow flex items-center justify-center gap-2"
+                transition-shadow flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               <Play className="w-5 h-5" />
               {t.beginBattle}
@@ -352,7 +354,7 @@ export function GameSetup({
         href="https://kamrok.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-3 left-3 z-30"
+        className="fixed left-3 z-30 safe-bottom"
       >
         <img src={kamrokLogo} alt="Kamrok" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
       </a>
@@ -362,7 +364,7 @@ export function GameSetup({
         href="https://lovable.dev/invite/8MUK1UP"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-3 right-3 z-30"
+        className="fixed right-3 z-30 safe-bottom"
       >
         <img src={builtwithImg} alt="Built with Lovable" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
       </a>

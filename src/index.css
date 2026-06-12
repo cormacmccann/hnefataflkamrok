@@ -163,8 +163,41 @@
   .touch-action-manipulation {
     touch-action: manipulation;
   }
+
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .safe-bottom {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+html, body {
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
 }
 
 button, a, [role="button"] {
   touch-action: manipulation;
+}
+
+/* Leaflet override: dark themed attribution */
+.leaflet-container {
+  background: #0a1520;
+  font-family: 'Crimson Text', serif;
+}
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.6) !important;
+  color: #ccc !important;
+  font-size: 9px !important;
+}
+.leaflet-control-attribution a { color: hsl(38 60% 60%) !important; }
+.tafl-marker-pulse {
+  animation: tafl-pulse 1.6s ease-out infinite;
+}
+@keyframes tafl-pulse {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  100% { box-shadow: 0 0 0 14px transparent; }
 }
