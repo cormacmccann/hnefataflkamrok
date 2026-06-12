@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield, Info, X } from 'lucide-react';
+import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen } from 'lucide-react';
 
 const VARIANT_FLAGS: Record<string, string> = {
   fidchell: '🇮🇪',
@@ -19,6 +19,7 @@ import kamrokLogo from '@/assets/kamrok-logo.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
 import { LanguageSelector } from './LanguageSelector';
+import { RulesModal } from './RulesModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 interface GameSetupProps {
@@ -41,6 +42,7 @@ export function GameSetup({
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showMap, setShowMap] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
   const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
 
@@ -75,6 +77,14 @@ export function GameSetup({
 
       {/* Top-right controls */}
       <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-30 flex items-center gap-1 sm:gap-3">
+        <button
+          onClick={() => setShowRules(true)}
+          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
+          title="How to play"
+          aria-label="How to play"
+        >
+          <BookOpen className="w-4 h-4" />
+        </button>
         <button
           onClick={() => setShowMap(true)}
           className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
@@ -338,13 +348,22 @@ export function GameSetup({
               {t.beginBattle}
             </button>
 
-            <button
-              onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
-              className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              {t.watchDemo}
-            </button>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <button
+                onClick={() => setShowRules(true)}
+                className="text-xs text-primary/90 hover:text-primary transition-colors flex items-center gap-1.5 underline-offset-4 hover:underline"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                How to play
+              </button>
+              <button
+                onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {t.watchDemo}
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -380,6 +399,9 @@ export function GameSetup({
           />
         )}
       </AnimatePresence>
+
+      {/* How to play modal */}
+      <RulesModal open={showRules} onClose={() => setShowRules(false)} />
     </div>
   );
 }
