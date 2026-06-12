@@ -42,6 +42,7 @@ export function GameSetup({
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [showMap, setShowMap] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
   const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
 
