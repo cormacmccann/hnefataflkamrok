@@ -260,7 +260,7 @@ export default function Index() {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [gameStarted, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, isFidchell, taflAI, fidchellAI, selectPiece, taflState, fidchellState, setDemoMove, hidePopup, t]);
+  }, [gameStarted, isPassAndPlay, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, isFidchell, taflAI, fidchellAI, selectPiece, taflState, fidchellState, setDemoMove, hidePopup, t]);
 
   useEffect(() => {
     if (gameState.gameResult) {
