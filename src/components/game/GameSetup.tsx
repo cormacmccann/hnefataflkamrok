@@ -23,7 +23,9 @@ import { RulesModal } from './RulesModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { LORE_GAMES, LoreGame } from '@/constants/loreGames';
 import { AncientGameModal } from '@/components/ancient/AncientGameModal';
+import { ERA_IMAGES } from '@/components/ancient/EraBackdrop';
 import { Globe, Hourglass, Sparkles } from 'lucide-react';
+
 
 const LORE_FLAGS: Record<string, string> = {
   petteia: '🇬🇷',
@@ -250,30 +252,40 @@ export function GameSetup({
             >
               {LORE_GAMES.map((g) => {
                 const playable = g.status === 'playable';
+                const era = ERA_IMAGES[g.id];
                 return (
                   <motion.button
                     key={g.id}
                     onClick={() => setLoreGame(g)}
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.97 }}
-                    className="carved-button shrink-0 snap-center text-left px-3 sm:px-4 py-3 rounded-lg min-w-[180px] sm:min-w-[200px] relative"
+                    className="carved-button shrink-0 snap-center text-left rounded-lg min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] relative overflow-hidden"
                   >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="text-base">{LORE_FLAGS[g.id] || '🏳️'}</span>
-                      <span className="font-['Cinzel'] text-sm font-semibold text-foreground truncate">{g.name}</span>
+                    {era && (
+                      <div className="relative h-20 sm:h-24 overflow-hidden">
+                        <img src={era} alt={g.region} loading="lazy" className="w-full h-full object-cover" width={210} height={96} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                      </div>
+                    )}
+                    <div className="p-2.5">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-base">{LORE_FLAGS[g.id] || '🏳️'}</span>
+                        <span className="font-['Cinzel'] text-sm font-semibold text-foreground truncate">{g.name}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate">{g.region}</p>
+                      <p className="text-[10px] text-muted-foreground/70 italic truncate">{g.era}</p>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">{g.region}</p>
-                    <p className="text-[10px] text-muted-foreground/70 italic">{g.era}</p>
-                    <span className={`absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 ${
+                    <span className={`absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 backdrop-blur-sm ${
                       playable
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-amber-700/20 text-amber-300'
+                        ? 'bg-primary/80 text-primary-foreground'
+                        : 'bg-amber-700/80 text-amber-50'
                     }`}>
                       {playable ? <><Sparkles className="w-2.5 h-2.5" /> Play</> : <><Hourglass className="w-2.5 h-2.5" /> Dev</>}
                     </span>
                   </motion.button>
                 );
               })}
+
             </motion.div>
           )}
         </motion.div>
