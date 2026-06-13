@@ -70,7 +70,7 @@ export function RaceGame({
 
   return (
     <div className="absolute inset-0">
-      <Ancient3DScene cameraPosition={cameraPosition ?? [0, 12, 9]} minDistance={6} maxDistance={26}>
+      <Ancient3DScene cameraPosition={cameraPosition ?? [0, 12, 9]} minDistance={6} maxDistance={26} eraId={eraId}>
         <RaceBoard3D
           state={state} myMoves={myMoves} onMove={playMove}
           tileColor={tileColor} specialColor={specialColor}

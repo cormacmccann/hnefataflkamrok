@@ -44,7 +44,7 @@ export function LatrunculorumGame() {
 
   return (
     <div className="absolute inset-0">
-      <Ancient3DScene cameraPosition={[0, 11, 9]}>
+      <Ancient3DScene cameraPosition={[0, 11, 9]} eraId="latrunculorum">
         <LatrunculorumBoard3D state={state} validTargets={validTargets} onSquareClick={clickSquare} />
       </Ancient3DScene>
 

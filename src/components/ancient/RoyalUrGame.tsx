@@ -54,7 +54,7 @@ export function RoyalUrGame() {
 
   return (
     <div className="absolute inset-0">
-      <Ancient3DScene cameraPosition={[0, 9, 8]} minDistance={7} maxDistance={20}>
+      <Ancient3DScene cameraPosition={[0, 9, 8]} minDistance={7} maxDistance={20} eraId="royal-ur">
         <RoyalUrBoard3D state={state} myMoves={myMoves} onMove={trySelectMove} />
       </Ancient3DScene>
 

@@ -50,7 +50,7 @@ export function PetteiaGame() {
 
   return (
     <div className="absolute inset-0">
-      <Ancient3DScene cameraPosition={[0, 11, 9]}>
+      <Ancient3DScene cameraPosition={[0, 11, 9]} eraId="petteia">
         <PetteiaBoard3D state={state} validTargets={validTargets} onSquareClick={clickSquare} />
       </Ancient3DScene>
 
