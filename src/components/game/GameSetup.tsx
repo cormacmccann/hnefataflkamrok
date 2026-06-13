@@ -168,75 +168,114 @@ export function GameSetup({
             <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
           </div>
 
-          <div className="flex gap-2 sm:gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0 -mx-2 sm:mx-0 pb-2">
-            {GAME_VARIANTS.map((variant) => {
-              const isActive = selectedVariant.id === variant.id;
-              const flag = VARIANT_FLAGS[variant.id] || '🏳️';
-              return (
-                <div key={variant.id} className="relative shrink-0 snap-center">
-                  <motion.button
-                    onClick={() => handleVariantChange(variant)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`carved-button px-3 sm:px-5 py-3 rounded-lg text-center min-w-[96px] sm:min-w-[110px] transition-all ${
-                      isActive
-                        ? 'active ring-2 ring-primary/40 scale-105'
-                        : 'text-foreground'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
-                      <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
+          {activeTab === 'tafl' && (
+            <>
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0 -mx-2 sm:mx-0 pb-2">
+                {GAME_VARIANTS.map((variant) => {
+                  const isActive = selectedVariant.id === variant.id;
+                  const flag = VARIANT_FLAGS[variant.id] || '🏳️';
+                  return (
+                    <div key={variant.id} className="relative shrink-0 snap-center">
+                      <motion.button
+                        onClick={() => handleVariantChange(variant)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.97 }}
+                        className={`carved-button px-3 sm:px-5 py-3 rounded-lg text-center min-w-[96px] sm:min-w-[110px] transition-all ${
+                          isActive
+                            ? 'active ring-2 ring-primary/40 scale-105'
+                            : 'text-foreground'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
+                          <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
+                        </div>
+                        <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
+                          {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`}
+                        </p>
+                      </motion.button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInfoVariant(infoVariant?.id === variant.id ? null : variant);
+                        }}
+                        className="absolute -top-2 -right-2 w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-primary/90 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10 shadow-md"
+                        title={`${t.infoAbout} ${variant.name}`}
+                        aria-label={`${t.infoAbout} ${variant.name}`}
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`}
-                    </p>
-                  </motion.button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInfoVariant(infoVariant?.id === variant.id ? null : variant);
-                    }}
-                    className="absolute -top-2 -right-2 w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-primary/90 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10 shadow-md"
-                    title={`${t.infoAbout} ${variant.name}`}
-                    aria-label={`${t.infoAbout} ${variant.name}`}
-                  >
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
 
-          <AnimatePresence>
-            {infoVariant && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="mt-4 mx-auto max-w-lg carved-button rounded-lg p-4 relative"
-              >
-                <button
-                  onClick={() => setInfoVariant(null)}
-                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{VARIANT_FLAGS[infoVariant.id] || '🏳️'}</span>
-                  <h4 className="font-['Cinzel'] text-primary font-semibold">{infoVariant.name}</h4>
-                  <span className="text-xs text-muted-foreground">— {infoVariant.origin}, {infoVariant.era}</span>
-                </div>
-                <p className="text-sm text-foreground/90 leading-relaxed">
-                  {getVariantHistory(infoVariant.id, infoVariant.history)}
-                </p>
-                <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                  <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
-                  <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <AnimatePresence>
+                {infoVariant && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="mt-4 mx-auto max-w-lg carved-button rounded-lg p-4 relative"
+                  >
+                    <button
+                      onClick={() => setInfoVariant(null)}
+                      className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{VARIANT_FLAGS[infoVariant.id] || '🏳️'}</span>
+                      <h4 className="font-['Cinzel'] text-primary font-semibold">{infoVariant.name}</h4>
+                      <span className="text-xs text-muted-foreground">— {infoVariant.origin}, {infoVariant.era}</span>
+                    </div>
+                    <p className="text-sm text-foreground/90 leading-relaxed">
+                      {getVariantHistory(infoVariant.id, infoVariant.history)}
+                    </p>
+                    <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                      <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
+                      <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+
+          {activeTab === 'lost' && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex gap-2 sm:gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory flex-nowrap sm:flex-wrap justify-start sm:justify-center px-2 sm:px-0 -mx-2 sm:mx-0 pb-2"
+            >
+              {LORE_GAMES.map((g) => {
+                const playable = g.status === 'playable';
+                return (
+                  <motion.button
+                    key={g.id}
+                    onClick={() => setLoreGame(g)}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="carved-button shrink-0 snap-center text-left px-3 sm:px-4 py-3 rounded-lg min-w-[180px] sm:min-w-[200px] relative"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-base">{LORE_FLAGS[g.id] || '🏳️'}</span>
+                      <span className="font-['Cinzel'] text-sm font-semibold text-foreground truncate">{g.name}</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">{g.region}</p>
+                    <p className="text-[10px] text-muted-foreground/70 italic">{g.era}</p>
+                    <span className={`absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 ${
+                      playable
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-amber-700/20 text-amber-300'
+                    }`}>
+                      {playable ? <><Sparkles className="w-2.5 h-2.5" /> Play</> : <><Hourglass className="w-2.5 h-2.5" /> Dev</>}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Center area: Parchment + Settings */}
