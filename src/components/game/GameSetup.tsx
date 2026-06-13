@@ -176,25 +176,33 @@ export function GameSetup({
                 {GAME_VARIANTS.map((variant) => {
                   const isActive = selectedVariant.id === variant.id;
                   const flag = VARIANT_FLAGS[variant.id] || '🏳️';
+                  const era = ERA_IMAGES[variant.id];
                   return (
                     <div key={variant.id} className="relative shrink-0 snap-center">
                       <motion.button
                         onClick={() => handleVariantChange(variant)}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.04 }}
                         whileTap={{ scale: 0.97 }}
-                        className={`carved-button px-3 sm:px-5 py-3 rounded-lg text-center min-w-[96px] sm:min-w-[110px] transition-all ${
-                          isActive
-                            ? 'active ring-2 ring-primary/40 scale-105'
-                            : 'text-foreground'
+                        className={`carved-button text-left rounded-lg min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] relative overflow-hidden transition-all ${
+                          isActive ? 'active ring-2 ring-primary/60 scale-[1.02]' : 'text-foreground'
                         }`}
                       >
-                        <div className="flex items-center justify-center gap-1.5">
-                          <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
-                          <span className="font-['Cinzel'] text-sm font-semibold">{variant.name}</span>
+                        {era && (
+                          <div className="relative h-20 sm:h-24 overflow-hidden">
+                            <img src={era} alt={variant.origin} loading="lazy" className="w-full h-full object-cover" width={210} height={96} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                          </div>
+                        )}
+                        <div className="p-2.5">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
+                            <span className="font-['Cinzel'] text-sm font-semibold truncate">{variant.name}</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground truncate">{variant.origin}</p>
+                          <p className="text-[10px] text-muted-foreground/70 italic truncate">
+                            {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`} · {variant.era}
+                          </p>
                         </div>
-                        <p className={`text-[10px] mt-0.5 ${isActive ? 'opacity-70' : 'text-muted-foreground'}`}>
-                          {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`}
-                        </p>
                       </motion.button>
                       <button
                         onClick={(e) => {
