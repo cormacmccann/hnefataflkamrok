@@ -40,6 +40,7 @@ export default function Index() {
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [isPassAndPlay, setIsPassAndPlay] = useState(false);
 
   const { musicVolume, sfxVolume, updateMusicVolume, updateSfxVolume } = useVolumeControl();
   const { isPlaying, startMusic } = useMusicPlayer(musicVolume);
@@ -73,19 +74,38 @@ export default function Index() {
     setBoardTheme(variant.theme);
     setBoardType(variant.boardType);
     setVariantId(selectedVariantId);
+    setIsPassAndPlay(false);
     setGameStarted(true);
-    
+
     if (variant.boardType === 'circular') {
       fidchellState.resetGame(side);
     } else {
       taflState.resetGame(size, side);
     }
-    
+
     startMusic();
-    
+
     if (mode === 'demo') {
       startDemo();
     }
+  };
+
+  const handleStartPassAndPlay = (selectedVariantId: string) => {
+    const variant = GAME_VARIANTS.find(v => v.id === selectedVariantId) || GAME_VARIANTS[1];
+    setBoardSize(variant.boardSize);
+    setPlayerSide('attacker'); // attacker moves first; pass-and-play ignores side anyway
+    setGameMode('play');
+    setBoardTheme(variant.theme);
+    setBoardType(variant.boardType);
+    setVariantId(selectedVariantId);
+    setIsPassAndPlay(true);
+    setGameStarted(true);
+    if (variant.boardType === 'circular') {
+      fidchellState.resetGame('attacker');
+    } else {
+      taflState.resetGame(variant.boardSize, 'attacker');
+    }
+    startMusic();
   };
 
   const handleNewGame = () => {
