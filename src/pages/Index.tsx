@@ -40,6 +40,7 @@ export default function Index() {
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [isPassAndPlay, setIsPassAndPlay] = useState(false);
 
   const { musicVolume, sfxVolume, updateMusicVolume, updateSfxVolume } = useVolumeControl();
   const { isPlaying, startMusic } = useMusicPlayer(musicVolume);
@@ -73,19 +74,38 @@ export default function Index() {
     setBoardTheme(variant.theme);
     setBoardType(variant.boardType);
     setVariantId(selectedVariantId);
+    setIsPassAndPlay(false);
     setGameStarted(true);
-    
+
     if (variant.boardType === 'circular') {
       fidchellState.resetGame(side);
     } else {
       taflState.resetGame(size, side);
     }
-    
+
     startMusic();
-    
+
     if (mode === 'demo') {
       startDemo();
     }
+  };
+
+  const handleStartPassAndPlay = (selectedVariantId: string) => {
+    const variant = GAME_VARIANTS.find(v => v.id === selectedVariantId) || GAME_VARIANTS[1];
+    setBoardSize(variant.boardSize);
+    setPlayerSide('attacker'); // attacker moves first; pass-and-play ignores side anyway
+    setGameMode('play');
+    setBoardTheme(variant.theme);
+    setBoardType(variant.boardType);
+    setVariantId(selectedVariantId);
+    setIsPassAndPlay(true);
+    setGameStarted(true);
+    if (variant.boardType === 'circular') {
+      fidchellState.resetGame('attacker');
+    } else {
+      taflState.resetGame(variant.boardSize, 'attacker');
+    }
+    startMusic();
   };
 
   const handleNewGame = () => {
@@ -106,7 +126,8 @@ export default function Index() {
 
   const handleSquareClick = useCallback((position: Position) => {
     if (gameMode === 'demo') return;
-    if (!gameState.isPlayerTurn || gameState.gameResult) return;
+    if (gameState.gameResult) return;
+    if (!isPassAndPlay && !gameState.isPlayerTurn) return;
 
     if (gameState.selectedPiece) {
       const moveSuccess = makeMove(position);
@@ -121,11 +142,12 @@ export default function Index() {
         }
       }
     }
-  }, [gameMode, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
 
   const handlePieceClick = useCallback((pieceId: string) => {
     if (gameMode === 'demo') return;
-    if (!gameState.isPlayerTurn || gameState.gameResult) return;
+    if (gameState.gameResult) return;
+    if (!isPassAndPlay && !gameState.isPlayerTurn) return;
 
     const piece = gameState.pieces.find(p => p.id === pieceId);
     if (!piece) return;
@@ -135,11 +157,13 @@ export default function Index() {
     } else {
       selectPiece(piece);
     }
-  }, [gameMode, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
 
   // Demo mode & AI: plays both sides
   useEffect(() => {
     if (!gameStarted || gameState.gameResult) return;
+    if (isPassAndPlay) return; // no AI in pass-and-play
+    
     
     // Fidchell uses different AI
     if (isFidchell) {
@@ -236,7 +260,7 @@ export default function Index() {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [gameStarted, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, isFidchell, taflAI, fidchellAI, selectPiece, taflState, fidchellState, setDemoMove, hidePopup, t]);
+  }, [gameStarted, isPassAndPlay, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, isFidchell, taflAI, fidchellAI, selectPiece, taflState, fidchellState, setDemoMove, hidePopup, t]);
 
   useEffect(() => {
     if (gameState.gameResult) {
@@ -252,6 +276,7 @@ export default function Index() {
     return (
       <GameSetup 
         onStartGame={handleStartGame}
+        onStartPassAndPlay={handleStartPassAndPlay}
         musicVolume={musicVolume}
         sfxVolume={sfxVolume}
         onMusicVolumeChange={updateMusicVolume}

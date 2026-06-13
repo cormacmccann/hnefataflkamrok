@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen } from 'lucide-react';
+import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen, Users } from 'lucide-react';
+import { MultiplayerMenu } from '@/components/multiplayer/MultiplayerMenu';
+import { ProfileChip } from '@/components/auth/ProfileChip';
 
 const VARIANT_FLAGS: Record<string, string> = {
   fidchell: '🇮🇪',
@@ -40,6 +42,7 @@ const LORE_FLAGS: Record<string, string> = {
 
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
+  onStartPassAndPlay?: (variantId: string) => void;
   musicVolume: number;
   sfxVolume: number;
   onMusicVolumeChange: (volume: number) => void;
@@ -48,6 +51,7 @@ interface GameSetupProps {
 
 export function GameSetup({
   onStartGame,
+  onStartPassAndPlay,
   musicVolume,
   sfxVolume,
   onMusicVolumeChange,
@@ -112,6 +116,15 @@ export function GameSetup({
         >
           <Map className="w-4 h-4" />
         </button>
+        <button
+          onClick={() => setShowMultiplayer(true)}
+          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
+          title="Multiplayer"
+          aria-label="Multiplayer"
+        >
+          <Users className="w-4 h-4" />
+        </button>
+        <ProfileChip />
         <LanguageSelector />
         <VolumeControl
           musicVolume={musicVolume}
@@ -497,6 +510,13 @@ export function GameSetup({
 
       {/* Ancient lost-game modal (fullscreen 3D) */}
       <AncientGameModal game={loreGame} onClose={() => setLoreGame(null)} />
+
+      {/* Multiplayer menu */}
+      <MultiplayerMenu
+        open={showMultiplayer}
+        onOpenChange={setShowMultiplayer}
+        onPassAndPlay={(vid) => onStartPassAndPlay?.(vid)}
+      />
     </div>
   );
 }
