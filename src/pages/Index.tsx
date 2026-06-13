@@ -126,7 +126,8 @@ export default function Index() {
 
   const handleSquareClick = useCallback((position: Position) => {
     if (gameMode === 'demo') return;
-    if (!gameState.isPlayerTurn || gameState.gameResult) return;
+    if (gameState.gameResult) return;
+    if (!isPassAndPlay && !gameState.isPlayerTurn) return;
 
     if (gameState.selectedPiece) {
       const moveSuccess = makeMove(position);
@@ -141,11 +142,12 @@ export default function Index() {
         }
       }
     }
-  }, [gameMode, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
 
   const handlePieceClick = useCallback((pieceId: string) => {
     if (gameMode === 'demo') return;
-    if (!gameState.isPlayerTurn || gameState.gameResult) return;
+    if (gameState.gameResult) return;
+    if (!isPassAndPlay && !gameState.isPlayerTurn) return;
 
     const piece = gameState.pieces.find(p => p.id === pieceId);
     if (!piece) return;
@@ -155,11 +157,13 @@ export default function Index() {
     } else {
       selectPiece(piece);
     }
-  }, [gameMode, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
 
   // Demo mode & AI: plays both sides
   useEffect(() => {
     if (!gameStarted || gameState.gameResult) return;
+    if (isPassAndPlay) return; // no AI in pass-and-play
+    
     
     // Fidchell uses different AI
     if (isFidchell) {
