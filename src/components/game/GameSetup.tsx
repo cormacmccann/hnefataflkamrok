@@ -473,6 +473,9 @@ export function GameSetup({
 
       {/* How to play modal */}
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
+
+      {/* Ancient lost-game modal (fullscreen 3D) */}
+      <AncientGameModal game={loreGame} onClose={() => setLoreGame(null)} />
     </div>
   );
 }
