@@ -63,6 +63,7 @@ export function GameSetup({
   const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
   const [activeTab, setActiveTab] = useState<'tafl' | 'lost'>('tafl');
   const [loreGame, setLoreGame] = useState<LoreGame | null>(null);
+  const [showMultiplayer, setShowMultiplayer] = useState(false);
 
   const difficultyMap = [
     { key: 'easy' as AIDifficulty, label: t.easy, vikingName: t.thrall },
