@@ -135,7 +135,7 @@ export function GameSetup({
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 w-full max-w-5xl px-4 py-4 sm:py-8 flex flex-col items-center gap-6 sm:gap-8">
+      <div className="relative z-10 w-full max-w-5xl px-4 pt-24 pb-4 sm:pt-8 sm:pb-8 flex flex-col items-center gap-6 sm:gap-8">
 
         {/* Header */}
         <motion.div
