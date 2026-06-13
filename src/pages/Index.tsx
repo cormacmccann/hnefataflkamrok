@@ -287,7 +287,8 @@ export default function Index() {
           alt={t.appName}
           className="h-9 sm:h-14 md:h-16 drop-shadow-lg"
         />
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end items-center gap-2">
+          <ProfileChip />
           <VolumeControl
             musicVolume={musicVolume}
             sfxVolume={sfxVolume}
