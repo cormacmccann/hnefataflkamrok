@@ -270,7 +270,9 @@ export default function Index() {
         theme={boardTheme}
         boardType={boardType}
         connectionPath={isFidchell ? fidchellState.connectionPath : undefined}
+        variantId={variantId}
       />
+      <EraBackdrop gameId={variantId} />
 
       {/* Header Overlay with Logo and Volume */}
       <motion.header 
