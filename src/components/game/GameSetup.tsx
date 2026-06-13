@@ -332,8 +332,14 @@ export function GameSetup({
           )}
         </motion.div>
 
+        {/* Daily Puzzle */}
+        <div className="w-full flex justify-center">
+          <DailyPuzzleCard />
+        </div>
+
         {/* Center area: Parchment + Settings */}
         <div className="flex flex-col lg:flex-row gap-6 w-full items-start justify-center">
+
 
           {/* Parchment Card */}
           <motion.div
