@@ -128,6 +128,17 @@ export function GameSetup({
           <Users className="w-4 h-4" />
           <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Online</span>
         </button>
+        <button
+          onClick={toggleHistorianMode}
+          className={`carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target transition-colors ${historianMode ? 'active text-primary' : 'text-foreground hover:text-primary'}`}
+          aria-label="Toggle historian mode"
+          title={historianMode ? 'Historian mode on — alternate rulesets shown' : 'Show alternate scholarly rulesets'}
+        >
+          <ScrollText className="w-4 h-4" />
+          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">
+            {historianMode ? 'Scholar' : 'Lore'}
+          </span>
+        </button>
         <ProfileChip />
         {/* Language picker lives inside the profile dropdown */}
         <VolumeControl
@@ -264,6 +275,11 @@ export function GameSetup({
                       <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
                       <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
                     </div>
+                    <SourcesPanel
+                      sources={infoVariant.sources}
+                      alternates={infoVariant.alternateRules}
+                      historianMode={historianMode}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
