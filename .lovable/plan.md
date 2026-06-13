@@ -1,96 +1,60 @@
+# Multiplayer for Tafl
 
-# Plan: Make all 8 ancient games playable
+## Modes (all three from your answer)
+- **Pass-and-play** — two players on one device, no backend. Works for every variant immediately.
+- **Online live** — both players in the same room, moves stream in real time.
+- **Async / correspondence** — same room, but moves can be made hours/days apart; the inactive player gets a "your turn" notification when they reopen the app.
 
-Scope is large and honest — three brand-new engine families, plus AI, UI, 3D boards, and 6-language copy for each. I'll ship in 3 phases so you have something playable after each one rather than waiting for everything.
+A room is the same database object in both online cases — the only difference is whether both players are connected at once.
 
----
+## Identity (your "guest + claim on signup" choice)
+- Visiting the app silently creates an **anonymous Lovable Cloud user** the first time you do anything multiplayer. You play with a generated name like "Raven 482".
+- That anonymous account already owns your games, friends, and history server-side.
+- "Sign in" / "Sign up" (email+password or Google) **upgrades the same account in place**, so every guest game you played, every move, every friend you added is automatically kept — nothing to migrate, nothing to claim manually.
+- Auth methods at launch: email + password and Google sign-in (Lovable Cloud defaults).
 
-## Phase 1 — Custodial-capture family (reuses existing Tafl engine)
+## Joining a game (all three from your answer)
+- **Share link** — host clicks "Invite", gets a URL like `/play/HRAVEN-42`. Anyone with the link can join as guest or signed-in.
+- **6-char room code** — same room exposes a typeable code (`HRAVEN42`) on the host screen and a "Join by code" input on the home screen.
+- **Friends list** — signed-in users see online friends, can send a direct game invite that lands as a notification in their app and (optionally later) email.
 
-**Games:** Petteia (Greek, 8×8), Ludus Latrunculorum (Roman, 8×8 with "dux" piece).
+## Variants
+All 6 Tafl variants and all 8 Lost-World variants are multiplayer-enabled. The existing engines already produce a serialisable `GameState`, so the multiplayer layer is variant-agnostic: it just syncs `state + lastMove` per room.
 
-**Work:**
-- Extend `VARIANT_CONFIGS` in `src/constants/game.ts` with two new variants + themes (Greek marble/olive for Petteia, Roman bronze/legion-red for Latrunculorum).
-- New rule flags on `VariantRules`: `equalSides` (no king), `immobilizationWin`, `duxPiece`.
-- Patch `useGameLogic.ts` victory check: detect "no legal moves" as a loss for that side.
-- AI: reuse minimax, new heuristic weights (no king-escape term; mobility + material).
-- 3D: reuse square board; new piece colors/materials only.
-- Tutorial + history map cards in all 6 languages.
+## Data model (Lovable Cloud / Postgres)
+- `profiles` — `id` (= auth user id), `display_name`, `avatar_url`, `is_anonymous`, `created_at`. Auto-created by trigger on signup.
+- `rooms` — `id`, `code` (6-char unique), `variant_id`, `rules` JSONB, `host_id` (profile), `guest_id` (profile, nullable until joined), `host_side` (`attacker`|`defender`), `status` (`waiting`|`active`|`finished`|`abandoned`), `state` JSONB (current game state), `current_player`, `winner` (nullable), `created_at`, `updated_at`, `last_move_at`.
+- `room_moves` — append-only log: `room_id`, `idx`, `by_player`, `move` JSONB, `state_after` JSONB, `created_at`. Used for replays + animation reconstruction on reconnect.
+- `friendships` — `user_id`, `friend_id`, `status` (`pending`|`accepted`), `created_at`. Unique on the unordered pair.
+- `game_invites` — `room_id`, `from_id`, `to_id`, `status` (`pending`|`accepted`|`declined`), `created_at`.
+- `user_roles` + `has_role()` helper (per project convention) — not strictly needed yet, scaffolded for future admin tools.
 
-**Deliverable:** 2 fully playable new variants alongside Tafl.
+RLS policies: a profile is readable by anyone signed-in (for friend lookup by display name), writable only by its owner. A room is readable by its host, its guest, or anyone holding the URL code (validated via a `SECURITY DEFINER` `join_room(code)` function so we don't leak the rooms table publicly). Moves are insertable only by the room's current player.
 
----
+## Realtime sync
+- Subscribe to `room_moves` inserts for the active room via Lovable Cloud Realtime.
+- Each insert carries `state_after`, so the client applies it directly — no need to re-run engine logic on the receiver and no risk of divergence.
+- Optimistic local apply on the mover's side, rollback on insert rejection (RLS).
 
-## Phase 2 — Race-game engine (dice + linear/branching tracks)
+## UI changes
+- New **"Multiplayer"** entry on the home screen alongside the existing setup, with three buttons: *Pass & Play*, *Create Online Room*, *Join by code/link*.
+- New **`/play/:code`** route — auto-creates an anonymous session if needed, then drops you into the existing 3D scene with a small "opponent" HUD chip (avatar, name, online/offline dot, "their turn / your turn" indicator).
+- New **Friends panel** (signed-in only) — search by display name, send/accept friend requests, see online status, "Invite to game" button per friend.
+- New **Profile chip** in the header — shows guest name + "Sign in to save & invite friends" CTA, or avatar + name once signed in.
+- Existing single-player setup is unchanged; everything multiplayer is additive.
 
-**Games:** Royal Game of Ur, Senet, Mehen, Patolli, Liubo.
+## Build order
+1. Enable Lovable Cloud + migrations for `profiles`, `rooms`, `room_moves`, `friendships`, `game_invites`, `has_role`, RLS, `join_room` RPC.
+2. Auth wiring: anonymous-by-default, `signInWithPassword` / `signInWithOAuth('google')`, in-place upgrade. Profile chip in header.
+3. Pass-and-play mode (no backend) — quickest win, gets the local 2-player loop working.
+4. Online rooms: create / join-by-code / share-link route, realtime move sync, reconnect-from-log.
+5. Friends list + direct game invites.
+6. Async polish: "your turn" toast on app open, per-room unread badge.
 
-**New shared engine** `src/lib/raceEngine.ts`:
-- Generic track graph (nodes + directed edges) so each game just declares its board topology.
-- Dice abstraction: 4 binary throwing-sticks (Ur, Senet), 6 sticks (Liubo), 5 marked beans (Patolli), 6 sticks for Mehen.
-- Per-game special-square handlers (Senet's water/rebirth squares, Ur's rosettes for extra turns, Patolli's cross-arms, Mehen's spiral lion-attack).
-- Capture/swap/safe-square rules per game.
-- Bear-off / win condition per game.
+## Technical notes
+- Moves are validated client-side by the engine before insert; the DB stores `state_after` rather than re-validating server-side (no Deno port of every engine needed). RLS still enforces "only the current player can write the next move," which prevents the obvious cheat.
+- Anonymous users count against Lovable Cloud's monthly active users; we'll show a subtle prompt to sign up after their second finished game.
+- 6-char codes use a Crockford alphabet (no `O/0/I/1`) to avoid typos.
+- All multiplayer code is gated behind a feature check so single-player keeps working if Cloud is ever unreachable.
 
-**Per-game configs:**
-- **Royal Game of Ur** — Finkel's reconstruction (2007 British Museum tablet). Solid rules, easy.
-- **Senet** — Kendall/Bell reconstruction. Honest disclaimer: rules are educated reconstruction.
-- **Mehen** — minimal speculative ruleset with an in-app "rules are lost — this is a modern reconstruction" notice.
-- **Patolli** — Durán's chronicle-based ruleset, betting mechanic omitted.
-- **Liubo** — partial reconstruction notice; play a simplified race based on surviving Han fragments.
-
-**AI:** Race games are largely chance-driven; AI = expectimax 1–2 ply over dice distributions with a "racing + capture" heuristic.
-
-**UI:** New `RaceBoard.tsx` (2D SVG, since 3D for snake/cross/serpentine tracks is a huge separate project). Dice-roll animation component.
-
-**Deliverable:** 5 playable race games with clear authenticity disclaimers.
-
----
-
-## Phase 3 — Sowing engine (Bao)
-
-**Game:** Bao la Kiswahili.
-
-**New engine** `src/lib/sowingEngine.ts`:
-- 4 rows × 8 pits, seeds per pit, two phases (namua / mtaji).
-- Multi-lap sowing with relay-capture (the hard part — Bao is famously the most complex traditional game).
-- Special pit `nyumba` mechanics.
-
-**AI:** Iterative-deepening minimax over sowing moves; Bao's branching factor is small so this works well.
-
-**UI:** New `BaoBoard.tsx` 2D top-down with seed-drop animation.
-
-**Deliverable:** Playable Bao with a "trainer mode" hint system because the rules are unforgiving.
-
----
-
-## Cross-cutting work (each phase)
-
-- Update `GameSetup.tsx` variant rail to group: **Tafl** / **Custodial** / **Race** / **Sowing**.
-- `loreGames.ts` entries flip `status: 'lore'` → `'playable'` and link to the variant.
-- Tutorial layered modal (`RulesModal.tsx`) gets per-game quick-start + animated demo.
-- 6-language translation pass for every new string.
-- History map: clicking a now-playable pin offers "Read lore" or "Play this game".
-
----
-
-## Honest disclaimers shown in-game
-
-For Senet, Mehen, Liubo, Patolli I'll show a small parchment notice: "Original rules are partly lost. This is a modern reconstruction based on [source]." This is more historically responsible than pretending we know.
-
----
-
-## Out of scope
-
-- Full 3D boards for race/sowing games (2D SVG only — 3D snake/cross boards are weeks of modeling each).
-- Online multiplayer.
-- Patolli betting mechanic.
-- Variant-by-variant AI tuning beyond reasonable defaults.
-
----
-
-## Suggested order
-
-Start Phase 1 now (fastest payoff, biggest reuse). Phase 2 next session (largest single chunk — race engine is real work). Phase 3 last (Bao alone is engine + UI + AI).
-
-**Confirm and I'll begin Phase 1 immediately.** If you'd rather I attempt all three phases in one go, say so — it will be a very large change touching ~25 files and I'll need to skip some polish.
+If this looks right, I'll start with step 1 (enable Cloud + migrations) once you approve.
