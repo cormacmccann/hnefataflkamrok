@@ -6,6 +6,8 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { Ancient3DScene } from './Ancient3DScene';
 import { PetteiaBoard3D } from './PetteiaBoard3D';
+import { EraBackdrop } from './EraBackdrop';
+
 
 export function PetteiaGame() {
   const [state, setState] = useState<PettState>(initialPettState);
@@ -71,7 +73,10 @@ export function PetteiaGame() {
         <RotateCcw className="w-4 h-4" /> Restart
       </button>
 
+      <EraBackdrop gameId="petteia" />
+
       {/* HUD: log + rules */}
+
       <div className="absolute bottom-4 left-4 right-4 z-20 grid sm:grid-cols-2 gap-2 max-w-3xl mx-auto">
         <div className="parchment rounded-lg p-2 max-h-24 overflow-y-auto text-[11px] font-mono space-y-0.5 text-amber-950">
           {state.log.slice(-6).map((l, i) => <div key={i}>{l}</div>)}
