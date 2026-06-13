@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   initialUrState, rollDice, legalMoves, applyMove, passTurn, chooseAIMove,
-  ROSETTE_SQUARES, SQUARE_COORDS, WHITE_PATH, BLACK_PATH, UrState, UrMove, SquareId,
+  UrState, UrMove,
 } from '@/lib/ancient/royalUr';
-import { Dices, RotateCcw, Sparkles } from 'lucide-react';
-
-const ALL_SQUARES: SquareId[] = Object.keys(SQUARE_COORDS) as SquareId[];
+import { Dices, RotateCcw } from 'lucide-react';
+import { Ancient3DScene } from './Ancient3DScene';
+import { RoyalUrBoard3D } from './RoyalUrBoard3D';
 
 export function RoyalUrGame() {
   const [state, setState] = useState<UrState>(initialUrState);
@@ -26,15 +25,11 @@ export function RoyalUrGame() {
       const next = { ...state, dice: r, rolled: true, log: [...state.log, `White rolled ${r}`] };
       const moves = legalMoves(next, r);
       setRolling(false);
-      if (moves.length === 0) {
-        setState(passTurn(next, r === 0 ? 'Rolled 0.' : 'No legal move.'));
-      } else {
-        setState(next);
-      }
+      if (moves.length === 0) setState(passTurn(next, r === 0 ? 'Rolled 0.' : 'No legal move.'));
+      else setState(next);
     }, 600);
   }, [state]);
 
-  // AI loop: rolls + moves until it's white's turn again or game over
   useEffect(() => {
     if (state.winner || state.turn !== 'black') return;
     setAiThinking(true);
@@ -42,11 +37,8 @@ export function RoyalUrGame() {
       const r = rollDice();
       const next = { ...state, dice: r, rolled: true, log: [...state.log, `Black rolled ${r}`] };
       const move = chooseAIMove(next, r);
-      if (!move) {
-        setState(passTurn(next, r === 0 ? 'Rolled 0.' : 'No legal move.'));
-      } else {
-        setState(applyMove(next, move));
-      }
+      if (!move) setState(passTurn(next, r === 0 ? 'Rolled 0.' : 'No legal move.'));
+      else setState(applyMove(next, move));
       setAiThinking(false);
     }, 900);
     return () => { clearTimeout(id); setAiThinking(false); };
@@ -56,148 +48,54 @@ export function RoyalUrGame() {
     if (state.turn !== 'white' || !state.rolled || state.winner) return;
     setState(applyMove(state, m));
   };
-
   const reset = () => setState(initialUrState());
 
   return (
-    <div className="space-y-3">
-      <div className="text-center">
-        <h3 className="font-['Cinzel'] text-lg text-primary">Royal Game of Ur</h3>
-        <p className="text-[11px] text-muted-foreground">Sumer · c. 2600 BCE · Finkel's reconstruction (BM 33333+)</p>
+    <div className="absolute inset-0">
+      <Ancient3DScene cameraPosition={[0, 9, 8]} minDistance={7} maxDistance={20}>
+        <RoyalUrBoard3D state={state} myMoves={myMoves} onMove={trySelectMove} />
+      </Ancient3DScene>
+
+      {/* HUD: header */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 parchment rounded-lg px-4 py-2 flex items-center gap-3 text-amber-950 text-sm font-['Cinzel']">
+        <span className="font-bold">Royal Game of Ur</span>
+        <span className="opacity-70">·</span>
+        <span>
+          {state.winner ? `${state.winner === 'white' ? 'You' : 'AI'} won` : state.turn === 'white' ? 'Your turn' : 'AI turn'}
+        </span>
       </div>
 
-      <UrBoard state={state} myMoves={myMoves} onMove={trySelectMove} />
+      <button
+        onClick={reset}
+        className="absolute top-4 right-4 z-20 carved-button px-3 py-2 rounded-md text-foreground inline-flex items-center gap-1.5 text-sm"
+      >
+        <RotateCcw className="w-4 h-4" /> Restart
+      </button>
 
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onRoll}
-            disabled={state.rolled || state.winner !== null || state.turn !== 'white' || rolling}
-            className="tap-target px-3 rounded-md bg-primary text-primary-foreground disabled:opacity-50 inline-flex items-center gap-1.5 text-sm"
-          >
-            <Dices className={`w-4 h-4 ${rolling ? 'animate-spin' : ''}`} />
-            {rolling ? 'Rolling…' : state.turn === 'white' && !state.rolled ? 'Roll sticks' : aiThinking ? 'Black thinking…' : `Roll: ${state.dice >= 0 ? state.dice : '—'}`}
-          </button>
-          <span className={`text-xs px-2 py-1 rounded ${state.turn === 'white' ? 'bg-primary/20 text-primary' : 'bg-secondary/50'}`}>
-            {state.winner ? `${state.winner === 'white' ? 'You' : 'AI'} won` : state.turn === 'white' ? 'Your turn' : 'AI turn'}
-          </span>
-        </div>
+      {/* HUD: roll button */}
+      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20">
         <button
-          onClick={reset}
-          className="tap-target px-3 rounded-md bg-secondary hover:bg-secondary/80 inline-flex items-center gap-1.5 text-sm"
+          onClick={onRoll}
+          disabled={state.rolled || state.winner !== null || state.turn !== 'white' || rolling}
+          className="px-5 py-3 rounded-lg font-['Cinzel'] font-bold uppercase tracking-wider
+            bg-gradient-to-b from-primary to-[hsl(35_55%_38%)] text-primary-foreground
+            shadow-[0_0_20px_hsl(38_60%_50%/0.4)] disabled:opacity-50 disabled:cursor-not-allowed
+            inline-flex items-center gap-2"
         >
-          <RotateCcw className="w-4 h-4" /> Restart
+          <Dices className={`w-5 h-5 ${rolling ? 'animate-spin' : ''}`} />
+          {rolling ? 'Rolling…' : state.turn === 'white' && !state.rolled ? 'Roll sticks' : aiThinking ? 'Black thinking…' : `Rolled: ${state.dice >= 0 ? state.dice : '—'}`}
         </button>
       </div>
 
-      <Pools state={state} />
-
-      <div className="rounded-lg border border-border bg-background/40 p-2 max-h-24 overflow-y-auto text-[11px] font-mono space-y-0.5">
-        {state.log.slice(-8).map((l, i) => (
-          <div key={i} className="text-foreground/70">{l}</div>
-        ))}
-      </div>
-
-      <p className="text-[10px] text-muted-foreground italic text-center">
-        4 tetrahedral sticks (each 50/50) → roll 0–4. Land on a ✦ rosette to take an extra turn (and stay safe on the central one). Bear off all 7 tokens to win.
-      </p>
-    </div>
-  );
-}
-
-function UrBoard({ state, myMoves, onMove }: { state: UrState; myMoves: UrMove[]; onMove: (m: UrMove) => void }) {
-  const cellSize = 44;
-  const targets = new Map<string, UrMove>();
-  myMoves.forEach((m) => {
-    if (m.toPathIdx === 14) return;
-    targets.set(WHITE_PATH[m.toPathIdx], m);
-  });
-  const myTokenOnSquare = (sq: SquareId): { who: 'white' | 'black'; idx: number } | null => {
-    for (let i = 0; i < state.white.length; i++) {
-      const p = state.white[i]; if (p >= 0 && p < 14 && WHITE_PATH[p] === sq) return { who: 'white', idx: i };
-    }
-    for (let i = 0; i < state.black.length; i++) {
-      const p = state.black[i]; if (p >= 0 && p < 14 && BLACK_PATH[p] === sq) return { who: 'black', idx: i };
-    }
-    return null;
-  };
-
-  return (
-    <div className="flex justify-center">
-      <div
-        className="relative"
-        style={{ width: cellSize * 8, height: cellSize * 3 }}
-      >
-        {ALL_SQUARES.map((sq) => {
-          const { row, col } = SQUARE_COORDS[sq];
-          const isRosette = ROSETTE_SQUARES.has(sq);
-          const tok = myTokenOnSquare(sq);
-          const target = targets.get(sq);
-          const fromSquare = myMoves.find((m) => m.fromPathIdx >= 0 && WHITE_PATH[m.fromPathIdx] === sq);
-          return (
-            <div
-              key={sq}
-              style={{
-                position: 'absolute',
-                left: col * cellSize,
-                top: row * cellSize,
-                width: cellSize,
-                height: cellSize,
-              }}
-              className={`border border-amber-900/60 flex items-center justify-center
-                ${isRosette ? 'bg-amber-700/40' : 'bg-amber-100/10'}
-                ${target ? 'ring-2 ring-primary cursor-pointer' : ''}
-                ${fromSquare && !target ? 'ring-1 ring-primary/40' : ''}
-              `}
-              onClick={() => target && onMove(target)}
-            >
-              {isRosette && <Sparkles className="absolute w-3 h-3 text-amber-300/70 top-0.5 left-0.5" />}
-              {tok && (
-                <motion.div
-                  layoutId={`ur-${tok.who}-${tok.idx}`}
-                  className={`w-7 h-7 rounded-full border-2 ${
-                    tok.who === 'white'
-                      ? 'bg-amber-50 border-amber-700'
-                      : 'bg-stone-900 border-stone-600'
-                  } shadow-md`}
-                />
-              )}
-            </div>
-          );
-        })}
+      {/* HUD: log + rules */}
+      <div className="absolute bottom-4 left-4 right-4 z-20 grid sm:grid-cols-2 gap-2 max-w-3xl mx-auto">
+        <div className="parchment rounded-lg p-2 max-h-24 overflow-y-auto text-[11px] font-mono space-y-0.5 text-amber-950">
+          {state.log.slice(-6).map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+        <div className="parchment rounded-lg p-2 text-[11px] text-amber-950 leading-snug">
+          <span className="font-bold font-['Cinzel']">How to play:</span> Roll 4 sticks (0–4). Click a glowing square to move. Land on a ✦ rosette for a safe square + extra turn. Bear off all 7 tokens to win. Finkel's reconstruction (BM 33333+).
+        </div>
       </div>
     </div>
-  );
-}
-
-function Pools({ state }: { state: UrState }) {
-  const wStart = state.white.filter((p) => p === -1).length;
-  const wOff = state.white.filter((p) => p === 14).length;
-  const bStart = state.black.filter((p) => p === -1).length;
-  const bOff = state.black.filter((p) => p === 14).length;
-  return (
-    <div className="flex justify-between text-xs">
-      <div className="flex items-center gap-2">
-        <span className="text-amber-200">White</span>
-        <Pool count={wStart} cls="bg-amber-50 border-amber-700" /> <span>start</span>
-        <Pool count={wOff} cls="bg-amber-50 border-amber-700" /> <span>off</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-stone-300">Black</span>
-        <Pool count={bStart} cls="bg-stone-900 border-stone-600" /> <span>start</span>
-        <Pool count={bOff} cls="bg-stone-900 border-stone-600" /> <span>off</span>
-      </div>
-    </div>
-  );
-}
-
-function Pool({ count, cls }: { count: number; cls: string }) {
-  return (
-    <span className="inline-flex items-center gap-0.5">
-      {Array.from({ length: count }).map((_, i) => (
-        <span key={i} className={`w-3 h-3 rounded-full border ${cls}`} />
-      ))}
-      {count === 0 && <span className="text-muted-foreground">·</span>}
-    </span>
   );
 }
