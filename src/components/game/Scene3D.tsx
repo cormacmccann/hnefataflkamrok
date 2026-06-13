@@ -6,6 +6,7 @@ import { Board3D } from './Board3D';
 import { CircularBoard3D } from './CircularBoard3D';
 import { CaptureParticles } from './CaptureParticles';
 import vikingTableBg from '@/assets/viking-table-bg.jpg';
+import { ERA_IMAGES } from '@/components/ancient/EraBackdrop';
 
 interface CapturePosition {
   position: Position;
@@ -21,6 +22,7 @@ interface Scene3DProps {
   theme?: BoardTheme;
   boardType?: BoardType;
   connectionPath?: FidchellPosition[];
+  variantId?: string;
 }
 
 export function Scene3D({ 
@@ -31,7 +33,8 @@ export function Scene3D({
   onCaptureComplete,
   theme,
   boardType = 'square',
-  connectionPath = []
+  connectionPath = [],
+  variantId,
 }: Scene3DProps) {
   const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
 
