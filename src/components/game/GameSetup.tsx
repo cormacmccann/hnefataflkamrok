@@ -59,6 +59,8 @@ export function GameSetup({
   const [showRules, setShowRules] = useState(false);
   const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
   const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
+  const [activeTab, setActiveTab] = useState<'tafl' | 'lost'>('tafl');
+  const [loreGame, setLoreGame] = useState<LoreGame | null>(null);
 
   const difficultyMap = [
     { key: 'easy' as AIDifficulty, label: t.easy, vikingName: t.thrall },
