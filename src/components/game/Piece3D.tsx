@@ -178,8 +178,9 @@ export function Piece3D({ piece, position, isSelected, onClick, boardType = 'squ
       onPointerOut={() => setHovered(false)}
     >
       {useSimpleGeometry ? (
-        /* Simple cylinder geometry for circular board - ensures correct horizontal orientation */
-        <mesh rotation={[-Math.PI / 2, 0, 0]} castShadow>
+        /* Upright cylinder puck for circular (Fidchell) board.
+           CylinderGeometry is Y-up by default, so no X rotation needed. */
+        <mesh castShadow>
           <cylinderGeometry args={[0.25, 0.28, 0.15, 32]} />
           <meshStandardMaterial 
             color={simpleColor}
