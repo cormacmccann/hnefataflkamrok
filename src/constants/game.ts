@@ -174,7 +174,11 @@ export const GAME_VARIANTS: GameVariant[] = [
     defaultRules: { ...STANDARD_RULES, edgeEscape: true },
     coordinates: { lat: 51.279, lng: 1.083 },
   },
-];
+].map((v) => ({
+  ...v,
+  sources: VARIANT_SOURCES[v.id],
+  alternateRules: VARIANT_ALTERNATES[v.id],
+}));
 
 export const BOARD_CONFIGS: Record<BoardSize, BoardConfig> = {
   7: {
