@@ -305,15 +305,16 @@ export default function Index() {
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3"
+        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3"
+        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
         <div className="flex-1" />
         <img 
           src={hnefataflLogo} 
           alt={t.appName}
-          className="h-9 sm:h-14 md:h-16 drop-shadow-lg"
+          className="h-7 sm:h-14 md:h-16 drop-shadow-lg"
         />
-        <div className="flex-1 flex justify-end items-center gap-2">
+        <div className="flex-1 flex flex-wrap justify-end items-start gap-1.5 sm:gap-2">
           <ProfileChip />
           <VolumeControl
             musicVolume={musicVolume}
