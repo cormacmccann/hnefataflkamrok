@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function AuthDialog({ open, onOpenChange, defaultMode = 'signup' }: Props) {
-  const { signInWithPassword, signUpWithPassword, signInWithGoogle, isAnonymous } = useAuth();
+  const { signInWithPassword, signUpWithPassword, signInWithGoogle, signInWithApple, isAnonymous } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,6 +43,13 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'signup' }: Props
     if (res.error) toast.error(res.error);
   };
 
+  const apple = async () => {
+    setBusy(true);
+    const res = await signInWithApple();
+    setBusy(false);
+    if (res.error) toast.error(res.error);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] sm:max-w-md">
@@ -67,10 +74,18 @@ export function AuthDialog({ open, onOpenChange, defaultMode = 'signup' }: Props
           Continue with Google
         </Button>
 
+        <Button type="button" variant="outline" onClick={apple} disabled={busy} className="w-full">
+          <svg viewBox="0 0 24 24" className="w-4 h-4 mr-2" aria-hidden fill="currentColor">
+            <path d="M17.05 12.04c-.03-2.94 2.4-4.36 2.5-4.42-1.36-1.99-3.48-2.26-4.24-2.29-1.8-.18-3.52 1.06-4.44 1.06-.92 0-2.34-1.04-3.85-1.01-1.98.03-3.81 1.15-4.83 2.92-2.06 3.58-.53 8.87 1.48 11.77.98 1.42 2.15 3.02 3.69 2.96 1.48-.06 2.04-.96 3.83-.96 1.79 0 2.29.96 3.86.93 1.59-.03 2.6-1.45 3.57-2.88 1.12-1.65 1.59-3.25 1.62-3.34-.04-.02-3.11-1.19-3.14-4.74zm-2.92-8.7C14.93 2.36 15.52 1.04 15.36 0c-.99.04-2.18.66-3.01 1.64-.74.86-1.4 2.22-1.22 3.24 1.1.09 2.22-.56 3-1.54z"/>
+          </svg>
+          Continue with Apple
+        </Button>
+
         <div className="relative my-2">
           <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
           <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">or</span></div>
         </div>
+
 
         <form onSubmit={submit} className="space-y-3">
           {mode === 'signup' && (

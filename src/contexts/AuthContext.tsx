@@ -21,6 +21,7 @@ interface AuthCtx {
   signInWithPassword: (email: string, password: string) => Promise<{ error?: string }>;
   signUpWithPassword: (email: string, password: string, displayName?: string) => Promise<{ error?: string }>;
   signInWithGoogle: () => Promise<{ error?: string }>;
+  signInWithApple: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<{ error?: string }>;
 }
@@ -121,6 +122,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {};
   }, []);
 
+  const signInWithApple = useCallback(async () => {
+    const result = await lovable.auth.signInWithOAuth('apple', {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) return { error: result.error.message || 'Sign-in failed' };
+    return {};
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     // Immediately replace with a new guest so the app keeps working
@@ -145,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithPassword,
       signUpWithPassword,
       signInWithGoogle,
+      signInWithApple,
       signOut,
       updateDisplayName,
     }}>
