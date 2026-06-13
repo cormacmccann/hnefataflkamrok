@@ -8,6 +8,12 @@ import liubo from '@/assets/era/liubo.jpg';
 import patolli from '@/assets/era/patolli.jpg';
 import bao from '@/assets/era/bao.jpg';
 import mehen from '@/assets/era/mehen.jpg';
+import fidchell from '@/assets/era/fidchell.jpg';
+import brandub from '@/assets/era/brandub.jpg';
+import tablut from '@/assets/era/tablut.jpg';
+import tawlbwrdd from '@/assets/era/tawlbwrdd.jpg';
+import hnefatafl from '@/assets/era/hnefatafl.jpg';
+import alea from '@/assets/era/alea.jpg';
 
 export const ERA_IMAGES: Record<string, string> = {
   petteia,
@@ -18,6 +24,12 @@ export const ERA_IMAGES: Record<string, string> = {
   patolli,
   bao,
   mehen,
+  fidchell,
+  brandub,
+  tablut,
+  tawlbwrdd,
+  hnefatafl,
+  alea,
 };
 
 const ERA_CAPTIONS: Record<string, string> = {
@@ -29,6 +41,12 @@ const ERA_CAPTIONS: Record<string, string> = {
   patolli: 'Aztec Tenochtitlán, c. 1500 CE',
   bao: 'Stone Town, Zanzibar, c. 1700 CE',
   mehen: 'The Nile valley near Saqqara, c. 2700 BCE',
+  fidchell: 'Hill of Tara, Celtic Ireland, c. 500 CE',
+  brandub: 'Early Christian monastery, Ireland, c. 700 CE',
+  tablut: 'Sami camp under the aurora, Lapland, c. 1700 CE',
+  tawlbwrdd: 'Welsh hillfort in Snowdonia, c. 1200 CE',
+  hnefatafl: 'A Viking longhouse, Norway, c. 900 CE',
+  alea: 'Anglo-Saxon scriptorium, England, c. 1000 CE',
 };
 
 /** A small parchment-framed card showing what the game's homeland looked like in its time.

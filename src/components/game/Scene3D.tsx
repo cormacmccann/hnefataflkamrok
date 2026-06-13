@@ -6,6 +6,7 @@ import { Board3D } from './Board3D';
 import { CircularBoard3D } from './CircularBoard3D';
 import { CaptureParticles } from './CaptureParticles';
 import vikingTableBg from '@/assets/viking-table-bg.jpg';
+import { ERA_IMAGES } from '@/components/ancient/EraBackdrop';
 
 interface CapturePosition {
   position: Position;
@@ -21,6 +22,7 @@ interface Scene3DProps {
   theme?: BoardTheme;
   boardType?: BoardType;
   connectionPath?: FidchellPosition[];
+  variantId?: string;
 }
 
 export function Scene3D({ 
@@ -31,7 +33,8 @@ export function Scene3D({
   onCaptureComplete,
   theme,
   boardType = 'square',
-  connectionPath = []
+  connectionPath = [],
+  variantId,
 }: Scene3DProps) {
   const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
 
@@ -71,12 +74,21 @@ export function Scene3D({
 
   return (
     <div className="fixed inset-0 w-full h-full">
-      {/* Background */}
+      {/* Era backdrop — period landscape of the variant's homeland */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${vikingTableBg})` }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-[era-pan_60s_ease-in-out_infinite_alternate]"
+        style={{ backgroundImage: `url(${(variantId && ERA_IMAGES[variantId]) || vikingTableBg})` }}
       />
-      <div className="absolute inset-0 bg-black/30" />
+      {/* Warm vignette so the board stays legible */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.78) 100%)' }}
+      />
+      {/* Period-paper grain */}
+      <div className="absolute inset-0 opacity-[0.10] mix-blend-overlay pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(rgba(255,220,160,0.4) 1px, transparent 1px)', backgroundSize: '3px 3px' }}
+      />
+
       
       <Canvas shadows className="w-full h-full relative z-10">
         <PerspectiveCamera makeDefault position={[0, 12, 8]} fov={50} />
