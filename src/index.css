@@ -201,3 +201,9 @@ button, a, [role="button"] {
   0% { box-shadow: 0 0 0 0 currentColor; }
   100% { box-shadow: 0 0 0 14px transparent; }
 }
+
+@keyframes era-pan {
+  0%   { transform: scale(1.08) translate(0%, 0%); }
+  50%  { transform: scale(1.12) translate(-1.5%, -1%); }
+  100% { transform: scale(1.08) translate(1.5%, 1%); }
+}

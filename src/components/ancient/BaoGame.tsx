@@ -35,7 +35,7 @@ export function BaoGame() {
 
   return (
     <div className="absolute inset-0">
-      <Ancient3DScene cameraPosition={[0, 7, 5]} minDistance={4} maxDistance={15}>
+      <Ancient3DScene cameraPosition={[0, 7, 5]} minDistance={4} maxDistance={15} eraId="bao">
         <BaoBoard3D state={state} legalMoves={myLegal} onPit={click} />
       </Ancient3DScene>
 
