@@ -29,13 +29,15 @@ export function VolumeControl({
       <motion.button
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-card/90 backdrop-blur p-3 rounded-full border border-border shadow-lg hover:bg-card transition-colors"
+        className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
         title="Volume settings"
+        aria-label="Volume settings"
       >
         {getVolumeIcon(Math.max(musicVolume, sfxVolume))}
+        <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Sound</span>
       </motion.button>
 
       <AnimatePresence>

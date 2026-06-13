@@ -99,33 +99,36 @@ export function GameSetup({
       <div className="absolute inset-0 bg-black/50 z-[1]" />
 
       {/* Top-right controls */}
-      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-30 flex items-center gap-1 sm:gap-3">
+      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-30 flex flex-wrap items-start justify-end gap-1.5 sm:gap-2 max-w-[calc(100vw-1rem)]">
         <button
           onClick={() => setShowRules(true)}
-          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
-          title="How to play"
+          className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
           aria-label="How to play"
         >
           <BookOpen className="w-4 h-4" />
+          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Rules</span>
         </button>
         <button
           onClick={() => setShowMap(true)}
-          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
-          title={t.historyMapTitle}
+          className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
           aria-label={t.historyMapTitle}
         >
           <Map className="w-4 h-4" />
+          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Map</span>
         </button>
         <button
           onClick={() => setShowMultiplayer(true)}
-          className="tap-target rounded-lg carved-button text-foreground hover:text-primary transition-colors flex items-center justify-center"
-          title="Multiplayer"
+          className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
           aria-label="Multiplayer"
         >
           <Users className="w-4 h-4" />
+          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Online</span>
         </button>
         <ProfileChip />
-        <LanguageSelector />
+        {/* Language picker lives in the profile menu on mobile */}
+        <div className="hidden sm:block">
+          <LanguageSelector />
+        </div>
         <VolumeControl
           musicVolume={musicVolume}
           sfxVolume={sfxVolume}
