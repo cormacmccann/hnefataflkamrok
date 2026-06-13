@@ -1,4 +1,5 @@
 import { BoardConfig, BoardSize, GameVariant, BoardTheme, VariantRules } from '@/types/game';
+import { VARIANT_SOURCES, VARIANT_ALTERNATES } from '@/constants/variantSources';
 
 // Irish Celtic theme - deep greens with gold accents
 const BRANDUB_THEME: BoardTheme = {
