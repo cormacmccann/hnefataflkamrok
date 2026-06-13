@@ -6,6 +6,8 @@ import {
 import { Dices, RotateCcw } from 'lucide-react';
 import { Ancient3DScene } from './Ancient3DScene';
 import { RoyalUrBoard3D } from './RoyalUrBoard3D';
+import { EraBackdrop } from './EraBackdrop';
+
 
 export function RoyalUrGame() {
   const [state, setState] = useState<UrState>(initialUrState);
@@ -72,7 +74,10 @@ export function RoyalUrGame() {
         <RotateCcw className="w-4 h-4" /> Restart
       </button>
 
+      <EraBackdrop gameId="royal-ur" />
+
       {/* HUD: roll button */}
+
       <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20">
         <button
           onClick={onRoll}

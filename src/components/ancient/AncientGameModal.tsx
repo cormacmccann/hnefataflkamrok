@@ -1,8 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { RoyalUrGame } from './RoyalUrGame';
 import { PetteiaGame } from './PetteiaGame';
+import { LatrunculorumGame } from './LatrunculorumGame';
+import { BaoGame } from './BaoGame';
+import { RaceGame } from './RaceGame';
+import { SENET_CONFIG } from '@/lib/ancient/senet';
+import { PATOLLI_CONFIG } from '@/lib/ancient/patolli';
+import { LIUBO_CONFIG } from '@/lib/ancient/liubo';
+import { MEHEN_CONFIG } from '@/lib/ancient/mehen';
 import { LoreGame } from '@/constants/loreGames';
-import { Hourglass, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface Props {
   game: LoreGame | null;
@@ -19,7 +26,6 @@ export function AncientGameModal({ game, onClose }: Props) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[80] bg-black"
         >
-          {/* Close */}
           <button
             onClick={onClose}
             className="absolute top-4 left-4 z-30 carved-button p-2 rounded-md text-foreground"
@@ -30,73 +36,64 @@ export function AncientGameModal({ game, onClose }: Props) {
 
           {game.id === 'royal-ur' && <RoyalUrGame />}
           {game.id === 'petteia' && <PetteiaGame />}
-          {game.id !== 'royal-ur' && game.id !== 'petteia' && (
-            <div className="absolute inset-0 flex items-center justify-center p-6">
-              <InDevelopmentPanel game={game} />
-            </div>
+          {game.id === 'latrunculorum' && <LatrunculorumGame />}
+          {game.id === 'bao' && <BaoGame />}
+          {game.id === 'senet' && (
+            <RaceGame
+              config={SENET_CONFIG}
+              eraId="senet"
+              cameraPosition={[0, 9, 6]}
+              tileColor="#E0C088"
+              specialColor="#C97A3D"
+              baseColor="#3a2410"
+              surfaceColor="#5b3a1f"
+              diceLabel="Throw sticks"
+              disclaimer="Original Senet rules are lost. This uses the Kendall/Bell reconstruction — educated guesswork, not history."
+            />
+          )}
+          {game.id === 'patolli' && (
+            <RaceGame
+              config={PATOLLI_CONFIG}
+              eraId="patolli"
+              cameraPosition={[0, 14, 10]}
+              tileColor="#1a8a85"
+              specialColor="#e94d2e"
+              baseColor="#2a1810"
+              surfaceColor="#3d1e10"
+              tileSize={0.7}
+              diceLabel="Throw beans"
+              disclaimer="Reconstructed from Diego Durán's chronicle (c. 1581). The Aztec betting mechanic has been omitted."
+            />
+          )}
+          {game.id === 'liubo' && (
+            <RaceGame
+              config={LIUBO_CONFIG}
+              eraId="liubo"
+              cameraPosition={[0, 7, 8]}
+              tileColor="#9a1a1a"
+              specialColor="#FFD700"
+              baseColor="#2a1810"
+              surfaceColor="#3a1f10"
+              diceLabel="Throw sticks"
+              disclaimer="Liubo's original rules vanished by ~700 CE. This is a heavily simplified modern reconstruction."
+            />
+          )}
+          {game.id === 'mehen' && (
+            <RaceGame
+              config={MEHEN_CONFIG}
+              eraId="mehen"
+              cameraPosition={[0, 12, 8]}
+              tileColor="#8a6a3a"
+              specialColor="#d4a55a"
+              baseColor="#3a2a1a"
+              surfaceColor="#5a4520"
+              tileSize={0.65}
+              diceLabel="Throw sticks"
+              disclaimer="Mehen's rules are GENUINELY UNKNOWN. This is a modern speculative reconstruction for educational play — not history."
+            />
           )}
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
-
-function InDevelopmentPanel({ game }: { game: LoreGame }) {
-  const status = STATUS[game.id] ?? { phase: 'Engine design', progress: 10 };
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="parchment rounded-xl p-6 max-w-md w-full space-y-4 text-amber-950"
-    >
-      <div>
-        <h3 className="font-['Cinzel'] text-xl text-amber-900 font-bold text-center">{game.name}</h3>
-        <p className="text-center text-[11px] opacity-70">{game.region} · {game.era}</p>
-      </div>
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-700/15 border border-amber-700/40">
-        <Hourglass className="w-4 h-4 shrink-0" />
-        <span className="text-sm font-semibold">In active development</span>
-      </div>
-      <p className="text-sm leading-relaxed">{game.description}</p>
-      <div>
-        <div className="flex justify-between text-xs mb-1 opacity-80">
-          <span>{status.phase}</span>
-          <span>{status.progress}%</span>
-        </div>
-        <div className="h-2 bg-amber-900/20 rounded overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${status.progress}%` }}
-            transition={{ duration: 0.8 }}
-            className="h-full bg-gradient-to-r from-primary to-amber-400"
-          />
-        </div>
-      </div>
-      <div className="text-xs space-y-1 opacity-90">
-        <p className="font-semibold">Why it's not playable yet</p>
-        <p>{REASONS[game.id] ?? 'Needs a new engine family the project does not yet implement.'}</p>
-      </div>
-      <p className="text-[10px] italic text-center pt-1 opacity-70">
-        Playable in waves — Royal Game of Ur and Petteia are live in 3D. Senet and Bao are next.
-      </p>
-    </motion.div>
-  );
-}
-
-const STATUS: Record<string, { phase: string; progress: number }> = {
-  senet: { phase: 'Race engine + Kendall ruleset', progress: 55 },
-  liubo: { phase: 'Lost-rules reconstruction research', progress: 15 },
-  patolli: { phase: 'Cross-board topology', progress: 35 },
-  bao: { phase: 'Sowing engine (4×8 mancala)', progress: 40 },
-  mehen: { phase: 'Snake-board spiral & speculative ruleset', progress: 20 },
-  latrunculorum: { phase: 'Dux piece + Roman variant rules', progress: 65 },
-};
-
-const REASONS: Record<string, string> = {
-  senet: 'Race game with throwing-sticks dice and a serpentine track — requires a generic race-engine we are still building. Kendall/Bell reconstruction will be used.',
-  liubo: 'The Han-dynasty rules were lost by the Tang. We will only ship a playable version once our reconstruction has solid scholarly grounding.',
-  patolli: 'Cross-shaped board topology and bean-dice rolls need the race-engine plus a special branching path renderer.',
-  bao: 'Mancala/sowing games need a completely different pit-and-seed engine with multi-lap relay capture — Bao is famously the hardest of them all.',
-  mehen: 'The rules of the Snake Game are genuinely unknown. Any "playable Mehen" would be invention, not history. We will ship a clearly-labelled modern reconstruction only.',
-  latrunculorum: 'Engine reuses Tafl mechanics, but the "dux" commander piece needs a custom rule plus tuned AI heuristics. Shipping immediately after Petteia.',
-};

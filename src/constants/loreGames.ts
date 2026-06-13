@@ -35,7 +35,7 @@ export const LORE_GAMES: LoreGame[] = [
     description:
       '"The game of mercenaries" — the Roman legionary\'s pastime. Glass and stone pieces with a special "dux" (commander) have been found from Vindolanda to North Africa. Custodial capture on grids 8×8 to 12×8.',
     family: 'custodial',
-    status: 'in-development',
+    status: 'playable',
   },
   {
     id: 'royal-ur',
@@ -57,7 +57,7 @@ export const LORE_GAMES: LoreGame[] = [
     description:
       'A 3×10 race game with throwing-sticks instead of dice — found in the tomb of Tutankhamun. Players raced pieces along a serpentine track between this life and the next.',
     family: 'race',
-    status: 'in-development',
+    status: 'playable',
   },
   {
     id: 'liubo',
@@ -68,7 +68,7 @@ export const LORE_GAMES: LoreGame[] = [
     description:
       'A symmetrical Han-dynasty race-and-capture game played with six tossed sticks. Confucius mentioned it; emperors played it. The rules were lost by the Tang dynasty and remain partly mysterious.',
     family: 'race',
-    status: 'in-development',
+    status: 'playable',
   },
   {
     id: 'patolli',
@@ -79,7 +79,7 @@ export const LORE_GAMES: LoreGame[] = [
     description:
       'A cross-shaped race game played with marked beans for dice. Beloved by the Aztecs — players wagered cloaks, slaves, even themselves. Banned and burned by Spanish missionaries after the conquest.',
     family: 'race',
-    status: 'in-development',
+    status: 'playable',
   },
   {
     id: 'bao',
@@ -90,7 +90,7 @@ export const LORE_GAMES: LoreGame[] = [
     description:
       'A four-row mancala/sowing game of the Swahili coast — deeply strategic, with a reputation for being among the most complex traditional games on Earth. Master players are dwindling.',
     family: 'sowing',
-    status: 'in-development',
+    status: 'playable',
   },
   {
     id: 'mehen',
@@ -101,6 +101,7 @@ export const LORE_GAMES: LoreGame[] = [
     description:
       'Played on a coiled-snake board with lion-shaped pieces and marbles. Vanished from Egypt by the Old Kingdom\'s end; nobody is sure how it was played. A true lost game.',
     family: 'race',
-    status: 'in-development',
+    status: 'playable',
   },
 ];
+
