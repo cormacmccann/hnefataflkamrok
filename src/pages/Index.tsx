@@ -10,6 +10,7 @@ import { useDemoMode } from '@/hooks/useDemoMode';
 import { useFidchellState } from '@/hooks/useFidchellState';
 import { useFidchellAI } from '@/hooks/useFidchellAI';
 import { Scene3D } from '@/components/game/Scene3D';
+import { EraBackdrop } from '@/components/ancient/EraBackdrop';
 import { TurnIndicator } from '@/components/game/TurnIndicator';
 import { MoveHistory } from '@/components/game/MoveHistory';
 import { GameControls } from '@/components/game/GameControls';
