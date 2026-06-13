@@ -178,7 +178,7 @@ export const GAME_VARIANTS: GameVariant[] = [
   ...v,
   sources: VARIANT_SOURCES[v.id],
   alternateRules: VARIANT_ALTERNATES[v.id],
-}));
+})) as GameVariant[];
 
 export const BOARD_CONFIGS: Record<BoardSize, BoardConfig> = {
   7: {
