@@ -304,7 +304,8 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
           )}
         </div>
       </motion.div>
-      <AncientGameModal game={playingGame} onClose={() => setPlayingGame(null)} />
     </motion.div>
+    <AncientGameModal game={playingGame} onClose={() => setPlayingGame(null)} />
+    </>
   );
 }
