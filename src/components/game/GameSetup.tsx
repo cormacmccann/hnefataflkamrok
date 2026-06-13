@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen, Users } from 'lucide-react';
+import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen, Users, ScrollText } from 'lucide-react';
 import { MultiplayerMenu } from '@/components/multiplayer/MultiplayerMenu';
 import { ProfileChip } from '@/components/auth/ProfileChip';
+import { SourcesPanel } from './SourcesPanel';
+import { DailyPuzzleCard } from './DailyPuzzleCard';
+import { useHistorianMode } from '@/contexts/HistorianModeContext';
 
 const VARIANT_FLAGS: Record<string, string> = {
   fidchell: '🇮🇪',
@@ -58,6 +61,7 @@ export function GameSetup({
   onSfxVolumeChange,
 }: GameSetupProps) {
   const { t } = useLanguage();
+  const { historianMode, toggleHistorianMode } = useHistorianMode();
   const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[2]);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
@@ -123,6 +127,17 @@ export function GameSetup({
         >
           <Users className="w-4 h-4" />
           <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Online</span>
+        </button>
+        <button
+          onClick={toggleHistorianMode}
+          className={`carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target transition-colors ${historianMode ? 'active text-primary' : 'text-foreground hover:text-primary'}`}
+          aria-label="Toggle historian mode"
+          title={historianMode ? 'Historian mode on — alternate rulesets shown' : 'Show alternate scholarly rulesets'}
+        >
+          <ScrollText className="w-4 h-4" />
+          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">
+            {historianMode ? 'Scholar' : 'Lore'}
+          </span>
         </button>
         <ProfileChip />
         {/* Language picker lives inside the profile dropdown */}
@@ -260,6 +275,11 @@ export function GameSetup({
                       <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
                       <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
                     </div>
+                    <SourcesPanel
+                      sources={infoVariant.sources}
+                      alternates={infoVariant.alternateRules}
+                      historianMode={historianMode}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -312,8 +332,14 @@ export function GameSetup({
           )}
         </motion.div>
 
+        {/* Daily Puzzle */}
+        <div className="w-full flex justify-center">
+          <DailyPuzzleCard />
+        </div>
+
         {/* Center area: Parchment + Settings */}
         <div className="flex flex-col lg:flex-row gap-6 w-full items-start justify-center">
+
 
           {/* Parchment Card */}
           <motion.div

@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_puzzles: {
+        Row: {
+          created_at: string
+          description: string | null
+          difficulty: string
+          goal: string
+          id: string
+          position: Json
+          puzzle_date: string
+          side_to_move: string
+          solution: Json
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          difficulty: string
+          goal: string
+          id?: string
+          position: Json
+          puzzle_date: string
+          side_to_move: string
+          solution: Json
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          goal?: string
+          id?: string
+          position?: Json
+          puzzle_date?: string
+          side_to_move?: string
+          solution?: Json
+          variant_id?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -131,6 +170,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      puzzle_attempts: {
+        Row: {
+          completed_at: string
+          id: string
+          moves_taken: number
+          puzzle_id: string
+          solved: boolean
+          time_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          moves_taken?: number
+          puzzle_id: string
+          solved?: boolean
+          time_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          moves_taken?: number
+          puzzle_id?: string
+          solved?: boolean
+          time_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "puzzle_attempts_puzzle_id_fkey"
+            columns: ["puzzle_id"]
+            isOneToOne: false
+            referencedRelation: "daily_puzzles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_moves: {
         Row: {

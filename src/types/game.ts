@@ -55,6 +55,24 @@ export interface BoardTheme {
   runeColor: string;
 }
 
+export type SourceType = 'manuscript' | 'archaeology' | 'saga' | 'scholarship';
+
+export interface VariantSource {
+  title: string;
+  author?: string;
+  year?: string;
+  url?: string;
+  type: SourceType;
+  note?: string;
+}
+
+export interface AlternateRuleset {
+  name: string;
+  rules: VariantRules;
+  attestation: string;
+  scholar?: string;
+}
+
 export interface GameVariant {
   id: string;
   name: string;
@@ -67,6 +85,8 @@ export interface GameVariant {
   era: string;
   defaultRules: VariantRules;
   coordinates: { lat: number; lng: number };
+  sources?: VariantSource[];
+  alternateRules?: AlternateRuleset[];
 }
 
 export type AIDifficulty = 'beginner' | 'easy' | 'medium' | 'valhalla';

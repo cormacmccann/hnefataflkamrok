@@ -1,4 +1,5 @@
 import { BoardConfig, BoardSize, GameVariant, BoardTheme, VariantRules } from '@/types/game';
+import { VARIANT_SOURCES, VARIANT_ALTERNATES } from '@/constants/variantSources';
 
 // Irish Celtic theme - deep greens with gold accents
 const BRANDUB_THEME: BoardTheme = {
@@ -173,7 +174,11 @@ export const GAME_VARIANTS: GameVariant[] = [
     defaultRules: { ...STANDARD_RULES, edgeEscape: true },
     coordinates: { lat: 51.279, lng: 1.083 },
   },
-];
+].map((v) => ({
+  ...v,
+  sources: VARIANT_SOURCES[v.id],
+  alternateRules: VARIANT_ALTERNATES[v.id],
+})) as GameVariant[];
 
 export const BOARD_CONFIGS: Record<BoardSize, BoardConfig> = {
   7: {
