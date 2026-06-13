@@ -5,8 +5,9 @@ import L, { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { GameVariant } from '@/types/game';
 import { LORE_GAMES, LoreGame } from '@/constants/loreGames';
-import { X, Sparkles, Scroll } from 'lucide-react';
+import { X, Sparkles, Scroll, Play, Hourglass } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { AncientGameModal } from '@/components/ancient/AncientGameModal';
 
 interface TaflHistoryMapProps {
   variants: GameVariant[];
@@ -69,6 +70,7 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
   const { t } = useLanguage();
   const [showLore, setShowLore] = useState(true);
   const [activeLore, setActiveLore] = useState<LoreGame | null>(null);
+  const [playingGame, setPlayingGame] = useState<LoreGame | null>(null);
 
   // Global bounds so lore pins (Egypt, China, Mesoamerica, East Africa) are reachable
   const bounds: LatLngBoundsExpression = [[-40, -130], [78, 150]];
@@ -171,9 +173,13 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
                     >
                       <div className="font-['Cinzel'] font-semibold flex items-center gap-1">
                         {g.name}
-                        {g.status === 'playable-soon' && (
-                          <span className="text-[8px] px-1 py-0.5 rounded bg-primary/30 text-primary uppercase tracking-wider">
-                            soon
+                        {g.status === 'playable' ? (
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-emerald-600/40 text-emerald-100 uppercase tracking-wider">
+                            play
+                          </span>
+                        ) : (
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-amber-700/30 text-amber-200 uppercase tracking-wider">
+                            dev
                           </span>
                         )}
                       </div>
@@ -262,18 +268,27 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
         {/* Bottom info card */}
         <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-secondary/30 rounded-lg text-xs sm:text-sm">
           {activeLore ? (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="font-['Cinzel'] text-primary font-semibold">{activeLore.name}</span>
                 <span className="text-muted-foreground">{activeLore.region}</span>
                 <span className="text-muted-foreground">{activeLore.era}</span>
-                {activeLore.status === 'playable-soon' && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/30 text-primary uppercase tracking-wider">
-                    Playable coming soon
-                  </span>
-                )}
               </div>
               <p className="text-foreground/80 text-[11px] sm:text-xs leading-relaxed">{activeLore.description}</p>
+              <button
+                onClick={() => setPlayingGame(activeLore)}
+                className={`tap-target px-3 rounded-md inline-flex items-center gap-1.5 text-xs font-semibold ${
+                  activeLore.status === 'playable'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'bg-amber-700/30 text-amber-100 hover:bg-amber-700/40'
+                }`}
+              >
+                {activeLore.status === 'playable' ? (
+                  <><Play className="w-3.5 h-3.5" /> Play now</>
+                ) : (
+                  <><Hourglass className="w-3.5 h-3.5" /> See progress</>
+                )}
+              </button>
             </div>
           ) : (
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
@@ -287,6 +302,7 @@ export function TaflHistoryMap({ variants, selectedVariant, onSelectVariant, onC
           )}
         </div>
       </motion.div>
+      <AncientGameModal game={playingGame} onClose={() => setPlayingGame(null)} />
     </motion.div>
   );
 }
