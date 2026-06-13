@@ -20,7 +20,7 @@ import builtwithImg from '@/assets/builtwith.png';
 import kamrokLogo from '@/assets/kamrok-logo.png';
 import { VolumeControl } from './VolumeControl';
 import { TaflHistoryMap } from './TaflHistoryMap';
-import { LanguageSelector } from './LanguageSelector';
+
 import { RulesModal } from './RulesModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { LORE_GAMES, LoreGame } from '@/constants/loreGames';
@@ -125,10 +125,7 @@ export function GameSetup({
           <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Online</span>
         </button>
         <ProfileChip />
-        {/* Language picker lives in the profile menu on mobile */}
-        <div className="hidden sm:block">
-          <LanguageSelector />
-        </div>
+        {/* Language picker lives inside the profile dropdown */}
         <VolumeControl
           musicVolume={musicVolume}
           sfxVolume={sfxVolume}
