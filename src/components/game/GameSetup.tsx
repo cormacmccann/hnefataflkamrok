@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen, Users } from 'lucide-react';
+import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen, Users, ScrollText } from 'lucide-react';
 import { MultiplayerMenu } from '@/components/multiplayer/MultiplayerMenu';
 import { ProfileChip } from '@/components/auth/ProfileChip';
+import { SourcesPanel } from './SourcesPanel';
+import { DailyPuzzleCard } from './DailyPuzzleCard';
+import { useHistorianMode } from '@/contexts/HistorianModeContext';
 
 const VARIANT_FLAGS: Record<string, string> = {
   fidchell: '🇮🇪',
@@ -58,6 +61,7 @@ export function GameSetup({
   onSfxVolumeChange,
 }: GameSetupProps) {
   const { t } = useLanguage();
+  const { historianMode, toggleHistorianMode } = useHistorianMode();
   const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[2]);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
