@@ -21,6 +21,20 @@ import { TaflHistoryMap } from './TaflHistoryMap';
 import { LanguageSelector } from './LanguageSelector';
 import { RulesModal } from './RulesModal';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { LORE_GAMES, LoreGame } from '@/constants/loreGames';
+import { AncientGameModal } from '@/components/ancient/AncientGameModal';
+import { Globe, Hourglass, Sparkles } from 'lucide-react';
+
+const LORE_FLAGS: Record<string, string> = {
+  petteia: '🇬🇷',
+  latrunculorum: '🇮🇹',
+  'royal-ur': '🇮🇶',
+  senet: '🇪🇬',
+  liubo: '🇨🇳',
+  patolli: '🇲🇽',
+  bao: '🇹🇿',
+  mehen: '🇪🇬',
+};
 
 interface GameSetupProps {
   onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
