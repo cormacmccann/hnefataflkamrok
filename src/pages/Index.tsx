@@ -276,6 +276,7 @@ export default function Index() {
     return (
       <GameSetup 
         onStartGame={handleStartGame}
+        onStartPassAndPlay={handleStartPassAndPlay}
         musicVolume={musicVolume}
         sfxVolume={sfxVolume}
         onMusicVolumeChange={updateMusicVolume}
