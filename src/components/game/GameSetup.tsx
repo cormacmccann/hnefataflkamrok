@@ -144,10 +144,26 @@ export function GameSetup({
           transition={{ duration: 0.5, delay: 0.15 }}
           className="w-full"
         >
+          {/* Tab toggle */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab('tafl')}
+              className={`carved-button px-4 py-2 rounded-lg text-sm font-['Cinzel'] inline-flex items-center gap-2 ${activeTab === 'tafl' ? 'active' : 'text-foreground'}`}
+            >
+              <Swords className="w-4 h-4" /> Tafl Variants
+            </button>
+            <button
+              onClick={() => setActiveTab('lost')}
+              className={`carved-button px-4 py-2 rounded-lg text-sm font-['Cinzel'] inline-flex items-center gap-2 ${activeTab === 'lost' ? 'active' : 'text-foreground'}`}
+            >
+              <Globe className="w-4 h-4" /> Other World Lost Games
+            </button>
+          </div>
+
           <div className="flex items-center gap-4 mb-4 justify-center">
             <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-primary/40" />
             <p className="text-xs uppercase tracking-[0.3em] text-primary/70 font-['Cinzel'] font-semibold whitespace-nowrap">
-              {t.selectYourSaga}
+              {activeTab === 'tafl' ? t.selectYourSaga : 'Pick a lost game to play'}
             </p>
             <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
           </div>
