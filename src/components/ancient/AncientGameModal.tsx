@@ -4,10 +4,10 @@ import { PetteiaGame } from './PetteiaGame';
 import { LatrunculorumGame } from './LatrunculorumGame';
 import { BaoGame } from './BaoGame';
 import { RaceGame } from './RaceGame';
+import { MehenGame } from './MehenGame';
 import { SENET_CONFIG } from '@/lib/ancient/senet';
 import { PATOLLI_CONFIG } from '@/lib/ancient/patolli';
 import { LIUBO_CONFIG } from '@/lib/ancient/liubo';
-import { MEHEN_CONFIG } from '@/lib/ancient/mehen';
 import { LoreGame } from '@/constants/loreGames';
 import { X } from 'lucide-react';
 
@@ -78,20 +78,7 @@ export function AncientGameModal({ game, onClose }: Props) {
               disclaimer="Liubo's original rules vanished by ~700 CE. This is a heavily simplified modern reconstruction."
             />
           )}
-          {game.id === 'mehen' && (
-            <RaceGame
-              config={MEHEN_CONFIG}
-              eraId="mehen"
-              cameraPosition={[0, 12, 8]}
-              tileColor="#8a6a3a"
-              specialColor="#d4a55a"
-              baseColor="#3a2a1a"
-              surfaceColor="#5a4520"
-              tileSize={0.65}
-              diceLabel="Throw sticks"
-              disclaimer="Mehen's rules are GENUINELY UNKNOWN. This is a modern speculative reconstruction for educational play — not history."
-            />
-          )}
+          {game.id === 'mehen' && <MehenGame />}
         </motion.div>
       )}
     </AnimatePresence>
