@@ -241,52 +241,51 @@ export function applyMehenMove(state: MehenState, move: MehenMove): MehenState {
   const piece = next.pieces.find((p) => p.id === move.pieceId)!;
   const playerName = next.players[piece.player].name;
   const oldPos = piece.pos;
+  const oldStatus = piece.status;
 
+  // Resolve capture first
+  if (move.captureId) {
+    const victim = next.pieces.find((p) => p.id === move.captureId)!;
+    victim.status = 'captured'; victim.pos = -1; victim.outDist = 0;
+    next.players[piece.player].captures += 1;
+    next.log.push(`${playerName}'s lion devours ${next.players[victim.player].name}'s pawn!`);
+  }
+
+  // Resolve swap: opponent piece on target slides back to mover's previous board square.
+  if (move.swapId) {
+    const other = next.pieces.find((p) => p.id === move.swapId)!;
+    const fallbackPos = oldStatus === 'off' ? headPos : oldPos;
+    other.pos = fallbackPos;
+    if (other.status === 'out') {
+      other.outDist = Math.max(0, headPos - fallbackPos);
+    }
+    next.log.push(`Pieces swap places in the coils of Mehen.`);
+  }
+
+  // Apply the move
   if (move.kind === 'enter') {
     piece.status = 'in';
     piece.pos = move.toPos;
+    piece.outDist = 0;
     next.log.push(`${playerName}: a soul enters the coils.`);
   } else if (move.kind === 'inward') {
     piece.pos = move.toPos;
   } else if (move.kind === 'arriveHead') {
     piece.pos = headPos;
     next.log.push(`${playerName}: a soul reaches the head of Mehen — Ra is close.`);
-    if (lionUnlocked(next, piece.player) && next.pieces.find((p) => p.id === `p${piece.player}-lion`)!.status === 'off') {
-      // mark all that player's pawns as 'out' starting from head (outDist 0) and lion ready
+    if (lionUnlocked(next, piece.player)) {
       next.pieces.forEach((p) => {
         if (p.player === piece.player && p.kind === 'pawn' && p.status === 'in') {
           p.status = 'out'; p.outDist = 0; p.pos = headPos;
         }
       });
       const lion = next.pieces.find((p) => p.id === `p${piece.player}-lion`)!;
-      lion.status = 'out'; lion.pos = headPos; lion.outDist = 0;
-      next.log.push(`${playerName}: the lion awakens! The return journey begins.`);
+      if (lion.status === 'off') {
+        lion.status = 'out'; lion.pos = headPos; lion.outDist = 0;
+        next.log.push(`${playerName}: the lion awakens! The return journey begins.`);
+      }
     }
   } else if (move.kind === 'outward') {
-    // capture / swap
-    if (move.captureId) {
-      const victim = next.pieces.find((p) => p.id === move.captureId)!;
-      victim.status = 'captured'; victim.pos = -1; victim.outDist = 0;
-      next.players[piece.player].captures += 1;
-      next.log.push(`${playerName}'s lion devours ${next.players[victim.player].name}'s pawn!`);
-    } else if (move.swapId) {
-      const other = next.pieces.find((p) => p.id === move.swapId)!;
-      const swapPos = other.pos;
-      const swapOut = other.outDist;
-      other.pos = piece.status === 'off' ? headPos : piece.pos;
-      other.outDist = piece.outDist;
-      piece.pos = swapPos;
-      piece.outDist = swapOut;
-      // apply own move on top
-      piece.pos = move.toPos;
-      piece.outDist = move.toOutDist;
-      other.pos = oldPos === -1 ? headPos : oldPos;
-      other.outDist = piece.kind === 'lion' && piece.status === 'off' ? 0 : (other.status === 'out' ? Math.max(0, headPos - other.pos) : 0);
-      next.log.push(`Pieces swap positions in the coils.`);
-    } else {
-      piece.pos = move.toPos;
-      piece.outDist = move.toOutDist;
-    }
     if (piece.status === 'off') piece.status = 'out';
     piece.pos = move.toPos;
     piece.outDist = move.toOutDist;
