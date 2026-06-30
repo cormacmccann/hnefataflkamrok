@@ -174,39 +174,41 @@ export default function Index() {
     if (isPassAndPlay) return; // no AI in pass-and-play
     
     
-    // Fidchell uses different AI
+    // Fidchell uses different AI (placement phase + movement phase)
     if (isFidchell) {
-      if (gameMode === 'demo') {
-        const currentPlayer = gameState.currentPlayer;
+      const phase = fidchellState.phase;
+      const runFidchellAI = (side: Player, delay: number, demo: boolean) => {
         const timeoutId = setTimeout(() => {
-          const bestMove = fidchellAI.getBestMove(gameState.pieces, currentPlayer);
-          if (bestMove && bestMove.piece.circularPosition) {
-            const explanation = currentPlayer === 'defender' 
-              ? t.defendersManeuver
-              : t.attackersSiege;
-            setDemoMove(bestMove.piece, { row: bestMove.to.ring, col: bestMove.to.spoke }, currentPlayer, explanation);
-            selectPiece(bestMove.piece);
-            
-            setTimeout(() => {
-              fidchellState.makeMove(bestMove.to);
-              setTimeout(() => hidePopup(), 1500);
-            }, 1200);
+          const action = phase === 'placement'
+            ? fidchellAI.getBestPlacement(gameState.pieces, side)
+            : fidchellAI.getBestMove(gameState.pieces, side);
+          if (!action) return;
+          if (action.kind === 'place') {
+            if (demo) {
+              const explanation = side === 'defender' ? t.defendersManeuver : t.attackersSiege;
+              setDemoMove(
+                { id: 'ai-place', type: side === 'defender' ? 'defender' : 'attacker', position: { row: action.to.ring, col: action.to.spoke } } as any,
+                { row: action.to.ring, col: action.to.spoke },
+                side,
+                explanation,
+              );
+            }
+            fidchellState.handleNodeClick(action.to);
+            if (demo) setTimeout(() => hidePopup(), 1200);
+          } else if (action.piece) {
+            selectPiece(action.piece);
+            setTimeout(() => fidchellState.makeMove(action.to), 250);
+            if (demo) setTimeout(() => hidePopup(), 1500);
           }
-        }, 2000);
+        }, delay);
         return () => clearTimeout(timeoutId);
+      };
+      if (gameMode === 'demo') {
+        return runFidchellAI(gameState.currentPlayer, 1500, true);
       } else {
         if (gameState.isPlayerTurn) return;
         const aiSide: Player = playerSide === 'attacker' ? 'defender' : 'attacker';
-        const timeoutId = setTimeout(() => {
-          const bestMove = fidchellAI.getBestMove(gameState.pieces, aiSide);
-          if (bestMove) {
-            selectPiece(bestMove.piece);
-            setTimeout(() => {
-              fidchellState.makeMove(bestMove.to);
-            }, 300);
-          }
-        }, 500);
-        return () => clearTimeout(timeoutId);
+        return runFidchellAI(aiSide, 450, false);
       }
     }
     
