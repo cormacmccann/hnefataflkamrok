@@ -303,25 +303,16 @@ export const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', '�
 export const OGHAM = ['ᚁ', 'ᚂ', 'ᚃ', 'ᚄ', 'ᚅ', 'ᚆ', 'ᚇ', 'ᚈ', 'ᚉ', 'ᚊ', 'ᚋ', 'ᚌ', 'ᚍ', 'ᚎ', 'ᚏ', 'ᚐ'];
 
 // Fidchell circular board configuration
-// 5 rings (center navel + 4 outer), 16 spokes = 49 total positions
+// 8 levels: center (Navel) + 7 concentric rings. 16 spokes. 27 pawns per side.
+// Both players start with all pawns in hand; board begins empty.
 export const FIDCHELL_CONFIG: CircularBoardConfig = {
-  rings: 5,
+  rings: 8,
   spokes: 16,
-  totalNodes: 49, // 1 center + 16*3 (rings 1-3 have all 16) = 49 (ring 4 has 16)
-  piecesPerSide: 12,
+  totalNodes: 1 + 7 * 16, // 113 intersections (center never occupied)
+  piecesPerSide: 27,
   navelPosition: { ring: 0, spoke: 0 },
-  // White pieces start on inner rings (will make connection from center)
-  initialWhite: [
-    { ring: 1, spoke: 0 }, { ring: 1, spoke: 4 }, { ring: 1, spoke: 8 }, { ring: 1, spoke: 12 },
-    { ring: 2, spoke: 2 }, { ring: 2, spoke: 6 }, { ring: 2, spoke: 10 }, { ring: 2, spoke: 14 },
-    { ring: 2, spoke: 0 }, { ring: 2, spoke: 4 }, { ring: 2, spoke: 8 }, { ring: 2, spoke: 12 },
-  ],
-  // Black pieces start on outer rings (will block connections)
-  initialBlack: [
-    { ring: 3, spoke: 1 }, { ring: 3, spoke: 3 }, { ring: 3, spoke: 5 }, { ring: 3, spoke: 7 },
-    { ring: 3, spoke: 9 }, { ring: 3, spoke: 11 }, { ring: 3, spoke: 13 }, { ring: 3, spoke: 15 },
-    { ring: 4, spoke: 0 }, { ring: 4, spoke: 4 }, { ring: 4, spoke: 8 }, { ring: 4, spoke: 12 },
-  ],
+  initialWhite: [],
+  initialBlack: [],
 };
 
 import { CircularBoardConfig } from '@/types/game';
