@@ -199,10 +199,17 @@ export const VARIANT_ALTERNATES: Record<string, AlternateRuleset[]> = {
   ],
   fidchell: [
     {
-      name: 'Connection reconstruction',
+      name: 'Connection reconstruction (current default)',
       scholar: 'Modern (Ballinderry peg-pattern derived)',
       rules: { kingArmed: true, edgeEscape: false, shieldwallCapture: false, victoryType: 'connection' },
       attestation: 'Historical rules are lost; connection mechanic is a scholarly hypothesis based on the radial peg pattern.',
     },
+    {
+      name: 'Classical two-player tafl (Unicorn Garden)',
+      scholar: 'Unicorn Garden (popular reconstruction)',
+      rules: { kingArmed: true, edgeEscape: false, shieldwallCapture: false, victoryType: 'escape' },
+      attestation: 'Treats fidchell as a two-player king-and-defenders vs. attackers game in the tafl family — the king escapes to a corner, captured by custodial flanking. The 3-player "Suckling" PDF ruleset is itself a later variant.',
+    },
   ],
+
 };
