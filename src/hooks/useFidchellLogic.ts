@@ -2,293 +2,259 @@ import { useCallback } from 'react';
 import { Piece, FidchellPosition, Player } from '@/types/game';
 import { FIDCHELL_CONFIG } from '@/constants/game';
 
+/**
+ * Fidchell — "Connection Tafl" (Gwth Bwch variant)
+ *
+ * Board: 1 Navel Stone (center, never occupied) + 7 concentric rings × 16 spokes.
+ * Two phases:
+ *  1. PLACEMENT — each player has 27 pawns in hand; on your turn place one on any
+ *     empty intersection. Sandwich captures grant an extra turn.
+ *  2. MOVEMENT — once your hand is empty, you slide pieces along a single line
+ *     (ring or spoke) through empty intersections until blocked. The Navel Stone
+ *     blocks all movement. In movement, the Navel also acts as half of a sandwich
+ *     when capturing on ring 1.
+ *
+ * No captures may pass through the center. Capturing multiple in one move still
+ * grants only ONE extra turn. Win: connect the center (via a ring-1 pawn) to the
+ * outer rim (ring 7) through a continuous chain of your own adjacent pawns.
+ */
+
+type Color = 'white' | 'black';
+const CENTER: FidchellPosition = { ring: 0, spoke: 0 };
+
+function colorOf(p: Piece): Color {
+  return p.type === 'defender' || p.type === 'king' ? 'white' : 'black';
+}
+
+function key(p: FidchellPosition): string {
+  return `${p.ring}-${p.spoke}`;
+}
+
+function isCenter(p: FidchellPosition): boolean {
+  return p.ring === 0;
+}
+
+// 4 cardinal step directions on the circular board:
+// 'in' (toward center), 'out' (away from center), 'cw', 'ccw'.
+type Dir = 'in' | 'out' | 'cw' | 'ccw';
+const DIRS: Dir[] = ['in', 'out', 'cw', 'ccw'];
+
+// Returns the next intersection from `pos` in direction `d`, or null if off-board.
+// The center is treated as a single position; stepping inward from ring 1 lands
+// on the center, but the center is never a placeable / movable square. Stepping
+// outward "from" the center is undefined in this engine (we never start there).
+function step(pos: FidchellPosition, d: Dir): FidchellPosition | null {
+  if (isCenter(pos)) return null;
+  const S = FIDCHELL_CONFIG.spokes;
+  const R = FIDCHELL_CONFIG.rings;
+  switch (d) {
+    case 'in':
+      return pos.ring === 1 ? CENTER : { ring: pos.ring - 1, spoke: pos.spoke };
+    case 'out':
+      return pos.ring < R - 1 ? { ring: pos.ring + 1, spoke: pos.spoke } : null;
+    case 'cw':
+      return { ring: pos.ring, spoke: (pos.spoke + 1) % S };
+    case 'ccw':
+      return { ring: pos.ring, spoke: (pos.spoke - 1 + S) % S };
+  }
+}
+
 interface FidchellLogicReturn {
   getValidMoves: (piece: Piece, pieces: Piece[]) => FidchellPosition[];
-  checkConnection: (pieces: Piece[]) => { connected: boolean; path: FidchellPosition[] };
-  simulateMove: (pieces: Piece[], piece: Piece, to: FidchellPosition) => { newPieces: Piece[]; captured: Piece[] };
-  checkGameOver: (pieces: Piece[]) => { gameOver: boolean; winner: Player | null };
+  getAllEmptyNodes: (pieces: Piece[]) => FidchellPosition[];
+  getCapturesFor: (
+    pieces: Piece[],
+    at: FidchellPosition,
+    movingColor: Color,
+    phase: 'placement' | 'movement'
+  ) => Piece[];
+  applyPlacement: (
+    pieces: Piece[],
+    color: Color,
+    at: FidchellPosition,
+    nextId: number
+  ) => { newPieces: Piece[]; captured: Piece[]; placed: Piece };
+  applyMove: (
+    pieces: Piece[],
+    piece: Piece,
+    to: FidchellPosition
+  ) => { newPieces: Piece[]; captured: Piece[] };
+  checkConnection: (
+    pieces: Piece[],
+    color: Color
+  ) => { connected: boolean; path: FidchellPosition[] };
 }
 
 export function useFidchellLogic(): FidchellLogicReturn {
-  
-  // Check if two circular positions are adjacent
-  const areAdjacent = useCallback((a: FidchellPosition, b: FidchellPosition): boolean => {
-    // Center is adjacent to all ring 1 positions
-    if (a.ring === 0 && b.ring === 1) return true;
-    if (b.ring === 0 && a.ring === 1) return true;
-    
-    // Same ring - adjacent spokes
-    if (a.ring === b.ring && a.ring > 0) {
-      const spokeDiff = Math.abs(a.spoke - b.spoke);
-      return spokeDiff === 1 || spokeDiff === FIDCHELL_CONFIG.spokes - 1;
-    }
-    
-    // Adjacent rings - same spoke
-    if (Math.abs(a.ring - b.ring) === 1 && a.spoke === b.spoke) {
-      return true;
-    }
-    
-    return false;
-  }, []);
+  const pieceAt = useCallback(
+    (pieces: Piece[], pos: FidchellPosition) =>
+      pieces.find(
+        p =>
+          p.circularPosition?.ring === pos.ring &&
+          p.circularPosition?.spoke === pos.spoke
+      ),
+    []
+  );
 
-  // Get piece at circular position
-  const getPieceAt = useCallback((pieces: Piece[], pos: FidchellPosition): Piece | undefined => {
-    return pieces.find(p => 
-      p.circularPosition?.ring === pos.ring && 
-      p.circularPosition?.spoke === pos.spoke
-    );
-  }, []);
-
-  // Get valid moves for a piece on circular board
-  const getValidMoves = useCallback((piece: Piece, pieces: Piece[]): FidchellPosition[] => {
-    if (!piece.circularPosition) return [];
-    
-    const pos = piece.circularPosition;
-    const moves: FidchellPosition[] = [];
-    
-    // Movement: along spokes (radially) or along rings (circularly)
-    
-    // Radial movement (along spoke)
-    if (pos.ring === 0) {
-      // From center, can move to any ring 1 position
-      for (let spoke = 0; spoke < FIDCHELL_CONFIG.spokes; spoke++) {
-        const target: FidchellPosition = { ring: 1, spoke };
-        if (!getPieceAt(pieces, target)) {
-          moves.push(target);
+  // Movement: slide along a single line (ring or spoke) through empty
+  // intersections until blocked. Cannot move through or onto the center.
+  const getValidMoves = useCallback(
+    (piece: Piece, pieces: Piece[]): FidchellPosition[] => {
+      if (!piece.circularPosition) return [];
+      const start = piece.circularPosition;
+      const moves: FidchellPosition[] = [];
+      for (const d of DIRS) {
+        let cur: FidchellPosition | null = step(start, d);
+        while (cur && !isCenter(cur) && !pieceAt(pieces, cur)) {
+          moves.push(cur);
+          cur = step(cur, d);
         }
       }
-    } else {
-      // Move inward along spoke
-      for (let ring = pos.ring - 1; ring >= 0; ring--) {
-        const target: FidchellPosition = ring === 0 
-          ? { ring: 0, spoke: 0 } 
-          : { ring, spoke: pos.spoke };
-        if (getPieceAt(pieces, target)) break;
-        moves.push(target);
-      }
-      
-      // Move outward along spoke
-      for (let ring = pos.ring + 1; ring < FIDCHELL_CONFIG.rings; ring++) {
-        const target: FidchellPosition = { ring, spoke: pos.spoke };
-        if (getPieceAt(pieces, target)) break;
-        moves.push(target);
-      }
-      
-      // Circular movement (along ring)
-      // Move clockwise
-      for (let i = 1; i < FIDCHELL_CONFIG.spokes; i++) {
-        const spoke = (pos.spoke + i) % FIDCHELL_CONFIG.spokes;
-        const target: FidchellPosition = { ring: pos.ring, spoke };
-        if (getPieceAt(pieces, target)) break;
-        moves.push(target);
-      }
-      
-      // Move counter-clockwise
-      for (let i = 1; i < FIDCHELL_CONFIG.spokes; i++) {
-        const spoke = (pos.spoke - i + FIDCHELL_CONFIG.spokes) % FIDCHELL_CONFIG.spokes;
-        const target: FidchellPosition = { ring: pos.ring, spoke };
-        if (getPieceAt(pieces, target)) break;
-        moves.push(target);
-      }
-    }
-    
-    return moves;
-  }, [getPieceAt]);
+      return moves;
+    },
+    [pieceAt]
+  );
 
-  // BFS to check if white has a connection from center (ring 1) to edge
-  // The Navel Stone (center) counts as a connection point for any white piece on ring 1
-  const checkConnection = useCallback((pieces: Piece[]): { connected: boolean; path: FidchellPosition[] } => {
-    const whitePieces = pieces.filter(p => p.type === 'defender');
-    const whitePositions = new Set(
-      whitePieces
-        .filter(p => p.circularPosition)
-        .map(p => `${p.circularPosition!.ring}-${p.circularPosition!.spoke}`)
-    );
-    
-    // Check if there's a white piece touching the center (ring 1)
-    const hasRing1 = whitePieces.some(p => p.circularPosition?.ring === 1);
-    if (!hasRing1) {
-      return { connected: false, path: [] };
-    }
-    
-    // BFS from all ring 1 white pieces (they connect to the Navel Stone)
-    const visited = new Set<string>();
-    const queue: { pos: FidchellPosition; path: FidchellPosition[] }[] = [];
-    
-    // Start from all white pieces on ring 1 (connected to center)
-    for (const piece of whitePieces) {
-      if (piece.circularPosition?.ring === 1) {
-        const key = `${piece.circularPosition.ring}-${piece.circularPosition.spoke}`;
-        if (!visited.has(key)) {
-          visited.add(key);
-          queue.push({ 
-            pos: piece.circularPosition, 
-            path: [{ ring: 0, spoke: 0 }, piece.circularPosition] // Include center in path
-          });
-        }
+  const getAllEmptyNodes = useCallback((pieces: Piece[]): FidchellPosition[] => {
+    const out: FidchellPosition[] = [];
+    for (let r = 1; r < FIDCHELL_CONFIG.rings; r++) {
+      for (let s = 0; s < FIDCHELL_CONFIG.spokes; s++) {
+        const pos = { ring: r, spoke: s };
+        if (!pieceAt(pieces, pos)) out.push(pos);
       }
     }
-    
-    while (queue.length > 0) {
-      const { pos, path } = queue.shift()!;
-      
-      // Check if we reached the outer edge
-      if (pos.ring === FIDCHELL_CONFIG.rings - 1) {
-        return { connected: true, path };
-      }
-      
-      // Get adjacent positions
-      const neighbors: FidchellPosition[] = [];
-      
-      // Radial neighbors
-      if (pos.ring > 1) {
-        neighbors.push({ ring: pos.ring - 1, spoke: pos.spoke });
-      }
-      if (pos.ring < FIDCHELL_CONFIG.rings - 1) {
-        neighbors.push({ ring: pos.ring + 1, spoke: pos.spoke });
-      }
-      // Circular neighbors
-      neighbors.push({ 
-        ring: pos.ring, 
-        spoke: (pos.spoke + 1) % FIDCHELL_CONFIG.spokes 
-      });
-      neighbors.push({ 
-        ring: pos.ring, 
-        spoke: (pos.spoke - 1 + FIDCHELL_CONFIG.spokes) % FIDCHELL_CONFIG.spokes 
-      });
-      
-      for (const neighbor of neighbors) {
-        const key = `${neighbor.ring}-${neighbor.spoke}`;
-        if (!visited.has(key) && whitePositions.has(key)) {
-          visited.add(key);
-          queue.push({ pos: neighbor, path: [...path, neighbor] });
-        }
-      }
-    }
-    
-    return { connected: false, path: [] };
-  }, []);
+    return out;
+  }, [pieceAt]);
 
-  // Simulate a move and check for captures
-  const simulateMove = useCallback((
-    pieces: Piece[], 
-    piece: Piece, 
-    to: FidchellPosition
-  ): { newPieces: Piece[]; captured: Piece[] } => {
-    const newPieces = pieces.map(p => 
-      p.id === piece.id 
-        ? { 
-            ...p, 
-            circularPosition: to,
-            position: { row: to.ring, col: to.spoke } // Keep position in sync
+  // Custodial sandwich capture, scanned from the just-placed/moved piece.
+  // For each cardinal direction, if neighbor1 is enemy and neighbor2 is friendly
+  // (or, in movement only, neighbor2 is the Navel Stone and neighbor1 is on
+  // ring 1), neighbor1 is captured. Captures never pass through the center.
+  const getCapturesFor = useCallback(
+    (
+      pieces: Piece[],
+      at: FidchellPosition,
+      movingColor: Color,
+      phase: 'placement' | 'movement'
+    ): Piece[] => {
+      const captured: Piece[] = [];
+      for (const d of DIRS) {
+        const n1 = step(at, d);
+        if (!n1 || isCenter(n1)) continue;
+        const p1 = pieceAt(pieces, n1);
+        if (!p1 || colorOf(p1) === movingColor) continue;
+
+        const n2 = step(n1, d);
+        if (!n2) continue;
+
+        if (isCenter(n2)) {
+          // Center as half-sandwich: movement phase only, and only when the
+          // captured pawn sits on ring 1.
+          if (phase === 'movement' && n1.ring === 1) {
+            captured.push(p1);
           }
-        : p
-    );
-    
-    const captured: Piece[] = [];
-    const movingPieceType = piece.type;
-    const isWhite = movingPieceType === 'defender' || movingPieceType === 'king';
-    
-    // Check for custodial captures (simplified for circular board)
-    // A piece is captured if sandwiched between two enemies on the same line
-    
-    // Get neighbors of the destination
-    const neighbors: FidchellPosition[] = [];
-    if (to.ring === 0) {
-      // Center - check all ring 1
-      for (let spoke = 0; spoke < FIDCHELL_CONFIG.spokes; spoke++) {
-        neighbors.push({ ring: 1, spoke });
-      }
-    } else {
-      // Radial neighbors
-      if (to.ring > 0) {
-        neighbors.push(to.ring === 1 
-          ? { ring: 0, spoke: 0 } 
-          : { ring: to.ring - 1, spoke: to.spoke }
-        );
-      }
-      if (to.ring < FIDCHELL_CONFIG.rings - 1) {
-        neighbors.push({ ring: to.ring + 1, spoke: to.spoke });
-      }
-      // Circular neighbors
-      neighbors.push({ ring: to.ring, spoke: (to.spoke + 1) % FIDCHELL_CONFIG.spokes });
-      neighbors.push({ ring: to.ring, spoke: (to.spoke - 1 + FIDCHELL_CONFIG.spokes) % FIDCHELL_CONFIG.spokes });
-    }
-    
-    // Check each neighbor for capture
-    for (const neighbor of neighbors) {
-      const neighborPiece = getPieceAt(newPieces, neighbor);
-      if (!neighborPiece) continue;
-      
-      const neighborIsWhite = neighborPiece.type === 'defender' || neighborPiece.type === 'king';
-      if (neighborIsWhite === isWhite) continue; // Same team
-      
-      // Check if sandwiched - find the opposite side
-      let opposite: FidchellPosition | null = null;
-      
-      if (neighbor.ring === to.ring) {
-        // Circular - opposite is on the other side
-        const spokeDiff = neighbor.spoke - to.spoke;
-        if (Math.abs(spokeDiff) === 1 || Math.abs(spokeDiff) === FIDCHELL_CONFIG.spokes - 1) {
-          const oppositeSpoke = spokeDiff > 0 || spokeDiff === -(FIDCHELL_CONFIG.spokes - 1)
-            ? (neighbor.spoke + 1) % FIDCHELL_CONFIG.spokes
-            : (neighbor.spoke - 1 + FIDCHELL_CONFIG.spokes) % FIDCHELL_CONFIG.spokes;
-          opposite = { ring: neighbor.ring, spoke: oppositeSpoke };
+          continue;
         }
-      } else {
-        // Radial - opposite is on the other ring
-        const ringDiff = neighbor.ring - to.ring;
-        if (Math.abs(ringDiff) === 1) {
-          const oppositeRing = neighbor.ring + ringDiff;
-          if (oppositeRing >= 0 && oppositeRing < FIDCHELL_CONFIG.rings) {
-            opposite = oppositeRing === 0 
-              ? { ring: 0, spoke: 0 }
-              : { ring: oppositeRing, spoke: neighbor.spoke };
-          }
-        }
-      }
-      
-      if (opposite) {
-        const oppositePiece = getPieceAt(newPieces, opposite);
-        if (oppositePiece) {
-          const oppositeIsWhite = oppositePiece.type === 'defender' || oppositePiece.type === 'king';
-          if (oppositeIsWhite === isWhite) {
-            // Captured!
-            captured.push(neighborPiece);
-          }
-        }
-      }
-    }
-    
-    // Remove captured pieces
-    const finalPieces = newPieces.filter(p => !captured.some(c => c.id === p.id));
-    
-    return { newPieces: finalPieces, captured };
-  }, [getPieceAt]);
 
-  // Check if game is over
-  const checkGameOver = useCallback((pieces: Piece[]): { gameOver: boolean; winner: Player | null } => {
-    // White wins if they have a connection from center to edge
-    const { connected } = checkConnection(pieces);
-    if (connected) {
-      return { gameOver: true, winner: 'defender' };
-    }
-    
-    // Black wins if white has too few pieces to possibly connect
-    const whitePieces = pieces.filter(p => p.type === 'defender');
-    const minPiecesForConnection = FIDCHELL_CONFIG.rings - 1; // Need at least 4 pieces for rings 1-4
-    
-    if (whitePieces.length < minPiecesForConnection) {
-      return { gameOver: true, winner: 'attacker' };
-    }
-    
-    return { gameOver: false, winner: null };
-  }, [checkConnection]);
+        const p2 = pieceAt(pieces, n2);
+        if (p2 && colorOf(p2) === movingColor) {
+          captured.push(p1);
+        }
+      }
+      return captured;
+    },
+    [pieceAt]
+  );
+
+  const applyPlacement = useCallback(
+    (pieces: Piece[], color: Color, at: FidchellPosition, nextId: number) => {
+      const placed: Piece = {
+        id: `${color === 'white' ? 'w' : 'b'}-${nextId}`,
+        type: color === 'white' ? 'defender' : 'attacker',
+        position: { row: at.ring, col: at.spoke },
+        circularPosition: at,
+      };
+      const withPlaced = [...pieces, placed];
+      const captured = getCapturesFor(withPlaced, at, color, 'placement');
+      const newPieces = withPlaced.filter(p => !captured.some(c => c.id === p.id));
+      return { newPieces, captured, placed };
+    },
+    [getCapturesFor]
+  );
+
+  const applyMove = useCallback(
+    (pieces: Piece[], piece: Piece, to: FidchellPosition) => {
+      const moved = pieces.map(p =>
+        p.id === piece.id
+          ? { ...p, circularPosition: to, position: { row: to.ring, col: to.spoke } }
+          : p
+      );
+      const captured = getCapturesFor(moved, to, colorOf(piece), 'movement');
+      const newPieces = moved.filter(p => !captured.some(c => c.id === p.id));
+      return { newPieces, captured };
+    },
+    [getCapturesFor]
+  );
+
+  // Win check: from any of `color`'s pawns on ring 1 (touching the center),
+  // BFS through same-color adjacency to reach the outer rim (ring R-1).
+  const checkConnection = useCallback(
+    (pieces: Piece[], color: Color) => {
+      const own = pieces.filter(p => colorOf(p) === color && p.circularPosition);
+      const ownSet = new Set(own.map(p => key(p.circularPosition!)));
+      const seeds = own.filter(p => p.circularPosition!.ring === 1);
+      if (seeds.length === 0) return { connected: false, path: [] };
+
+      const visited = new Set<string>();
+      const parent = new Map<string, FidchellPosition | null>();
+      const queue: FidchellPosition[] = [];
+
+      for (const s of seeds) {
+        const k = key(s.circularPosition!);
+        if (!visited.has(k)) {
+          visited.add(k);
+          parent.set(k, null);
+          queue.push(s.circularPosition!);
+        }
+      }
+
+      const R = FIDCHELL_CONFIG.rings;
+      let end: FidchellPosition | null = null;
+      while (queue.length) {
+        const cur = queue.shift()!;
+        if (cur.ring === R - 1) {
+          end = cur;
+          break;
+        }
+        for (const d of DIRS) {
+          const nb = step(cur, d);
+          if (!nb || isCenter(nb)) continue;
+          const nk = key(nb);
+          if (visited.has(nk) || !ownSet.has(nk)) continue;
+          visited.add(nk);
+          parent.set(nk, cur);
+          queue.push(nb);
+        }
+      }
+
+      if (!end) return { connected: false, path: [] };
+      const path: FidchellPosition[] = [];
+      let cur: FidchellPosition | null = end;
+      while (cur) {
+        path.unshift(cur);
+        cur = parent.get(key(cur)) ?? null;
+      }
+      return { connected: true, path: [CENTER, ...path] };
+    },
+    []
+  );
 
   return {
     getValidMoves,
+    getAllEmptyNodes,
+    getCapturesFor,
+    applyPlacement,
+    applyMove,
     checkConnection,
-    simulateMove,
-    checkGameOver,
   };
 }
