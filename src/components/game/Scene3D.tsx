@@ -36,6 +36,7 @@ export function Scene3D({
   boardType = 'square',
   connectionPath = [],
   variantId,
+  placementMode = false,
 }: Scene3DProps) {
   const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
 
