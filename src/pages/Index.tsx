@@ -118,7 +118,6 @@ export default function Index() {
   // Handle move for both board types
   const makeMove = useCallback((position: Position) => {
     if (isFidchell) {
-      const fidchellPos: FidchellPosition = { ring: position.row, col: position.col } as any;
       return fidchellState.makeMove({ ring: position.row, spoke: position.col });
     }
     return taflState.makeMove(position);
@@ -128,6 +127,11 @@ export default function Index() {
     if (gameMode === 'demo') return;
     if (gameState.gameResult) return;
     if (!isPassAndPlay && !gameState.isPlayerTurn) return;
+
+    if (isFidchell) {
+      fidchellState.handleNodeClick({ ring: position.row, spoke: position.col });
+      return;
+    }
 
     if (gameState.selectedPiece) {
       const moveSuccess = makeMove(position);
@@ -142,12 +146,17 @@ export default function Index() {
         }
       }
     }
-  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece, isFidchell, fidchellState]);
 
   const handlePieceClick = useCallback((pieceId: string) => {
     if (gameMode === 'demo') return;
     if (gameState.gameResult) return;
     if (!isPassAndPlay && !gameState.isPlayerTurn) return;
+
+    if (isFidchell) {
+      fidchellState.handlePieceClick(pieceId);
+      return;
+    }
 
     const piece = gameState.pieces.find(p => p.id === pieceId);
     if (!piece) return;
@@ -157,7 +166,7 @@ export default function Index() {
     } else {
       selectPiece(piece);
     }
-  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece, isFidchell, fidchellState]);
 
   // Demo mode & AI: plays both sides
   useEffect(() => {
