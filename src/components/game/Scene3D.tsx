@@ -126,6 +126,7 @@ export function Scene3D({
             onPieceClick={onPieceClick}
             theme={theme}
             connectionPath={connectionPath}
+            placementMode={placementMode}
           />
         ) : (
           <Board3D
