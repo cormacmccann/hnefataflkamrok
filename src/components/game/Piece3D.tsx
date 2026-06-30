@@ -33,7 +33,8 @@ function easeInOutCubic(t: number): number {
 export function Piece3D({ piece, position, isSelected, onClick, boardType = 'square' }: Piece3DProps) {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
-  const useSimpleGeometry = boardType === 'circular';
+  // Use full GLB models on both square and circular (Fidchell) boards
+  const useSimpleGeometry = false;
   
   // Animation state
   const animationRef = useRef({
