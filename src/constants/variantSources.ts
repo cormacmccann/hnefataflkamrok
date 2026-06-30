@@ -32,6 +32,14 @@ export const VARIANT_SOURCES: Record<string, VariantSource[]> = {
       type: 'scholarship',
       note: 'Journal of the Royal Society of Antiquaries of Ireland.',
     },
+    {
+      title: 'Fidchell — Origins & Classical Two-Player Rules',
+      author: 'Unicorn Garden',
+      type: 'scholarship',
+      url: 'https://www.unicorngarden.com/fidchell/origins.htm',
+      note: 'Argues fidchell was classically a two-player tafl-like game (king + defenders vs. attackers), distinct from later 3-player reconstructions.',
+    },
+
   ],
   brandub: [
     {
