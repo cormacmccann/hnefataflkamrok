@@ -23,6 +23,7 @@ interface Scene3DProps {
   boardType?: BoardType;
   connectionPath?: FidchellPosition[];
   variantId?: string;
+  placementMode?: boolean;
 }
 
 export function Scene3D({ 
@@ -35,6 +36,7 @@ export function Scene3D({
   boardType = 'square',
   connectionPath = [],
   variantId,
+  placementMode = false,
 }: Scene3DProps) {
   const [completedParticles, setCompletedParticles] = useState<Set<string>>(new Set());
 
@@ -124,6 +126,7 @@ export function Scene3D({
             onPieceClick={onPieceClick}
             theme={theme}
             connectionPath={connectionPath}
+            placementMode={placementMode}
           />
         ) : (
           <Board3D

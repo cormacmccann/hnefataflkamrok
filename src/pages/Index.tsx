@@ -118,7 +118,6 @@ export default function Index() {
   // Handle move for both board types
   const makeMove = useCallback((position: Position) => {
     if (isFidchell) {
-      const fidchellPos: FidchellPosition = { ring: position.row, col: position.col } as any;
       return fidchellState.makeMove({ ring: position.row, spoke: position.col });
     }
     return taflState.makeMove(position);
@@ -128,6 +127,11 @@ export default function Index() {
     if (gameMode === 'demo') return;
     if (gameState.gameResult) return;
     if (!isPassAndPlay && !gameState.isPlayerTurn) return;
+
+    if (isFidchell) {
+      fidchellState.handleNodeClick({ ring: position.row, spoke: position.col });
+      return;
+    }
 
     if (gameState.selectedPiece) {
       const moveSuccess = makeMove(position);
@@ -142,12 +146,17 @@ export default function Index() {
         }
       }
     }
-  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece, isFidchell, fidchellState]);
 
   const handlePieceClick = useCallback((pieceId: string) => {
     if (gameMode === 'demo') return;
     if (gameState.gameResult) return;
     if (!isPassAndPlay && !gameState.isPlayerTurn) return;
+
+    if (isFidchell) {
+      fidchellState.handlePieceClick(pieceId);
+      return;
+    }
 
     const piece = gameState.pieces.find(p => p.id === pieceId);
     if (!piece) return;
@@ -157,7 +166,7 @@ export default function Index() {
     } else {
       selectPiece(piece);
     }
-  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece]);
+  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece, isFidchell, fidchellState]);
 
   // Demo mode & AI: plays both sides
   useEffect(() => {
@@ -165,39 +174,41 @@ export default function Index() {
     if (isPassAndPlay) return; // no AI in pass-and-play
     
     
-    // Fidchell uses different AI
+    // Fidchell uses different AI (placement phase + movement phase)
     if (isFidchell) {
-      if (gameMode === 'demo') {
-        const currentPlayer = gameState.currentPlayer;
+      const phase = fidchellState.phase;
+      const runFidchellAI = (side: Player, delay: number, demo: boolean) => {
         const timeoutId = setTimeout(() => {
-          const bestMove = fidchellAI.getBestMove(gameState.pieces, currentPlayer);
-          if (bestMove && bestMove.piece.circularPosition) {
-            const explanation = currentPlayer === 'defender' 
-              ? t.defendersManeuver
-              : t.attackersSiege;
-            setDemoMove(bestMove.piece, { row: bestMove.to.ring, col: bestMove.to.spoke }, currentPlayer, explanation);
-            selectPiece(bestMove.piece);
-            
-            setTimeout(() => {
-              fidchellState.makeMove(bestMove.to);
-              setTimeout(() => hidePopup(), 1500);
-            }, 1200);
+          const action = phase === 'placement'
+            ? fidchellAI.getBestPlacement(gameState.pieces, side)
+            : fidchellAI.getBestMove(gameState.pieces, side);
+          if (!action) return;
+          if (action.kind === 'place') {
+            if (demo) {
+              const explanation = side === 'defender' ? t.defendersManeuver : t.attackersSiege;
+              setDemoMove(
+                { id: 'ai-place', type: side === 'defender' ? 'defender' : 'attacker', position: { row: action.to.ring, col: action.to.spoke } } as any,
+                { row: action.to.ring, col: action.to.spoke },
+                side,
+                explanation,
+              );
+            }
+            fidchellState.handleNodeClick(action.to);
+            if (demo) setTimeout(() => hidePopup(), 1200);
+          } else if (action.piece) {
+            selectPiece(action.piece);
+            setTimeout(() => fidchellState.makeMove(action.to), 250);
+            if (demo) setTimeout(() => hidePopup(), 1500);
           }
-        }, 2000);
+        }, delay);
         return () => clearTimeout(timeoutId);
+      };
+      if (gameMode === 'demo') {
+        return runFidchellAI(gameState.currentPlayer, 1500, true);
       } else {
         if (gameState.isPlayerTurn) return;
         const aiSide: Player = playerSide === 'attacker' ? 'defender' : 'attacker';
-        const timeoutId = setTimeout(() => {
-          const bestMove = fidchellAI.getBestMove(gameState.pieces, aiSide);
-          if (bestMove) {
-            selectPiece(bestMove.piece);
-            setTimeout(() => {
-              fidchellState.makeMove(bestMove.to);
-            }, 300);
-          }
-        }, 500);
-        return () => clearTimeout(timeoutId);
+        return runFidchellAI(aiSide, 450, false);
       }
     }
     
@@ -298,8 +309,35 @@ export default function Index() {
         boardType={boardType}
         connectionPath={isFidchell ? fidchellState.connectionPath : undefined}
         variantId={variantId}
+        placementMode={isFidchell && fidchellState.phase === 'placement' && (isPassAndPlay || gameState.isPlayerTurn)}
       />
       <EraBackdrop gameId={variantId} />
+
+      {/* Fidchell HUD: phase + pawns in hand */}
+      {isFidchell && !gameState.gameResult && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+        >
+          <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md bg-black/55 backdrop-blur-sm border border-amber-200/30 text-amber-100 font-serif text-xs sm:text-sm shadow-lg text-center">
+            <div className="uppercase tracking-widest text-[10px] sm:text-xs opacity-80">
+              {fidchellState.phase === 'placement' ? 'Placement Phase' : 'Movement Phase'}
+            </div>
+            <div className="mt-0.5 flex items-center gap-3 sm:gap-4 justify-center">
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300" />
+                <span>{fidchellState.pawnsInHand.defender}</span>
+              </span>
+              <span className="opacity-60">in hand</span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-stone-800 border border-stone-500" />
+                <span>{fidchellState.pawnsInHand.attacker}</span>
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Header Overlay with Logo and Volume */}
       <motion.header 
