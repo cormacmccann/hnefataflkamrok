@@ -1,62 +1,110 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { Piece, Player, GameResult, FidchellPosition, Move, GameState } from '@/types/game';
 import { FIDCHELL_CONFIG } from '@/constants/game';
 import { useFidchellLogic } from './useFidchellLogic';
 import { useSoundEffects } from './useSoundEffects';
+
+export type FidchellPhase = 'placement' | 'movement';
+
+type Color = 'white' | 'black';
+const playerToColor = (p: Player): Color => (p === 'defender' ? 'white' : 'black');
+const colorToPlayer = (c: Color): Player => (c === 'white' ? 'defender' : 'attacker');
 
 interface FidchellStateReturn {
   gameState: GameState;
   selectPiece: (piece: Piece | null) => void;
   makeMove: (to: FidchellPosition) => boolean;
   resetGame: (playerSide: Player) => void;
+  handleNodeClick: (pos: FidchellPosition) => void;
+  handlePieceClick: (pieceId: string) => void;
   connectionPath: FidchellPosition[];
+  phase: FidchellPhase;
+  pawnsInHand: { defender: number; attacker: number };
 }
 
 export function useFidchellState(playerSide: Player, sfxVolume: number): FidchellStateReturn {
   const logic = useFidchellLogic();
   const { playSelect, playMove, playCapture } = useSoundEffects(sfxVolume);
 
-  // Create initial pieces - Fidchell has no king, it's a connection game
-  const createInitialPieces = useCallback((): Piece[] => {
-    const pieces: Piece[] = [];
-    
-    // White pieces (defenders/connection makers) - starts on inner rings
-    FIDCHELL_CONFIG.initialWhite.forEach((pos, idx) => {
-      pieces.push({
-        id: `white-${idx}`,
-        type: 'defender',
-        position: { row: pos.ring, col: pos.spoke },
-        circularPosition: pos,
-      });
-    });
-    
-    // Black pieces (attackers/blockers) - starts on outer rings
-    FIDCHELL_CONFIG.initialBlack.forEach((pos, idx) => {
-      pieces.push({
-        id: `black-${idx}`,
-        type: 'attacker',
-        position: { row: pos.ring, col: pos.spoke },
-        circularPosition: pos,
-      });
-    });
-    
-    return pieces;
-  }, []);
-
-  const [pieces, setPieces] = useState<Piece[]>(createInitialPieces);
-  const [currentPlayer, setCurrentPlayer] = useState<Player>('attacker'); // Black moves first
+  const [pieces, setPieces] = useState<Piece[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState<Player>('attacker');
   const [selectedPiece, setSelectedPiece] = useState<Piece | null>(null);
   const [validMoves, setValidMoves] = useState<FidchellPosition[]>([]);
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
   const [gameResult, setGameResult] = useState<GameResult>(null);
   const [connectionPath, setConnectionPath] = useState<FidchellPosition[]>([]);
+  const [pawnsInHand, setPawnsInHand] = useState<{ defender: number; attacker: number }>({
+    defender: FIDCHELL_CONFIG.piecesPerSide,
+    attacker: FIDCHELL_CONFIG.piecesPerSide,
+  });
+  const nextIdRef = useRef(0);
+
+  // A player is in placement phase as long as they still have pawns in hand.
+  const phase: FidchellPhase = pawnsInHand[currentPlayer] > 0 ? 'placement' : 'movement';
 
   const isPlayerTurn = currentPlayer === playerSide;
 
-  // Convert FidchellPosition[] to Position[] for compatibility
-  const validMovesAsPositions = useMemo(() => {
-    return validMoves.map(fp => ({ row: fp.ring, col: fp.spoke }));
-  }, [validMoves]);
+  const validMovesAsPositions = useMemo(
+    () => validMoves.map(fp => ({ row: fp.ring, col: fp.spoke })),
+    [validMoves]
+  );
+
+  const afterAction = useCallback((newPieces: Piece[], gainExtraTurn: boolean) => {
+    // Connection win check for both colors (mover first).
+    const moverColor = playerToColor(currentPlayer);
+    const moverConn = logic.checkConnection(newPieces, moverColor);
+    if (moverConn.connected) {
+      setConnectionPath(moverConn.path);
+      setGameResult(currentPlayer === 'defender' ? 'defender-wins' : 'attacker-wins');
+      return;
+    }
+    const otherColor: Color = moverColor === 'white' ? 'black' : 'white';
+    const otherConn = logic.checkConnection(newPieces, otherColor);
+    if (otherConn.connected) {
+      setConnectionPath(otherConn.path);
+      const winner = colorToPlayer(otherColor);
+      setGameResult(winner === 'defender' ? 'defender-wins' : 'attacker-wins');
+      return;
+    }
+    setConnectionPath([]);
+
+    if (!gainExtraTurn) {
+      setCurrentPlayer(prev => (prev === 'attacker' ? 'defender' : 'attacker'));
+    }
+  }, [currentPlayer, logic]);
+
+  const placePawn = useCallback((at: FidchellPosition) => {
+    if (gameResult) return false;
+    if (pawnsInHand[currentPlayer] <= 0) return false;
+    if (at.ring === 0) return false; // never place on Navel Stone
+    if (pieces.some(p => p.circularPosition?.ring === at.ring && p.circularPosition?.spoke === at.spoke)) {
+      return false;
+    }
+
+    const color = playerToColor(currentPlayer);
+    const id = nextIdRef.current++;
+    const { newPieces, captured, placed } = logic.applyPlacement(pieces, color, at, id);
+
+    playMove();
+    if (captured.length > 0) playCapture();
+
+    const move: Move = {
+      piece: placed,
+      from: { row: -1, col: -1 }, // sentinel: from hand
+      to: { row: at.ring, col: at.spoke },
+      captured,
+      notation: `place ${color[0].toUpperCase()}@(${at.ring},${at.spoke})${captured.length ? `×${captured.length}` : ''}`,
+    };
+
+    setPieces(newPieces);
+    setMoveHistory(prev => [...prev, move]);
+    setPawnsInHand(prev => ({ ...prev, [currentPlayer]: prev[currentPlayer] - 1 }));
+    setSelectedPiece(null);
+    setValidMoves([]);
+
+    afterAction(newPieces, captured.length > 0);
+    return true;
+  }, [gameResult, pawnsInHand, currentPlayer, pieces, logic, playMove, playCapture, afterAction]);
 
   const selectPiece = useCallback((piece: Piece | null) => {
     if (!piece) {
@@ -64,44 +112,34 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
       setValidMoves([]);
       return;
     }
+    if (gameResult) return;
+    // Only selectable during the mover's movement phase.
+    if (pawnsInHand[currentPlayer] > 0) return;
 
-    // Check if piece belongs to current player
-    const isWhitePiece = piece.type === 'defender' || piece.type === 'king';
-    const isCurrentPlayerWhite = currentPlayer === 'defender';
-    
-    if (isWhitePiece !== isCurrentPlayerWhite) {
-      return;
-    }
+    const color = playerToColor(currentPlayer);
+    const pieceColor: Color = piece.type === 'attacker' ? 'black' : 'white';
+    if (pieceColor !== color) return;
 
     playSelect();
     setSelectedPiece(piece);
-    const moves = logic.getValidMoves(piece, pieces);
-    setValidMoves(moves);
-  }, [currentPlayer, pieces, logic, playSelect]);
+    setValidMoves(logic.getValidMoves(piece, pieces));
+  }, [gameResult, pawnsInHand, currentPlayer, logic, pieces, playSelect]);
 
   const makeMove = useCallback((to: FidchellPosition): boolean => {
     if (!selectedPiece || !selectedPiece.circularPosition) return false;
+    if (gameResult) return false;
+    if (!validMoves.some(m => m.ring === to.ring && m.spoke === to.spoke)) return false;
 
-    // Check if move is valid
-    const isValid = validMoves.some(m => m.ring === to.ring && m.spoke === to.spoke);
-    if (!isValid) return false;
-
-    // Execute move
-    const { newPieces, captured } = logic.simulateMove(pieces, selectedPiece, to);
-    
-    // Play sounds
+    const { newPieces, captured } = logic.applyMove(pieces, selectedPiece, to);
     playMove();
-    if (captured.length > 0) {
-      playCapture();
-    }
+    if (captured.length > 0) playCapture();
 
-    // Create move record
     const move: Move = {
       piece: selectedPiece,
       from: { row: selectedPiece.circularPosition.ring, col: selectedPiece.circularPosition.spoke },
       to: { row: to.ring, col: to.spoke },
       captured,
-      notation: `${selectedPiece.type[0].toUpperCase()}(${selectedPiece.circularPosition.ring},${selectedPiece.circularPosition.spoke})→(${to.ring},${to.spoke})`,
+      notation: `(${selectedPiece.circularPosition.ring},${selectedPiece.circularPosition.spoke})→(${to.ring},${to.spoke})${captured.length ? `×${captured.length}` : ''}`,
     };
 
     setPieces(newPieces);
@@ -109,37 +147,44 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
     setSelectedPiece(null);
     setValidMoves([]);
 
-    // Check for game over
-    const { gameOver, winner } = logic.checkGameOver(newPieces);
-    if (gameOver && winner) {
-      setGameResult(winner === 'defender' ? 'defender-wins' : 'attacker-wins');
-      
-      // Update connection path for victory visualization
-      if (winner === 'defender') {
-        const { path } = logic.checkConnection(newPieces);
-        setConnectionPath(path);
-      }
-    } else {
-      // Update connection path visualization
-      const { path } = logic.checkConnection(newPieces);
-      setConnectionPath(path);
-      
-      // Switch turns
-      setCurrentPlayer(prev => prev === 'attacker' ? 'defender' : 'attacker');
-    }
-
+    afterAction(newPieces, captured.length > 0);
     return true;
-  }, [selectedPiece, validMoves, pieces, logic, playMove, playCapture]);
+  }, [selectedPiece, gameResult, validMoves, pieces, logic, playMove, playCapture, afterAction]);
 
-  const resetGame = useCallback((side: Player) => {
-    setPieces(createInitialPieces());
+  const handleNodeClick = useCallback((pos: FidchellPosition) => {
+    if (gameResult) return;
+    if (pawnsInHand[currentPlayer] > 0) {
+      placePawn(pos);
+      return;
+    }
+    if (selectedPiece) makeMove(pos);
+  }, [gameResult, pawnsInHand, currentPlayer, selectedPiece, placePawn, makeMove]);
+
+  const handlePieceClick = useCallback((pieceId: string) => {
+    if (gameResult) return;
+    const piece = pieces.find(p => p.id === pieceId);
+    if (!piece) return;
+    if (selectedPiece?.id === pieceId) {
+      selectPiece(null);
+    } else {
+      selectPiece(piece);
+    }
+  }, [gameResult, pieces, selectedPiece, selectPiece]);
+
+  const resetGame = useCallback((_side: Player) => {
+    nextIdRef.current = 0;
+    setPieces([]);
     setCurrentPlayer('attacker');
     setSelectedPiece(null);
     setValidMoves([]);
     setMoveHistory([]);
     setGameResult(null);
     setConnectionPath([]);
-  }, [createInitialPieces]);
+    setPawnsInHand({
+      defender: FIDCHELL_CONFIG.piecesPerSide,
+      attacker: FIDCHELL_CONFIG.piecesPerSide,
+    });
+  }, []);
 
   const gameState: GameState = {
     pieces,
@@ -148,7 +193,7 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
     selectedPiece,
     validMoves: validMovesAsPositions,
     gameResult,
-    boardSize: 7, // Not used for circular board
+    boardSize: 7,
     isPlayerTurn,
     playerSide,
     boardType: 'circular',
@@ -160,6 +205,10 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
     selectPiece,
     makeMove,
     resetGame,
+    handleNodeClick,
+    handlePieceClick,
     connectionPath,
+    phase,
+    pawnsInHand,
   };
 }
