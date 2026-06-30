@@ -309,8 +309,35 @@ export default function Index() {
         boardType={boardType}
         connectionPath={isFidchell ? fidchellState.connectionPath : undefined}
         variantId={variantId}
+        placementMode={isFidchell && fidchellState.phase === 'placement' && (isPassAndPlay || gameState.isPlayerTurn)}
       />
       <EraBackdrop gameId={variantId} />
+
+      {/* Fidchell HUD: phase + pawns in hand */}
+      {isFidchell && !gameState.gameResult && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+        >
+          <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md bg-black/55 backdrop-blur-sm border border-amber-200/30 text-amber-100 font-serif text-xs sm:text-sm shadow-lg text-center">
+            <div className="uppercase tracking-widest text-[10px] sm:text-xs opacity-80">
+              {fidchellState.phase === 'placement' ? 'Placement Phase' : 'Movement Phase'}
+            </div>
+            <div className="mt-0.5 flex items-center gap-3 sm:gap-4 justify-center">
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300" />
+                <span>{fidchellState.pawnsInHand.defender}</span>
+              </span>
+              <span className="opacity-60">in hand</span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-stone-800 border border-stone-500" />
+                <span>{fidchellState.pawnsInHand.attacker}</span>
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Header Overlay with Logo and Volume */}
       <motion.header 
