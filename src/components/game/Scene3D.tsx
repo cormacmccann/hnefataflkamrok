@@ -23,6 +23,7 @@ interface Scene3DProps {
   boardType?: BoardType;
   connectionPath?: FidchellPosition[];
   variantId?: string;
+  placementMode?: boolean;
 }
 
 export function Scene3D({ 
