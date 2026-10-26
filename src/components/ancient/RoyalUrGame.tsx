@@ -1,18 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useUiTranslation } from '@/i18n/useUiTranslation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   initialUrState, rollDice, legalMoves, applyMove, passTurn, chooseAIMove,
   UrState, UrMove,
 } from '@/lib/ancient/royalUr';
-import { Dices, RotateCcw } from 'lucide-react';
+import { Dices } from 'lucide-react';
 import { Ancient3DScene } from './Ancient3DScene';
 import { RoyalUrBoard3D } from './RoyalUrBoard3D';
-import { EraBackdrop } from './EraBackdrop';
+import { AncientGameShell } from './AncientGameShell';
+import { UrBoard2D } from './AncientBoards2D';
+import { BoardView } from '@/components/game/BoardViewToggle';
 
 
 export function RoyalUrGame() {
+  const { tr } = useUiTranslation();
   const [state, setState] = useState<UrState>(initialUrState);
   const [aiThinking, setAiThinking] = useState(false);
   const [rolling, setRolling] = useState(false);
+  const [view, setView] = useState<BoardView>('3d');
+  const rollTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(rollTimer.current), []);
 
   const myMoves = useMemo(
     () => (state.rolled && state.turn === 'white' ? legalMoves(state, state.dice) : []),
@@ -20,9 +27,9 @@ export function RoyalUrGame() {
   );
 
   const onRoll = useCallback(() => {
-    if (state.rolled || state.winner || state.turn !== 'white') return;
+    if (state.rolled || state.winner || state.turn !== 'white' || rolling) return;
     setRolling(true);
-    setTimeout(() => {
+    rollTimer.current = setTimeout(() => {
       const r = rollDice();
       const next = { ...state, dice: r, rolled: true, log: [...state.log, `White rolled ${r}`] };
       const moves = legalMoves(next, r);
@@ -30,7 +37,7 @@ export function RoyalUrGame() {
       if (moves.length === 0) setState(passTurn(next, r === 0 ? 'Rolled 0.' : 'No legal move.'));
       else setState(next);
     }, 600);
-  }, [state]);
+  }, [state, rolling]);
 
   useEffect(() => {
     if (state.winner || state.turn !== 'black') return;
@@ -50,57 +57,19 @@ export function RoyalUrGame() {
     if (state.turn !== 'white' || !state.rolled || state.winner) return;
     setState(applyMove(state, m));
   };
-  const reset = () => setState(initialUrState());
+  const reset = () => { clearTimeout(rollTimer.current); setRolling(false); setState(initialUrState()); };
 
+  const displayedMoves = myMoves.filter((move, i, moves) => move.fromPathIdx !== -1 || moves.findIndex(other => other.fromPathIdx === -1) === i);
+  const status = state.winner ? tr(state.winner === 'white' ? 'You win' : 'Opponent wins') : state.turn === 'white' ? tr('Your turn · ivory tokens') : tr('Opponent’s turn');
   return (
-    <div className="absolute inset-0">
-      <Ancient3DScene cameraPosition={[0, 9, 8]} minDistance={7} maxDistance={20} eraId="royal-ur">
-        <RoyalUrBoard3D state={state} myMoves={myMoves} onMove={trySelectMove} />
-      </Ancient3DScene>
-
-      {/* HUD: header */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 parchment rounded-lg px-4 py-2 flex items-center gap-3 text-amber-950 text-sm font-['Cinzel']">
-        <span className="font-bold">Royal Game of Ur</span>
-        <span className="opacity-70">·</span>
-        <span>
-          {state.winner ? `${state.winner === 'white' ? 'You' : 'AI'} won` : state.turn === 'white' ? 'Your turn' : 'AI turn'}
-        </span>
-      </div>
-
-      <button
-        onClick={reset}
-        className="absolute top-4 right-4 z-20 carved-button px-3 py-2 rounded-md text-foreground inline-flex items-center gap-1.5 text-sm"
-      >
-        <RotateCcw className="w-4 h-4" /> Restart
-      </button>
-
-      <EraBackdrop gameId="royal-ur" />
-
-      {/* HUD: roll button */}
-
-      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20">
-        <button
-          onClick={onRoll}
-          disabled={state.rolled || state.winner !== null || state.turn !== 'white' || rolling}
-          className="px-5 py-3 rounded-lg font-['Cinzel'] font-bold uppercase tracking-wider
-            bg-gradient-to-b from-primary to-[hsl(35_55%_38%)] text-primary-foreground
-            shadow-[0_0_20px_hsl(38_60%_50%/0.4)] disabled:opacity-50 disabled:cursor-not-allowed
-            inline-flex items-center gap-2"
-        >
-          <Dices className={`w-5 h-5 ${rolling ? 'animate-spin' : ''}`} />
-          {rolling ? 'Rolling…' : state.turn === 'white' && !state.rolled ? 'Roll sticks' : aiThinking ? 'Black thinking…' : `Rolled: ${state.dice >= 0 ? state.dice : '—'}`}
-        </button>
-      </div>
-
-      {/* HUD: log + rules */}
-      <div className="absolute bottom-4 left-4 right-4 z-20 grid sm:grid-cols-2 gap-2 max-w-3xl mx-auto">
-        <div className="parchment rounded-lg p-2 max-h-24 overflow-y-auto text-[11px] font-mono space-y-0.5 text-amber-950">
-          {state.log.slice(-6).map((l, i) => <div key={i}>{l}</div>)}
-        </div>
-        <div className="parchment rounded-lg p-2 text-[11px] text-amber-950 leading-snug">
-          <span className="font-bold font-['Cinzel']">How to play:</span> Roll 4 sticks (0–4). Click a glowing square to move. Land on a ✦ rosette for a safe square + extra turn. Bear off all 7 tokens to win. Finkel's reconstruction (BM 33333+).
-        </div>
-      </div>
-    </div>
+    <AncientGameShell title="Royal Game of Ur" status={status} view={view} onViewChange={setView} onRestart={reset} log={state.log}
+      rules={tr("Cast four binary dice, then choose a highlighted destination. Rosettes grant another turn; the central rosette is safe. Bear off all seven tokens with an exact roll. A playable modern reconstruction.")}
+      controls={<>
+        <button onClick={onRoll} disabled={state.rolled || !!state.winner || state.turn !== 'white' || rolling} className="ancient-move-button"><Dices size={16} />{rolling ? tr('Casting…') : aiThinking ? tr('Opponent thinking…') : state.rolled ? tr('cast {v0} · choose a move', { v0: state.dice }) : tr('Cast dice')}</button>
+        <span className="ancient-board-score">{tr('Home: you')} {state.white.filter(p => p === 14).length}/7 {tr('· opponent')} {state.black.filter(p => p === 14).length}/7</span>
+        {displayedMoves.map((move, i) => <button className="ancient-move-button secondary" key={i} onClick={() => trySelectMove(move)} aria-label={tr('Move token {v0} {v1}', { v0: move.tokenIndex + 1, v1: move.toPathIdx === 14 ? tr('home') : tr('to square {v0}', { v0: move.toPathIdx + 1 }) })}>{move.toPathIdx === 14 ? tr('Bear off') : move.fromPathIdx === -1 ? tr('Enter') : tr('Token {v0}', { v0: move.tokenIndex + 1 })} {move.toPathIdx < 14 ? `→ ${move.toPathIdx + 1}` : tr('Token {v0}', { v0: move.tokenIndex + 1 })}</button>)}
+      </>}>
+      {view === '3d' ? <Ancient3DScene cameraPosition={[0, 9, 8]} minDistance={7} maxDistance={20} eraId="royal-ur"><RoyalUrBoard3D state={state} myMoves={myMoves} onMove={trySelectMove} /></Ancient3DScene> : <UrBoard2D state={state} moves={myMoves} onMove={trySelectMove} />}
+    </AncientGameShell>
   );
 }

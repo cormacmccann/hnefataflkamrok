@@ -1,548 +1,128 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BoardSize, Player, AIDifficulty, GameMode, GameVariant, VariantRules } from '@/types/game';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { ArrowRight, BookOpen, ChevronRight, Compass, Eye, Globe2, Shield, Swords, Users } from 'lucide-react';
+import { BoardSize, Player, AIDifficulty, GameMode, GameVariant } from '@/types/game';
 import { GAME_VARIANTS, BOARD_CONFIGS } from '@/constants/game';
-import { Play, Eye, Map, Swords, Shield, Info, X, BookOpen, Users, ScrollText } from 'lucide-react';
-import { MultiplayerMenu } from '@/components/multiplayer/MultiplayerMenu';
-import { ProfileChip } from '@/components/auth/ProfileChip';
-import { SourcesPanel } from './SourcesPanel';
-import { DailyPuzzleCard } from './DailyPuzzleCard';
-import { useHistorianMode } from '@/contexts/HistorianModeContext';
-
-const VARIANT_FLAGS: Record<string, string> = {
-  fidchell: '🇮🇪',
-  brandub: '🇮🇪',
-  tablut: '🇸🇪',
-  tawlbwrdd: '🏴‍☠️',
-  hnefatafl: '🇳🇴',
-  alea: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-};
-try { VARIANT_FLAGS['tawlbwrdd'] = '🏴󠁧󠁢󠁷󠁬󠁳󠁿'; } catch {};
-import vikingBackground from '@/assets/viking-background.jpg';
-import builtwithImg from '@/assets/builtwith.png';
-import kamrokLogo from '@/assets/kamrok-logo.png';
-import { VolumeControl } from './VolumeControl';
-import { TaflHistoryMap } from './TaflHistoryMap';
-
-import { RulesModal } from './RulesModal';
-import { useLanguage } from '@/i18n/LanguageContext';
 import { LORE_GAMES, LoreGame } from '@/constants/loreGames';
-import { AncientGameModal } from '@/components/ancient/AncientGameModal';
+const ChessGameModal = lazy(() => import('@/components/chess/ChessGameModal').then(m => ({ default: m.ChessGameModal })));
+const AncientGameModal = lazy(() => import('@/components/ancient/AncientGameModal').then(m => ({ default: m.AncientGameModal })));
 import { ERA_IMAGES } from '@/components/ancient/EraBackdrop';
-import { Globe, Hourglass, Sparkles } from 'lucide-react';
-
-
-const LORE_FLAGS: Record<string, string> = {
-  petteia: '🇬🇷',
-  latrunculorum: '🇮🇹',
-  'royal-ur': '🇮🇶',
-  senet: '🇪🇬',
-  liubo: '🇨🇳',
-  patolli: '🇲🇽',
-  bao: '🇹🇿',
-  mehen: '🇪🇬',
-};
+import { ProfileChip } from '@/components/auth/ProfileChip';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { LanguageSelector } from './LanguageSelector';
+import { BrandMark } from './BrandMark';
+import { VolumeControl } from './VolumeControl';
+const TaflHistoryMap = lazy(() => import('./TaflHistoryMap').then(m => ({ default: m.TaflHistoryMap })));
+import { RulesModal } from './RulesModal';
+import { SourcesPanel } from './SourcesPanel';
+import kamrokLogo from '@/assets/kamrok-logo.png';
 
 interface GameSetupProps {
-  onStartGame: (boardSize: BoardSize, playerSide: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
+  onStartGame: (size: BoardSize, side: Player, difficulty: AIDifficulty, mode: GameMode, variantId: string) => void;
   onStartPassAndPlay?: (variantId: string) => void;
   musicVolume: number;
   sfxVolume: number;
   onMusicVolumeChange: (volume: number) => void;
   onSfxVolumeChange: (volume: number) => void;
+  onToggleMute: () => void;
 }
+const FAMILY_LABELS = { custodial: 'Strategy & capture', race: 'Race & chance', sowing: 'Sowing & strategy', territory: 'Connection & territory' };
+const CLASSIC_GAMES = [{id:'chess',name:'Chess',region:'A world tradition',era:'Modern standard rules'}];
+const SHORT_NAMES: Record<string, string> = { petteia: 'Petteia', latrunculorum: 'Latrunculorum', liubo: 'Liubo', mehen: 'Mehen' };
 
-export function GameSetup({
-  onStartGame,
-  onStartPassAndPlay,
-  musicVolume,
-  sfxVolume,
-  onMusicVolumeChange,
-  onSfxVolumeChange,
-}: GameSetupProps) {
-  const { t } = useLanguage();
-  const { historianMode, toggleHistorianMode } = useHistorianMode();
-  const [selectedVariant, setSelectedVariant] = useState<GameVariant>(GAME_VARIANTS[2]);
+export function GameSetup(props: GameSetupProps) {
+  const [selectedId, setSelectedId] = useState('hnefatafl');
+  const gameListRef = useRef<HTMLDivElement>(null);
+  const [category, setCategory] = useState<'tafl' | 'world' | 'classics'>('tafl');
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
+  const [opponent, setOpponent] = useState<'ai' | 'local'>('ai');
   const [showMap, setShowMap] = useState(false);
   const [showRules, setShowRules] = useState(false);
-  const [rules, setRules] = useState<VariantRules>(GAME_VARIANTS[2].defaultRules);
-  const [infoVariant, setInfoVariant] = useState<GameVariant | null>(null);
-  const [activeTab, setActiveTab] = useState<'tafl' | 'lost'>('tafl');
+  const [showStory, setShowStory] = useState(false);
+  const [showChess, setShowChess] = useState(false);
   const [loreGame, setLoreGame] = useState<LoreGame | null>(null);
-  const [showMultiplayer, setShowMultiplayer] = useState(false);
-
-  const difficultyMap = [
-    { key: 'easy' as AIDifficulty, label: t.easy, vikingName: t.thrall },
-    { key: 'medium' as AIDifficulty, label: t.medium, vikingName: t.karl },
-    { key: 'valhalla' as AIDifficulty, label: t.hard, vikingName: t.jarl },
-  ];
-
-  const handleVariantChange = (variant: GameVariant) => {
-    setSelectedVariant(variant);
-    setRules(variant.defaultRules);
+  useEffect(() => {
+    const list=gameListRef.current; const selected=list?.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+    if(window.innerWidth<=900&&list&&selected) list.scrollTo({left:selected.offsetLeft-list.offsetLeft-(list.clientWidth-selected.clientWidth)/2,behavior:'auto'});
+  },[selectedId,category]);
+  const variant = GAME_VARIANTS.find(v => v.id === selectedId);
+  const ancient = LORE_GAMES.find(v => v.id === selectedId);
+  const isChess = selectedId === 'chess';
+  const categoryGames = category === 'tafl' ? GAME_VARIANTS : category === 'world' ? LORE_GAMES : CLASSIC_GAMES;
+  const name = isChess ? 'Chess' : variant?.name || SHORT_NAMES[selectedId] || ancient?.name || 'TAFL';
+  const origin = isChess ? 'A world tradition' : variant?.origin || ancient?.region;
+  const era = isChess ? 'Modern standard rules' : variant?.era || ancient?.era;
+  const description = isChess ? 'A game of kings, brought to the same wooden table. Play against the computer or a friend, switch between carved 3D pieces and a clear 2D board, and review every move.' : variant?.history || ancient?.description;
+  const circular = variant?.boardType === 'circular';
+  const config = variant ? BOARD_CONFIGS[variant.boardSize] : null;
+  const selectCategory = (next: 'tafl' | 'world' | 'classics') => { setCategory(next); setSelectedId(next === 'tafl' ? 'hnefatafl' : next === 'world' ? 'royal-ur' : 'chess'); };
+  const start = (mode: GameMode = 'play') => {
+    if (isChess) setShowChess(true);
+    else if (ancient) setLoreGame(ancient);
+    else if (variant && opponent === 'local' && mode === 'play') props.onStartPassAndPlay?.(variant.id);
+    else if (variant) props.onStartGame(variant.boardSize, playerSide, difficulty, mode, variant.id);
   };
+  return <div className="collection-shell collection-shell--immersive">
+    <div className={`collection-world ${isChess ? 'collection-world--chess' : ''}`} style={isChess ? undefined : {backgroundImage:`url(${ERA_IMAGES[selectedId]})`}} aria-hidden="true" />
+    <div className="collection-world-shade" aria-hidden="true" />
+    <header className="collection-header">
+      <BrandMark />
+      <nav className="collection-nav" aria-label="Collection navigation">
+        <span className="nav-current"><span /> The collection</span>
+        <button onClick={() => setShowMap(true)}><Compass size={16} /> Historical atlas</button>
+        <button onClick={() => setShowStory(true)}><BookOpen size={16} /> History & sources</button>
+      </nav>
+      <div className="header-utilities"><LanguageSelector compact /><VolumeControl musicVolume={props.musicVolume} sfxVolume={props.sfxVolume} onMusicVolumeChange={props.onMusicVolumeChange} onSfxVolumeChange={props.onSfxVolumeChange} onToggleMute={props.onToggleMute} /><ProfileChip /></div>
+    </header>
+    <main className="collection-layout">
+      <aside className="collection-library" data-category={category} aria-label="Choose a game">
+        <div className="library-heading"><span className="eyebrow">Discover & play</span><span className="library-total">15 games</span></div>
+        <h1>A seat at<br /><em>the old table.</em></h1>
+        <p className="library-intro">Ancient worlds, brought together<br className="hidden xl:block" /> through the games they played.</p>
+        <div className="library-tabs" role="group" aria-label="Game families"><button aria-pressed={category === 'tafl'} onClick={() => selectCategory('tafl')}>Tafl family <span>06</span></button><button aria-pressed={category === 'world'} onClick={() => selectCategory('world')}>World <span>08</span></button><button aria-pressed={category === 'classics'} onClick={() => selectCategory('classics')}>Classics <span>01</span></button></div>
+        <div ref={gameListRef} className="game-list">{categoryGames.map((game, i) => {
+          const homeland = 'origin' in game ? game.origin : game.region;
+          return <button key={game.id} className={`library-game ${selectedId === game.id ? 'is-selected' : ''}`} onClick={() => setSelectedId(game.id)} aria-pressed={selectedId === game.id}><span className="game-number">{String(i + 1).padStart(2, '0')}</span><span className="library-game-art">{game.id === 'chess' ? <span className="library-chess-icon" aria-hidden>♞</span> : <img src={ERA_IMAGES[game.id]} alt="" width="48" height="48" />}</span><span className="library-game-copy"><strong>{SHORT_NAMES[game.id] || game.name}</strong><small>{homeland}</small></span><ChevronRight size={14} aria-hidden /></button>;
+        })}</div>
+        <button className="library-atlas" onClick={() => setShowMap(true)}><Globe2 size={17} /><span>Follow the games across the world</span><ArrowRight size={14} /></button>
+      </aside>
+      <section className={`collection-exhibit ${variant ? 'exhibit-tafl' : ''}`} aria-label={`${name} overview`}>
+        {isChess ? <div className="exhibit-chess-background" /> : <img key={selectedId} className="exhibit-landscape" src={ERA_IMAGES[selectedId]} alt={`Artist's impression of ${origin}`} />}<div className="exhibit-shade" />
+        <div className="exhibit-topline"><span className="eyebrow">{isChess ? 'The classical table' : variant ? 'The tafl tradition' : FAMILY_LABELS[ancient?.family || 'race']}</span><span className="exhibit-edition">Nº {String(categoryGames.findIndex(g => g.id === selectedId) + 1).padStart(2, '0')}</span></div>
+        <div className="exhibit-title" key={`${selectedId}-title`}><p>{origin} <span>·</span> {era}</p><h2>{name}</h2><span className="exhibit-rule" /></div>
+        {isChess ? <div className="exhibit-board-space"><ChessPreview /></div> : variant ? <div className="exhibit-board-space"><BoardPreview variant={variant} /></div> : <div className="exhibit-ancient-symbol" aria-hidden>{ancient?.family === 'sowing' ? '◉ ◉ ◉' : ancient?.family === 'custodial' ? '♟' : '✺'}</div>}
+        <div className="exhibit-story"><span className="eyebrow">{circular ? 'A modern connection interpretation' : 'A living tradition of play'}</span><p>{description}</p><button onClick={() => setShowStory(true)}>Read the story <ArrowRight size={14} /></button></div><span className="exhibit-caption">{isChess ? 'The classical table' : 'Landscape · artist’s impression'}</span>
+      </section>
+      <aside className="collection-settings" aria-label="Game setup">
+        <div className="settings-title"><span className="eyebrow">Your table awaits</span><h2>Make your move.</h2><p>{isChess || variant ? 'A quiet contest. A worthy opponent.' : 'Discover a different tradition of play.'}</p></div>
+        <div className="game-facts"><div><span>THE BOARD</span><strong>{isChess ? '8 × 8' : variant ? circular ? '7 rings · 16 spokes' : `${variant.boardSize} × ${variant.boardSize}` : ancient?.family === 'sowing' ? '4 rows · 32 pits' : ancient?.family === 'custodial' ? '8 × 8' : 'Traditional track'}</strong></div><div><span>THE CONTEST</span><strong>{isChess ? 'Checkmate the opposing king' : variant ? circular ? 'Connect centre to edge' : variant.defaultRules.edgeEscape ? 'Escape to any edge' : 'Escape to a corner' : ancient?.family === 'custodial' ? 'Capture the opposing army' : ancient?.family === 'sowing' ? 'Sow, relay & capture' : 'Race your pieces home'}</strong></div>{variant && !circular && <div><span>THE ARMIES</span><strong>{config?.initialAttackers.length} attackers · {(config?.initialDefenders.length || 0) + 1} defenders</strong></div>}</div>
+        {variant ? <>
+          <fieldset className="setup-field"><legend>01 <span>Your opponent</span></legend><div className="segmented-choice"><button aria-pressed={opponent === 'ai'} onClick={() => setOpponent('ai')}><Swords size={15} /> The computer</button><button aria-pressed={opponent === 'local'} onClick={() => setOpponent('local')}><Users size={15} /> A friend</button></div></fieldset>
+          {opponent === 'ai' ? <><fieldset className="setup-field"><legend>02 <span>Choose your side</span></legend><div className="side-choices">{(['defender', 'attacker'] as const).map(side => <button key={side} aria-pressed={playerSide === side} onClick={() => setPlayerSide(side)}>{side === 'defender' ? <Shield size={20} /> : <Swords size={20} />}<span><strong>{circular ? side === 'defender' ? 'Ivory' : 'Ebony' : side === 'defender' ? 'Defenders' : 'Attackers'}</strong><small>{circular ? 'Connect centre to rim' : side === 'defender' ? 'Guide the king to safety' : 'Surround the king'}</small></span><span className="choice-radio" /></button>)}</div></fieldset>
+          <fieldset className="setup-field"><legend>03 <span>The challenge</span></legend><div className="difficulty-choices">{([{ id: 'easy', name: 'Apprentice', level: 'Easy' }, { id: 'medium', name: 'Strategist', level: 'Medium' }, { id: 'valhalla', name: 'Master', level: 'Hard' }] as const).map(d => <button key={d.id} aria-pressed={difficulty === d.id} onClick={() => setDifficulty(d.id)}><span>{d.name}</span><small>{d.level}</small></button>)}</div></fieldset></> : <div className="setup-local-note"><Users size={24} /><p>Share this screen.<br />{circular ? 'Ebony' : 'The attackers'} move first. Pass the table between turns.</p></div>}
+        </> : <div className="reconstruction-note"><BookOpen size={20} /><p><strong>{isChess ? 'A game of kings.' : ancient?.id === 'royal-ur' ? 'A recovered game' : 'A playable interpretation'}</strong>{isChess ? 'Castling, en passant, all four promotions, checkmate and draws. Choose a computer opponent or share the screen with a friend.' : ancient?.id === 'royal-ur' ? 'Play the popular modern race rules inspired by the surviving Babylonian evidence.' : 'Where original rules are incomplete or lost, the table uses a modern reconstruction. Read the rules inside the game.'}</p><span>{isChess ? 'Computer or a friend · three difficulty levels' : ancient?.id === 'bao' ? 'Local two-player · shared screen' : ancient?.id === 'mehen' ? '2–6 players · human or computer' : 'Play against the computer'}</span></div>}
+        <div className="settings-launch"><button className="primary-action" onClick={() => start()}>{isChess ? 'Open chess' : variant ? 'Take your seat' : 'Open the game'}<ArrowRight size={19} /></button><div className="launch-links"><button onClick={() => variant ? setShowRules(true) : setShowStory(true)}><BookOpen size={14} /> {variant ? 'How to play' : 'About this game'}</button>{variant && <button onClick={() => start('demo')}><Eye size={14} /> Watch a game</button>}</div><p className="launch-note">Playable in 2D & 3D <span>·</span> No account needed</p></div>
+      </aside>
+    </main>
+    <footer className="collection-footer"><a href="https://kamrok.com" target="_blank" rel="noopener noreferrer"><img src={kamrokLogo} alt="Kamrok" width="75" height="20" /></a><span>Made for the love of the game.</span><span>Old worlds. Timeless play.</span></footer>
+    {showMap && <Suspense fallback={<div className="fixed inset-0 z-50 grid place-items-center bg-background">Opening the atlas…</div>}><TaflHistoryMap variants={GAME_VARIANTS} selectedVariant={variant || GAME_VARIANTS[4]} onSelectVariant={v => { setCategory('tafl'); setSelectedId(v.id); }} onClose={() => setShowMap(false)} /></Suspense>}
+    <RulesModal open={showRules} onClose={() => setShowRules(false)} variant={variant} />
+    <Dialog open={showStory} onOpenChange={setShowStory}><DialogContent className="story-dialog"><DialogHeader><DialogDescription className="eyebrow">{origin} · {era}</DialogDescription><DialogTitle>{name}</DialogTitle></DialogHeader>{!isChess && <img src={ERA_IMAGES[selectedId]} alt={`Artist's impression of ${origin}`} />}<p>{description}</p><p className="story-caveat">{isChess ? 'This table follows modern chess movement rules. Repetition and fifty-move draws are automatically adjudicated; tournament clocks and claim arbitration are not used.' : circular ? 'This circular connection game is a contemporary interpretation. The original medieval Irish rules of Fidchell are not known.' : 'Ancient games survive through objects, texts and later traditions. The playable rules are identified interpretations; the landscape is an artist’s impression.'}</p><SourcesPanel sources={variant?.sources} alternates={variant?.alternateRules} historianMode /></DialogContent></Dialog>
+    {showChess && <Suspense fallback={<div className="fixed inset-0 z-50 grid place-items-center bg-background">Preparing your table…</div>}><ChessGameModal open onClose={() => setShowChess(false)} /></Suspense>}
+    {loreGame && <Suspense fallback={<div className="fixed inset-0 z-50 grid place-items-center bg-background">Preparing your table…</div>}><AncientGameModal game={loreGame} onClose={() => setLoreGame(null)} /></Suspense>}
+  </div>;
+}
+function BoardPreview({ variant }: { variant: GameVariant }) {
+  const config = BOARD_CONFIGS[variant.boardSize];
+  if (variant.boardType === 'circular') return <div className="preview-circular" aria-label="Circular connection board preview">{[1, 2, 3, 4, 5, 6, 7].map(r => <i key={r} style={{ width: `${r * 12}%`, height: `${r * 12}%` }} />)}{Array.from({ length: 16 }, (_, i) => <b key={i} style={{ transform: `rotate(${i * 22.5}deg)` }} />)}<span>✺</span></div>;
+  return <div className="preview-board" aria-label={`${variant.boardSize} by ${variant.boardSize} starting position`} style={{ gridTemplateColumns: `repeat(${variant.boardSize}, 1fr)` }}>{Array.from({ length: variant.boardSize * variant.boardSize }, (_, i) => {
+    const row = Math.floor(i / variant.boardSize), col = i % variant.boardSize;
+    const type = config.kingPosition.row === row && config.kingPosition.col === col ? 'king' : config.initialAttackers.some(p => p.row === row && p.col === col) ? 'attacker' : config.initialDefenders.some(p => p.row === row && p.col === col) ? 'defender' : null;
+    return <span key={i} className={(row + col) % 2 ? 'preview-dark' : ''}>{type && <i className={`preview-piece preview-piece--${type}`}>{type === 'king' ? '♔' : ''}</i>}</span>;
+  })}</div>;
+}
 
-  const boardConfig = BOARD_CONFIGS[selectedVariant.boardSize];
-  const attackerCount = boardConfig?.initialAttackers?.length ?? 0;
-  const defenderCount = (boardConfig?.initialDefenders?.length ?? 0) + 1;
-  const isFidchell = selectedVariant.id === 'fidchell';
-
-  const getVariantHistory = (variantId: string, fallback: string) => {
-    return t.variantHistories[variantId as keyof typeof t.variantHistories] || fallback;
-  };
-
-  return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ backgroundImage: `url(${vikingBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-    >
-      {/* Vignette overlay */}
-      <div className="absolute inset-0 vignette z-[1]" />
-      <div className="absolute inset-0 bg-black/50 z-[1]" />
-
-      {/* Top-right controls */}
-      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-30 flex flex-wrap items-start justify-end gap-1.5 sm:gap-2 max-w-[calc(100vw-1rem)]">
-        <button
-          onClick={() => setShowRules(true)}
-          className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
-          aria-label="How to play"
-        >
-          <BookOpen className="w-4 h-4" />
-          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Rules</span>
-        </button>
-        <button
-          onClick={() => setShowMap(true)}
-          className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
-          aria-label={t.historyMapTitle}
-        >
-          <Map className="w-4 h-4" />
-          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Map</span>
-        </button>
-        <button
-          onClick={() => setShowMultiplayer(true)}
-          className="carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target text-foreground hover:text-primary transition-colors"
-          aria-label="Multiplayer"
-        >
-          <Users className="w-4 h-4" />
-          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">Online</span>
-        </button>
-        <button
-          onClick={toggleHistorianMode}
-          className={`carved-button rounded-lg flex flex-col items-center gap-0.5 px-2 py-1.5 min-w-[56px] tap-target transition-colors ${historianMode ? 'active text-primary' : 'text-foreground hover:text-primary'}`}
-          aria-label="Toggle historian mode"
-          title={historianMode ? 'Historian mode on — alternate rulesets shown' : 'Show alternate scholarly rulesets'}
-        >
-          <ScrollText className="w-4 h-4" />
-          <span className="text-[9px] uppercase tracking-wider font-['Cinzel'] leading-none">
-            {historianMode ? 'Scholar' : 'Lore'}
-          </span>
-        </button>
-        <ProfileChip />
-        {/* Language picker lives inside the profile dropdown */}
-        <VolumeControl
-          musicVolume={musicVolume}
-          sfxVolume={sfxVolume}
-          onMusicVolumeChange={onMusicVolumeChange}
-          onSfxVolumeChange={onSfxVolumeChange}
-        />
-      </div>
-
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-5xl px-4 pt-24 pb-4 sm:pt-8 sm:pb-8 flex flex-col items-center gap-6 sm:gap-8">
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <Swords className="w-10 h-10 mx-auto mb-2 text-primary" />
-          <h1 className="text-2xl sm:text-3xl md:text-5xl font-['Cinzel'] font-bold text-primary drop-shadow-[0_0_24px_hsl(38_60%_50%/0.5)]">
-            {t.appName.toUpperCase()}
-          </h1>
-          <p className="text-xs md:text-sm uppercase tracking-[0.3em] text-primary/70 mt-1 font-['Cinzel']">
-            {t.ancientStrategy}
-          </p>
-        </motion.div>
-
-        {/* Variant Carousel (top, under title) */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="w-full"
-        >
-          {/* Tab toggle */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <button
-              onClick={() => setActiveTab('tafl')}
-              className={`carved-button px-4 py-2 rounded-lg text-sm font-['Cinzel'] inline-flex items-center gap-2 ${activeTab === 'tafl' ? 'active' : 'text-foreground'}`}
-            >
-              <Swords className="w-4 h-4" /> Tafl Variants
-            </button>
-            <button
-              onClick={() => setActiveTab('lost')}
-              className={`carved-button px-4 py-2 rounded-lg text-sm font-['Cinzel'] inline-flex items-center gap-2 ${activeTab === 'lost' ? 'active' : 'text-foreground'}`}
-            >
-              <Globe className="w-4 h-4" /> Other World Lost Games
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4 mb-4 justify-center">
-            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-primary/40" />
-            <p className="text-xs uppercase tracking-[0.3em] text-primary/70 font-['Cinzel'] font-semibold whitespace-nowrap">
-              {activeTab === 'tafl' ? t.selectYourSaga : 'Pick a lost game to play'}
-            </p>
-            <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-primary/40" />
-          </div>
-
-          {activeTab === 'tafl' && (
-            <>
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory justify-start sm:justify-center flex-nowrap sm:flex-wrap px-2 sm:px-0 -mx-2 sm:mx-0 pb-2">
-                {GAME_VARIANTS.map((variant) => {
-                  const isActive = selectedVariant.id === variant.id;
-                  const flag = VARIANT_FLAGS[variant.id] || '🏳️';
-                  const era = ERA_IMAGES[variant.id];
-                  return (
-                    <div key={variant.id} className="relative shrink-0 snap-center">
-                      <motion.button
-                        onClick={() => handleVariantChange(variant)}
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.97 }}
-                        className={`carved-button text-left rounded-lg min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] relative overflow-hidden transition-all ${
-                          isActive ? 'active ring-2 ring-primary/60 scale-[1.02]' : 'text-foreground'
-                        }`}
-                      >
-                        {era && (
-                          <div className="relative h-20 sm:h-24 overflow-hidden">
-                            <img src={era} alt={variant.origin} loading="lazy" className="w-full h-full object-cover" width={210} height={96} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-                          </div>
-                        )}
-                        <div className="p-2.5">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-base" role="img" aria-label={variant.origin}>{flag}</span>
-                            <span className="font-['Cinzel'] text-sm font-semibold truncate">{variant.name}</span>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground truncate">{variant.origin}</p>
-                          <p className="text-[10px] text-muted-foreground/70 italic truncate">
-                            {variant.boardType === 'circular' ? t.circular : `${variant.boardSize}×${variant.boardSize}`} · {variant.era}
-                          </p>
-                        </div>
-                      </motion.button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInfoVariant(infoVariant?.id === variant.id ? null : variant);
-                        }}
-                        className="absolute -top-2 -right-2 w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-primary/90 hover:bg-primary text-primary-foreground flex items-center justify-center transition-colors z-10 shadow-md"
-                        title={`${t.infoAbout} ${variant.name}`}
-                        aria-label={`${t.infoAbout} ${variant.name}`}
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <AnimatePresence>
-                {infoVariant && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="mt-4 mx-auto max-w-lg carved-button rounded-lg p-4 relative"
-                  >
-                    <button
-                      onClick={() => setInfoVariant(null)}
-                      className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{VARIANT_FLAGS[infoVariant.id] || '🏳️'}</span>
-                      <h4 className="font-['Cinzel'] text-primary font-semibold">{infoVariant.name}</h4>
-                      <span className="text-xs text-muted-foreground">— {infoVariant.origin}, {infoVariant.era}</span>
-                    </div>
-                    <p className="text-sm text-foreground/90 leading-relaxed">
-                      {getVariantHistory(infoVariant.id, infoVariant.history)}
-                    </p>
-                    <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                      <span>{t.boardLabel}: {infoVariant.boardType === 'circular' ? t.circularWeb : `${infoVariant.boardSize}×${infoVariant.boardSize}`}</span>
-                      <span>{t.victoryLabel}: {infoVariant.defaultRules.victoryType === 'connection' ? t.connection : t.kingEscape}</span>
-                    </div>
-                    <SourcesPanel
-                      sources={infoVariant.sources}
-                      alternates={infoVariant.alternateRules}
-                      historianMode={historianMode}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </>
-          )}
-
-          {activeTab === 'lost' && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex gap-2 sm:gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory flex-nowrap sm:flex-wrap justify-start sm:justify-center px-2 sm:px-0 -mx-2 sm:mx-0 pb-2"
-            >
-              {LORE_GAMES.map((g) => {
-                const playable = g.status === 'playable';
-                const era = ERA_IMAGES[g.id];
-                return (
-                  <motion.button
-                    key={g.id}
-                    onClick={() => setLoreGame(g)}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="carved-button shrink-0 snap-center text-left rounded-lg min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] relative overflow-hidden"
-                  >
-                    {era && (
-                      <div className="relative h-20 sm:h-24 overflow-hidden">
-                        <img src={era} alt={g.region} loading="lazy" className="w-full h-full object-cover" width={210} height={96} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-                      </div>
-                    )}
-                    <div className="p-2.5">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-base">{LORE_FLAGS[g.id] || '🏳️'}</span>
-                        <span className="font-['Cinzel'] text-sm font-semibold text-foreground truncate">{g.name}</span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground truncate">{g.region}</p>
-                      <p className="text-[10px] text-muted-foreground/70 italic truncate">{g.era}</p>
-                    </div>
-                    <span className={`absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 backdrop-blur-sm ${
-                      playable
-                        ? 'bg-primary/80 text-primary-foreground'
-                        : 'bg-amber-700/80 text-amber-50'
-                    }`}>
-                      {playable ? <><Sparkles className="w-2.5 h-2.5" /> Play</> : <><Hourglass className="w-2.5 h-2.5" /> Dev</>}
-                    </span>
-                  </motion.button>
-                );
-              })}
-
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Daily Puzzle */}
-        <div className="w-full flex justify-center">
-          <DailyPuzzleCard />
-        </div>
-
-        {/* Center area: Parchment + Settings */}
-        <div className="flex flex-col lg:flex-row gap-6 w-full items-start justify-center">
-
-
-          {/* Parchment Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="parchment rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full sm:-rotate-1 relative"
-          >
-            <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-800/40" />
-            <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-800/40" />
-            <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-amber-800/40" />
-            <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-amber-800/40" />
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedVariant.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25 }}
-              >
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-700 font-semibold mb-1">
-                  {t.currentVariant}
-                </p>
-                <h2 className="text-3xl md:text-4xl font-['Cinzel'] font-bold text-amber-950 mb-3">
-                  {selectedVariant.name}
-                </h2>
-                <p className="text-sm text-amber-900/80 italic leading-relaxed mb-6 font-['Crimson_Text']">
-                  "{getVariantHistory(selectedVariant.id, selectedVariant.history).slice(0, 180)}…"
-                </p>
-
-                <div className="flex justify-between border-t border-amber-800/20 pt-4">
-                  <div className="text-center">
-                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">{t.boardLabel}</p>
-                    <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
-                      {isFidchell ? `7 ${t.rings}` : `${selectedVariant.boardSize}×${selectedVariant.boardSize}`}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">
-                      {isFidchell ? t.black : t.attackers}
-                    </p>
-                    <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
-                      {isFidchell ? 12 : attackerCount}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-amber-700 uppercase tracking-wider font-semibold">
-                      {isFidchell ? t.white : t.defenders}
-                    </p>
-                    <p className="text-lg font-['Cinzel'] font-bold text-amber-950">
-                      {isFidchell ? '12' : `${defenderCount}`}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Right Settings Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.45 }}
-            className="w-full max-w-xs space-y-5"
-          >
-            <div className="space-y-2">
-              <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
-                {t.playAs}
-              </h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => setPlayerSide('defender')}
-                  className={`carved-button w-full px-4 py-3 rounded-lg flex items-center gap-3 text-left ${
-                    playerSide === 'defender' ? 'active' : 'text-foreground'
-                  }`}
-                >
-                  <Shield className="w-5 h-5 shrink-0" />
-                  <div>
-                    <p className="font-['Cinzel'] text-sm font-semibold">
-                      {isFidchell ? t.white : t.defenders}
-                    </p>
-                    <p className={`text-[10px] ${playerSide === 'defender' ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {isFidchell ? t.connectNavelToEdge : t.protectKing}
-                    </p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setPlayerSide('attacker')}
-                  className={`carved-button w-full px-4 py-3 rounded-lg flex items-center gap-3 text-left ${
-                    playerSide === 'attacker' ? 'active' : 'text-foreground'
-                  }`}
-                >
-                  <Swords className="w-5 h-5 shrink-0" />
-                  <div>
-                    <p className="font-['Cinzel'] text-sm font-semibold">
-                      {isFidchell ? t.black : t.attackers}
-                    </p>
-                    <p className={`text-[10px] ${playerSide === 'attacker' ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      {isFidchell ? t.blockTheConnection : t.captureKing}
-                    </p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-xs uppercase tracking-[0.2em] text-primary font-['Cinzel'] font-semibold border-l-2 border-primary pl-3">
-                {t.difficulty}
-              </h3>
-              <div className="space-y-2">
-                {difficultyMap.map((d) => (
-                  <button
-                    key={d.key}
-                    onClick={() => setDifficulty(d.key)}
-                    className={`carved-button w-full px-4 py-2.5 rounded-lg text-left ${
-                      difficulty === d.key ? 'active' : 'text-foreground'
-                    }`}
-                  >
-                    <span className="font-['Cinzel'] text-sm font-semibold">{d.vikingName}</span>
-                    <span className={`text-[10px] ml-2 ${difficulty === d.key ? 'opacity-70' : 'text-muted-foreground'}`}>
-                      ({d.label})
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'play', selectedVariant.id)}
-              className="w-full py-4 sm:py-3.5 rounded-lg font-['Cinzel'] font-bold text-lg uppercase tracking-wider
-                bg-gradient-to-b from-primary to-[hsl(35_55%_38%)] text-primary-foreground
-                shadow-[0_0_20px_hsl(38_60%_50%/0.4)] hover:shadow-[0_0_30px_hsl(38_60%_50%/0.6)]
-                transition-shadow flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-              <Play className="w-5 h-5" />
-              {t.beginBattle}
-            </button>
-
-            <div className="flex items-center justify-between gap-2 pt-1">
-              <button
-                onClick={() => setShowRules(true)}
-                className="text-xs text-primary/90 hover:text-primary transition-colors flex items-center gap-1.5 underline-offset-4 hover:underline"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                How to play
-              </button>
-              <button
-                onClick={() => onStartGame(selectedVariant.boardSize, playerSide, difficulty, 'demo', selectedVariant.id)}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                {t.watchDemo}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Kamrok logo */}
-      <a
-        href="https://kamrok.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed left-3 z-30 safe-bottom"
-      >
-        <img src={kamrokLogo} alt="Kamrok" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
-      </a>
-
-      {/* Built with Lovable badge */}
-      <a
-        href="https://lovable.dev/invite/8MUK1UP"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed right-3 z-30 safe-bottom"
-      >
-        <img src={builtwithImg} alt="Built with Lovable" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
-      </a>
-
-      {/* History Map Modal */}
-      <AnimatePresence>
-        {showMap && (
-          <TaflHistoryMap
-            variants={GAME_VARIANTS}
-            selectedVariant={selectedVariant}
-            onSelectVariant={handleVariantChange}
-            onClose={() => setShowMap(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* How to play modal */}
-      <RulesModal open={showRules} onClose={() => setShowRules(false)} />
-
-      {/* Ancient lost-game modal (fullscreen 3D) */}
-      <AncientGameModal game={loreGame} onClose={() => setLoreGame(null)} />
-
-      {/* Multiplayer menu */}
-      <MultiplayerMenu
-        open={showMultiplayer}
-        onOpenChange={setShowMultiplayer}
-        onPassAndPlay={(vid) => onStartPassAndPlay?.(vid)}
-      />
-    </div>
-  );
+function ChessPreview() {
+  const ranks=['♜♞♝♛♚♝♞♜','♟♟♟♟♟♟♟♟','','','','','♙♙♙♙♙♙♙♙','♖♘♗♕♔♗♘♖'];
+  return <div className="preview-board preview-chess-board" aria-label="Chess starting position" style={{gridTemplateColumns:'repeat(8,1fr)'}}>{Array.from({length:64},(_,i)=>{const row=Math.floor(i/8),col=i%8;return <span key={i} className={(row+col)%2?'preview-dark':''}><b className={row<2?'preview-chess-dark':'preview-chess-light'}>{ranks[row][col]||''}</b></span>})}</div>;
 }

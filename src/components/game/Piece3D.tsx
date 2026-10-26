@@ -3,216 +3,78 @@ import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { Piece } from '@/types/game';
 import * as THREE from 'three';
-import defenderModelUrl from '@/assets/defender-piece.glb?url';
-import attackerModelUrl from '@/assets/attacker-piece.glb?url';
-import kingModelUrl from '@/assets/king-piece.glb?url';
+import { getWoodTexture } from './BoardCraft';
+import defenderModelUrl from '@/assets/defender-piece-geometry.glb?url';
+import attackerModelUrl from '@/assets/attacker-piece-geometry.glb?url';
+import kingModelUrl from '@/assets/king-piece-geometry.glb?url';
 
 interface Piece3DProps {
-  piece: Piece;
-  position: [number, number, number];
-  isSelected: boolean;
-  onClick: () => void;
+  piece: Piece; position: [number, number, number]; isSelected: boolean; onClick: () => void;
   boardType?: 'square' | 'circular';
 }
 
-// Preload all models
-useGLTF.preload(defenderModelUrl);
-useGLTF.preload(attackerModelUrl);
-useGLTF.preload(kingModelUrl);
-
-// Easing function for smooth animation (ease-out cubic)
-function easeOutCubic(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
-}
-
-// Easing function for smooth start and end (ease-in-out cubic)
-function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
 export function Piece3D({ piece, position, isSelected, onClick, boardType = 'square' }: Piece3DProps) {
-  const meshRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
-  // Use full GLB models on both square and circular (Fidchell) boards
-  const useSimpleGeometry = false;
-  
-  // Animation state
-  const animationRef = useRef({
-    startPos: new THREE.Vector3(...position),
-    endPos: new THREE.Vector3(...position),
-    currentPos: new THREE.Vector3(...position),
-    progress: 1, // 0 to 1, 1 = animation complete
-    isAnimating: false,
-    duration: 0.4, // Animation duration in seconds
-  });
-  
-  // Load all models
-  const defenderGltf = useGLTF(defenderModelUrl);
-  const attackerGltf = useGLTF(attackerModelUrl);
-  const kingGltf = useGLTF(kingModelUrl);
-
-  // Get the appropriate model based on piece type
-  const getModel = () => {
-    switch (piece.type) {
-      case 'attacker':
-        return attackerGltf.scene;
-      case 'king':
-        return kingGltf.scene;
-      default:
-        return defenderGltf.scene;
-    }
-  };
-
-  // Detect position change and start animation
-  useEffect(() => {
-    const newPos = new THREE.Vector3(...position);
-    const currentEnd = animationRef.current.endPos;
-    
-    // Check if position actually changed
-    if (!newPos.equals(currentEnd)) {
-      const anim = animationRef.current;
-      anim.startPos.copy(anim.currentPos);
-      anim.endPos.copy(newPos);
-      anim.progress = 0;
-      anim.isAnimating = true;
-    }
-  }, [position[0], position[1], position[2]]);
-
-  const getColor = () => {
-    switch (piece.type) {
-      case 'attacker':
-        return '#2D1810';
-      case 'defender':
-        return '#D4B896';
-      case 'king':
-        return '#FFD700';
-    }
-  };
-
-  useFrame((state, delta) => {
-    if (!meshRef.current) return;
-
-    const anim = animationRef.current;
-
-    // Handle smooth movement animation with easing
-    if (anim.isAnimating && anim.progress < 1) {
-      anim.progress = Math.min(1, anim.progress + delta / anim.duration);
-      const easedProgress = easeInOutCubic(anim.progress);
-      
-      // Interpolate position with easing
-      anim.currentPos.lerpVectors(anim.startPos, anim.endPos, easedProgress);
-      
-      // Add arc motion (slight hop) for more natural movement
-      const arcHeight = 0.3;
-      const arcProgress = Math.sin(easedProgress * Math.PI);
-      
-      if (anim.progress >= 1) {
-        anim.isAnimating = false;
-        anim.currentPos.copy(anim.endPos);
-      }
-      
-      // Apply position with arc
-      meshRef.current.position.set(
-        anim.currentPos.x,
-        anim.currentPos.y + arcProgress * arcHeight,
-        anim.currentPos.z
-      );
-    } else if (isSelected) {
-      // Floating effect for selected pieces
-      meshRef.current.position.set(
-        anim.currentPos.x,
-        anim.currentPos.y + 0.3 + Math.sin(state.clock.elapsedTime * 3) * 0.05,
-        anim.currentPos.z
-      );
-      meshRef.current.rotation.y += 0.02;
-    } else {
-      // Idle state
-      meshRef.current.position.copy(anim.currentPos);
-      meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, 0, 0.1);
-    }
-
-    // Hover scale effect with smooth easing
-    const targetScale = hovered && !isSelected ? 1.1 : 1;
-    const currentScale = meshRef.current.scale.x;
-    const scaleSpeed = 0.15;
-    const newScale = THREE.MathUtils.lerp(currentScale, targetScale, scaleSpeed);
-    meshRef.current.scale.setScalar(newScale);
-  });
-
-  // Clone the scene for each instance with memoization
+  const [x, y, z] = position;
+  const modelUrl = piece.type === 'attacker' ? attackerModelUrl : piece.type === 'king' ? kingModelUrl : defenderModelUrl;
+  const { scene: sourceScene } = useGLTF(modelUrl);
+  const reducedMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
+  const animation = useRef({ from: new THREE.Vector3(...position), to: new THREE.Vector3(...position), current: new THREE.Vector3(...position), progress: 1 });
+  const color = piece.type === 'attacker' ? '#473124' : piece.type === 'king' ? '#bc9b5e' : '#e0cfad';
   const clonedScene = useMemo(() => {
-    const scene = getModel().clone();
-    return scene;
-  }, [piece.type, defenderGltf, attackerGltf, kingGltf]);
-  
-  // Apply materials to the cloned scene
-  useEffect(() => {
-    clonedScene.traverse((child) => {
+    const scene = sourceScene.clone();
+    scene.traverse(child => {
       if (child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshStandardMaterial({
-          color: getColor(),
-          roughness: 0.4,
-          metalness: piece.type === 'king' ? 0.6 : 0.3,
-          emissive: isSelected ? '#ffaa00' : hovered ? '#666666' : '#000000',
-          emissiveIntensity: isSelected ? 0.5 : hovered ? 0.2 : 0,
-        });
-        child.castShadow = true;
+        child.material = new THREE.MeshStandardMaterial({ color, roughness: piece.type === 'king' ? .47 : .64,
+          metalness: piece.type === 'king' ? .62 : 0, map: piece.type === 'king' ? null : getWoodTexture(),
+          bumpMap: getWoodTexture(), bumpScale: .006 });
+        child.castShadow = true; child.receiveShadow = true;
       }
     });
-  }, [clonedScene, isSelected, hovered, piece.type]);
+    return scene;
+  }, [piece.type, sourceScene, color]);
 
-  const radius = piece.type === 'king' ? 0.35 : 0.3;
-  const modelScale = piece.type === 'king' ? 0.5 : 0.4;
+  useEffect(() => () => {
+    clonedScene.traverse(child => { if (child instanceof THREE.Mesh && child.material instanceof THREE.Material) child.material.dispose(); });
+  }, [clonedScene]);
 
-  // Simple geometry colors for circular board
-  const simpleColor = piece.type === 'attacker' ? '#1a1a1a' : '#f5f5dc';
-  const simpleEmissive = isSelected ? '#ffaa00' : hovered ? '#666666' : '#000000';
+  useEffect(() => {
+    const next = new THREE.Vector3(x, y, z), anim = animation.current;
+    if (!next.equals(anim.to)) { anim.from.copy(anim.current); anim.to.copy(next); anim.progress = reducedMotion ? 1 : 0; }
+  }, [x, y, z, reducedMotion]);
 
-  return (
-    <group
-      ref={meshRef}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-    >
-      {useSimpleGeometry ? (
-        /* Upright cylinder puck for circular (Fidchell) board.
-           CylinderGeometry is Y-up by default, so no X rotation needed. */
-        <mesh castShadow>
-          <cylinderGeometry args={[0.25, 0.28, 0.15, 32]} />
-          <meshStandardMaterial 
-            color={simpleColor}
-            roughness={0.4}
-            metalness={0.3}
-            emissive={simpleEmissive}
-            emissiveIntensity={isSelected ? 0.5 : hovered ? 0.2 : 0}
-          />
-        </mesh>
-      ) : (
-        /* GLB model for square board */
-        <primitive 
-          object={clonedScene} 
-          scale={modelScale}
-          position={[0, 0, 0]}
-        />
-      )}
+  useEffect(() => () => { document.body.style.cursor = ''; }, []);
 
-      {/* Selected glow ring */}
-      {isSelected && (
-        <mesh position={[0, useSimpleGeometry ? 0 : -0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius + 0.05, radius + 0.15, 32]} />
-          <meshStandardMaterial 
-            color="#FFD700" 
-            emissive="#FFD700" 
-            emissiveIntensity={0.8}
-            transparent
-            opacity={0.6}
-          />
-        </mesh>
-      )}
-    </group>
-  );
+  useEffect(() => {
+    clonedScene.traverse(child => {
+      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+        child.material.emissive.set(isSelected ? '#8b6b35' : '#000000');
+        child.material.emissiveIntensity = isSelected ? .15 : 0;
+      }
+    });
+  }, [clonedScene, isSelected]);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    const anim = animation.current;
+    anim.progress = Math.min(1, anim.progress + delta / .33);
+    const eased = anim.progress < .5 ? 4 * anim.progress ** 3 : 1 - (-2 * anim.progress + 2) ** 3 / 2;
+    anim.current.lerpVectors(anim.from, anim.to, eased);
+    const lift = Math.sin(eased * Math.PI) * .12 + (isSelected ? .055 : 0);
+    groupRef.current.position.set(anim.current.x, anim.current.y + lift, anim.current.z);
+    groupRef.current.scale.setScalar(THREE.MathUtils.damp(groupRef.current.scale.x, hovered ? 1.035 : 1, 14, delta));
+  });
+
+  const scale = (piece.type === 'king' ? .5 : .4) * (boardType === 'circular' ? .83 : 1);
+  return <group ref={groupRef} position={position}
+    onClick={e => { e.stopPropagation(); onClick(); }}
+    onPointerOver={e => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
+    onPointerOut={() => { setHovered(false); document.body.style.cursor = ''; }}>
+    <primitive object={clonedScene} scale={scale} />
+    {isSelected && <mesh position={[0, -.035, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+      <ringGeometry args={[.35, .39, 40]} />
+      <meshStandardMaterial color="#d5bd7e" metalness={.5} roughness={.5} />
+    </mesh>}
+  </group>;
 }

@@ -1,224 +1,83 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Dices, RotateCcw, BookOpen, Users, Cpu, User } from 'lucide-react';
+import { useUiTranslation } from '@/i18n/useUiTranslation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dices, BookOpen, Users, Cpu, User } from 'lucide-react';
 import {
   MehenState, MehenMove, initialMehenState, legalMehenMoves,
   applyMehenMove, passMehenTurn, chooseAIMehenMove, castSticks,
   MEHEN_PLAYER_COLORS, MEHEN_PLAYER_NAMES,
 } from '@/lib/ancient/mehenEngine';
 import { MehenBoard } from './MehenBoard';
+import { MehenBoard3D } from './MehenBoard3D';
+import { Ancient3DScene } from './Ancient3DScene';
+import { AncientGameShell } from './AncientGameShell';
+import { BoardView } from '@/components/game/BoardViewToggle';
 
 type SetupSlot = { isAI: boolean };
 
 export function MehenGame() {
+  const { tr } = useUiTranslation();
   const [setup, setSetup] = useState<SetupSlot[] | null>(null);
   const [state, setState] = useState<MehenState | null>(null);
   const [rolling, setRolling] = useState(false);
-  const [aiThinking, setAiThinking] = useState(false);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
-
+  const [view, setView] = useState<BoardView>('3d');
+  const rollTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(rollTimer.current), []);
   const start = useCallback((slots: SetupSlot[]) => {
-    setSetup(slots);
-    setState(initialMehenState(slots));
-    setSelectedPieceId(null);
+    clearTimeout(rollTimer.current); setRolling(false); setSetup(slots);
+    setState(initialMehenState(slots)); setSelectedPieceId(null);
   }, []);
-
-  const myMoves = useMemo(() => {
-    if (!state || !state.rolled || state.winner !== null) return [];
-    return legalMehenMoves(state, state.dice);
-  }, [state]);
-
+  const myMoves = useMemo(() => !state || !state.rolled || state.winner !== null ? [] : legalMehenMoves(state, state.dice), [state]);
   const currentPlayer = state ? state.players[state.turn] : null;
   const isAITurn = !!currentPlayer?.isAI && state?.winner === null;
-
   const handleRoll = useCallback(() => {
-    if (!state || state.rolled || state.winner !== null) return;
+    if (!state || state.rolled || state.winner !== null || isAITurn || rolling) return;
     setRolling(true);
-    setTimeout(() => {
+    rollTimer.current = setTimeout(() => {
       const { value, faces } = castSticks();
-      const rolled: MehenState = { ...state, dice: value, faces, rolled: true,
-        log: [...state.log, `${state.players[state.turn].name} casts: ${value}`] };
-      const moves = legalMehenMoves(rolled, value);
+      const rolled: MehenState = { ...state, dice: value, faces, rolled: true, log: [...state.log, `${state.players[state.turn].name} casts: ${value}`] };
       setRolling(false);
-      if (moves.length === 0) {
-        setState(passMehenTurn(rolled, `casts ${value} — no legal move`));
-      } else {
-        setState(rolled);
-      }
-    }, 600);
-  }, [state]);
-
-  // AI auto-roll and move
+      const moves = legalMehenMoves(rolled, value);
+      setState(moves.length ? rolled : passMehenTurn(rolled, `casts ${value} — no legal move`));
+    }, 500);
+  }, [state, isAITurn, rolling]);
   useEffect(() => {
     if (!state || state.winner !== null || !isAITurn) return;
-    if (!state.rolled && !rolling) {
-      const id = setTimeout(() => {
-        const { value, faces } = castSticks();
-        const rolled: MehenState = { ...state, dice: value, faces, rolled: true,
-          log: [...state.log, `${state.players[state.turn].name} casts: ${value}`] };
-        const move = chooseAIMehenMove(rolled, value);
-        setAiThinking(true);
-        setTimeout(() => {
-          setAiThinking(false);
-          if (!move) setState(passMehenTurn(rolled, `casts ${value} — no legal move`));
-          else setState(applyMehenMove(rolled, move));
-        }, 700);
-      }, 500);
-      return () => clearTimeout(id);
-    }
-  }, [state, isAITurn, rolling]);
-
-  const playMove = (m: MehenMove) => {
-    if (!state) return;
-    setSelectedPieceId(null);
-    setState(applyMehenMove(state, m));
+    const id = setTimeout(() => {
+      const { value, faces } = castSticks();
+      const rolled: MehenState = { ...state, dice: value, faces, rolled: true, log: [...state.log, `${state.players[state.turn].name} casts: ${value}`] };
+      const move = chooseAIMehenMove(rolled, value);
+      setState(move ? applyMehenMove(rolled, move) : passMehenTurn(rolled, `casts ${value} — no legal move`));
+    }, 1100);
+    return () => clearTimeout(id);
+  }, [state, isAITurn]);
+  const playMove = (move: MehenMove) => {
+    if (!state || isAITurn || !state.rolled || !myMoves.some(m => m.pieceId === move.pieceId && m.toPos === move.toPos && m.kind === move.kind)) return;
+    setSelectedPieceId(null); setState(applyMehenMove(state, move));
   };
-
-  // Auto-select & auto-play when only one move available
-  useEffect(() => {
-    if (!state || isAITurn) return;
-    if (myMoves.length === 1) {
-      setSelectedPieceId(myMoves[0].pieceId);
-    } else if (myMoves.length > 1 && selectedPieceId) {
-      const stillHas = myMoves.some((m) => m.pieceId === selectedPieceId);
-      if (!stillHas) setSelectedPieceId(null);
-    }
-  }, [myMoves, isAITurn]); // eslint-disable-line
-
+  const reset = () => { clearTimeout(rollTimer.current); setRolling(false); setSetup(null); setState(null); setSelectedPieceId(null); };
   if (!setup || !state) return <MehenSetup onStart={start} />;
-
-  return (
-    <div className="absolute inset-0 overflow-hidden mehen-bg flex flex-col">
-      <style>{`
-        .mehen-bg {
-          background:
-            radial-gradient(ellipse at top, #2a1809 0%, #14090a 70%),
-            #14090a;
-        }
-        .mehen-card {
-          background: linear-gradient(180deg, #f1d9a3, #d6b275);
-          color: #2a1808;
-          border: 1.5px solid #6e3f18;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-        }
-        .mehen-btn {
-          background: linear-gradient(180deg, #d8a850, #8a5a22);
-          color: #2a1808;
-          border: 1.5px solid #2a1808;
-          font-family: 'Cinzel', serif;
-          letter-spacing: 0.05em;
-          font-weight: 700;
-          text-transform: uppercase;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,230,160,0.4);
-        }
-        .mehen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        @keyframes lore-fade {
-          0% { opacity: 0; transform: translateY(-6px); }
-          15% { opacity: 1; transform: translateY(0); }
-          85% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
-
-      {/* Top bar */}
-      <div className="relative z-20 flex items-center justify-between gap-2 px-3 py-2">
-        <div className="mehen-card rounded-md px-3 py-1.5 text-xs sm:text-sm font-['Cinzel'] flex items-center gap-2">
-          <span className="font-bold">Mehen</span>
-          <span className="opacity-60">·</span>
-          <span>Game of the Coiled One</span>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowRules(true)} className="mehen-btn px-3 py-1.5 rounded-md text-xs inline-flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5" /> Rules
-          </button>
-          <button onClick={() => { setSetup(null); setState(null); }} className="mehen-btn px-3 py-1.5 rounded-md text-xs inline-flex items-center gap-1.5">
-            <RotateCcw className="w-3.5 h-3.5" /> New game
-          </button>
-        </div>
-      </div>
-
-      {/* Main board area */}
-      <div className="relative flex-1 flex items-center justify-center px-2 pb-2 min-h-0">
-        <MehenBoard
-          state={state}
-          myMoves={isAITurn ? [] : myMoves}
-          onSelectMove={playMove}
-          selectedPieceId={selectedPieceId}
-          onSelectPiece={setSelectedPieceId}
-        />
-
-        {/* Player roster (right) */}
-        <div className="absolute right-2 top-2 flex flex-col gap-1.5 max-w-[180px]">
-          {state.players.map((p, i) => {
-            const remaining = state.pieces.filter((x) => x.player === i && x.kind === 'pawn' && (x.status === 'off' || x.status === 'in' || x.status === 'out')).length;
-            const returned = state.pieces.filter((x) => x.player === i && x.kind === 'pawn' && x.status === 'returned').length;
-            const isCurrent = i === state.turn && state.winner === null;
-            return (
-              <div key={i}
-                className={`mehen-card rounded-md px-2 py-1.5 text-[11px] ${isCurrent ? 'ring-2 ring-amber-300 scale-[1.02]' : ''}`}>
-                <div className="flex items-center gap-1.5 font-['Cinzel'] font-bold">
-                  <span className="inline-block w-3 h-3 rounded-full border border-amber-950" style={{ backgroundColor: p.color }} />
-                  <span className="truncate">{p.name}</span>
-                  {p.isAI && <Cpu className="w-3 h-3 opacity-60" />}
-                </div>
-                <div className="flex justify-between gap-2 mt-0.5">
-                  <span title="Pawns devoured">🦁 {p.captures}</span>
-                  <span title="Pawns left">◉ {remaining}</span>
-                  <span title="Returned safely">✦ {returned}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Lore message (latest log) */}
-        {state.log.length > 0 && (
-          <div key={state.log.length}
-            className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 mehen-card rounded-md px-3 py-1.5 text-xs font-['Cinzel'] italic"
-            style={{ animation: 'lore-fade 4s ease-in-out' }}>
-            {state.log[state.log.length - 1]}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom action bar */}
-      <div className="relative z-20 px-3 pb-3 pt-2 flex flex-col items-center gap-2">
-        <CastingSticks faces={state.faces} rolled={state.rolled} rolling={rolling} value={state.dice} />
-        <div className="flex items-center gap-3 flex-wrap justify-center">
-          <button
-            onClick={handleRoll}
-            disabled={state.rolled || state.winner !== null || isAITurn || rolling}
-            className="mehen-btn px-5 py-2.5 rounded-lg text-sm inline-flex items-center gap-2"
-          >
-            <Dices className={`w-4 h-4 ${rolling ? 'animate-spin' : ''}`} />
-            {rolling ? 'Casting…' : isAITurn ? (aiThinking ? `${currentPlayer?.name} thinks…` : `${currentPlayer?.name} casts…`)
-              : state.rolled ? `Rolled ${state.dice} — choose a piece` : `${currentPlayer?.name}: cast sticks`}
-          </button>
-          {state.rolled && !isAITurn && myMoves.length > 1 && selectedPieceId === null && (
-            <span className="mehen-card rounded-md px-3 py-1.5 text-xs italic">Tap a glowing piece</span>
-          )}
-        </div>
-      </div>
-
-      {state.winner !== null && (
-        <div className="absolute inset-0 z-30 bg-black/70 flex items-center justify-center p-4" onClick={() => { setSetup(null); setState(null); }}>
-          <div className="mehen-card rounded-xl p-6 max-w-md text-center">
-            <div className="text-xs font-['Cinzel'] uppercase opacity-70 tracking-widest">Mehen has spoken</div>
-            <div className="text-2xl font-['Cinzel'] font-bold mt-2 mb-1" style={{ color: state.players[state.winner].color === '#E8DCC2' ? '#6e3f18' : state.players[state.winner].color }}>
-              {state.players[state.winner].name} triumphs!
-            </div>
-            <div className="text-sm mb-3">
-              Devoured pawns: {state.players[state.winner].captures}
-              {state.endTie && <div className="text-xs italic opacity-70 mt-1">Tie broken by earliest return.</div>}
-            </div>
-            <button className="mehen-btn px-4 py-2 rounded-md text-sm">Play again</button>
-          </div>
-        </div>
-      )}
-
-      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
-    </div>
-  );
+  const status = state.winner !== null ? tr('{side} wins', { side: state.players[state.winner].name }) : `${currentPlayer?.name} · ${isAITurn ? tr('opponent thinking…') : state.rolled ? tr('cast {v0} · choose a move', { v0: state.dice }) : tr('cast sticks to begin')}`;
+  const humanMoves = isAITurn ? [] : myMoves;
+  const displayedMoves = humanMoves.filter((move, i, moves) => move.kind !== 'enter' || moves.findIndex(other => other.kind === 'enter') === i);
+  return <>
+    <AncientGameShell title="Mehen" status={status} view={view} onViewChange={setView} onRestart={reset} log={state.log}
+      rules={tr("The original rules are lost. This modern interpretation sends six pawns inward, then home; awakened lions capture on the return journey. Most captures wins, with return order breaking ties.")}
+      controls={<>
+        <div className="ancient-roster">{state.players.map((p,i) => <span key={i} className={state.turn === i ? 'current' : ''}><i style={{ color:p.color }}>●</i> {p.name}{p.isAI ? ` · ${tr('AI')}` : ''} · {p.captures} {tr('captures ·')} {state.pieces.filter(x=>x.player===i&&x.kind==='pawn'&&x.status==='returned').length}{tr('/6 home')}</span>)}</div>
+        <button className="ancient-move-button" onClick={handleRoll} disabled={state.rolled || state.winner !== null || isAITurn || rolling}><Dices size={15} />{rolling ? tr('Casting…') : isAITurn ? tr('Opponent’s turn') : state.rolled ? tr('cast {v0} · choose a move', { v0: state.dice }) : tr('Cast sticks')}</button>
+        <button className="ancient-move-button secondary" onClick={() => setShowRules(true)}><BookOpen size={15} />{tr('Rules of this table')}</button>
+        {displayedMoves.map((move,i) => {
+          const piece=state.pieces.find(p=>p.id===move.pieceId);
+          const label=piece?.kind==='lion'?tr('lion'):`${tr('Pawn')} ${Number(move.pieceId.split('pawn')[1])+1}`;
+          return <button key={i} className="ancient-move-button secondary" onClick={() => playMove(move)}>{move.kind==='enter'?`${tr('Enter')} `:''}{label} {move.kind==='returnHome'?`→ ${tr('home')}`:`→ ${move.toPos+1}`}</button>;
+        })}
+      </>}>
+      {view === '3d' ? <Ancient3DScene cameraPosition={[0,11,7]} eraId="mehen"><MehenBoard3D state={state} myMoves={humanMoves} onSelectMove={playMove} selectedPieceId={selectedPieceId} onSelectPiece={setSelectedPieceId} /></Ancient3DScene> : <div className="ancient-mehen-board"><MehenBoard state={state} myMoves={humanMoves} onSelectMove={playMove} selectedPieceId={selectedPieceId} onSelectPiece={setSelectedPieceId} /></div>}
+    </AncientGameShell>
+    {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+  </>;
 }
 
 function CastingSticks({ faces, rolled, rolling, value }: { faces: number[]; rolled: boolean; rolling: boolean; value: number }) {

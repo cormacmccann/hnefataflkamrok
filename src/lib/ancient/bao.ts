@@ -62,7 +62,7 @@ export function applyBaoMove(state: BaoState, pitIdx: number): BaoState {
   const pits = [...state.pits];
   let storeW = state.storeW, storeB = state.storeB;
   const log = [...state.log];
-  let who = state.turn;
+  const who = state.turn;
   let last = pitIdx;
   let safety = 200;
   let chainCount = 0;

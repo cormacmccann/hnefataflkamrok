@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import { AncientInlayLabel as Text } from './AncientInlayLabel';
+import { getWoodTexture } from '@/components/game/BoardCraft';
 import * as THREE from 'three';
 import { RaceState, RaceMove } from '@/lib/ancient/raceEngine';
 
@@ -42,11 +43,11 @@ export function RaceBoard3D({
     <group>
       <mesh position={[cx, -0.18, cz]} receiveShadow>
         <boxGeometry args={[sizeX + 0.6, 0.3, sizeZ + 0.6]} />
-        <meshStandardMaterial color={baseColor} roughness={0.9} />
+        <meshStandardMaterial color={baseColor} map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.9} />
       </mesh>
       <mesh position={[cx, -0.02, cz]} receiveShadow>
         <boxGeometry args={[sizeX, 0.1, sizeZ]} />
-        <meshStandardMaterial color={surfaceColor} roughness={0.7} />
+        <meshStandardMaterial color={surfaceColor} map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.7} />
       </mesh>
 
       {state.cfg.layout.map((sq) => {
@@ -64,8 +65,8 @@ export function RaceBoard3D({
               <meshStandardMaterial
                 color={isSpecial ? specialColor : tileColor}
                 roughness={0.55}
-                emissive={target ? '#22ff44' : '#000'}
-                emissiveIntensity={target ? 0.5 : 0}
+                emissive={target ? '#c6b678' : '#000'}
+                emissiveIntensity={target ? 0.12 : 0}
               />
             </mesh>
             {def?.extraRoll && (
@@ -77,7 +78,7 @@ export function RaceBoard3D({
             {target && (
               <mesh position={[sq.x, 0.18, sq.z]}>
                 <sphereGeometry args={[0.1, 16, 16]} />
-                <meshStandardMaterial color="#66ff66" emissive="#22ff44" emissiveIntensity={0.7} transparent opacity={0.85} />
+                <meshStandardMaterial color="#dfc885" emissive="#dfc885" emissiveIntensity={0.7} transparent opacity={0.85} />
               </mesh>
             )}
           </group>

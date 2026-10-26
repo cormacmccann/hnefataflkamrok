@@ -46,7 +46,7 @@ const ERA_CAPTIONS: Record<string, string> = {
   tablut: 'Sami camp under the aurora, Lapland, c. 1700 CE',
   tawlbwrdd: 'Welsh hillfort in Snowdonia, c. 1200 CE',
   hnefatafl: 'A Viking longhouse, Norway, c. 900 CE',
-  alea: 'Anglo-Saxon scriptorium, England, c. 1000 CE',
+  alea: 'An imagined medieval scriptorium, Britain & Ireland',
 };
 
 /** A small parchment-framed card showing what the game's homeland looked like in its time.

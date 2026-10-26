@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
+import { FittedTableCamera, SceneLoading, SceneUnavailable, TableLighting } from './BoardCraft';
 import { GameState, Position, BoardTheme, BoardType, FidchellPosition } from '@/types/game';
 import { Board3D } from './Board3D';
 import { CircularBoard3D } from './CircularBoard3D';
@@ -12,6 +13,8 @@ interface CapturePosition {
   position: Position;
   pieceType: 'attacker' | 'defender' | 'king';
 }
+
+const NO_CAPTURES: CapturePosition[] = [];
 
 interface Scene3DProps {
   gameState: GameState;
@@ -30,7 +33,7 @@ export function Scene3D({
   gameState, 
   onSquareClick, 
   onPieceClick, 
-  capturePositions = [], 
+  capturePositions = NO_CAPTURES,
   onCaptureComplete,
   theme,
   boardType = 'square',
@@ -44,19 +47,17 @@ export function Scene3D({
   const boardWidth = gameState.boardSize * squareSize;
   const offset = boardWidth / 2 - squareSize / 2;
 
-  const handleParticleComplete = (key: string) => {
-    setCompletedParticles(prev => {
-      const next = new Set(prev);
-      next.add(key);
-      if (next.size === capturePositions.length && onCaptureComplete) {
-        setTimeout(() => {
-          onCaptureComplete();
-          setCompletedParticles(new Set());
-        }, 100);
-      }
-      return next;
-    });
-  };
+  const handleParticleComplete = useCallback((key: string) => {
+    setCompletedParticles(previous => previous.has(key) ? previous : new Set([...previous, key]));
+  }, []);
+
+  useEffect(() => {
+    if (!capturePositions.length || completedParticles.size < capturePositions.length) return;
+    const timer = window.setTimeout(() => { onCaptureComplete?.(); setCompletedParticles(new Set()); }, 100);
+    return () => window.clearTimeout(timer);
+  }, [completedParticles, capturePositions.length, onCaptureComplete]);
+
+  useEffect(() => { setCompletedParticles(new Set()); }, [capturePositions]);
 
   const getParticleColor = (type: 'attacker' | 'defender' | 'king') => {
     switch (type) {
@@ -75,16 +76,16 @@ export function Scene3D({
   const isCircular = boardType === 'circular';
 
   return (
-    <div className="fixed inset-0 w-full h-full">
+    <div className="absolute inset-0 w-full h-full overflow-hidden">
       {/* Era backdrop — period landscape of the variant's homeland */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-[era-pan_60s_ease-in-out_infinite_alternate]"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
         style={{ backgroundImage: `url(${(variantId && ERA_IMAGES[variantId]) || vikingTableBg})` }}
       />
       {/* Warm vignette so the board stays legible */}
       <div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.78) 100%)' }}
+        style={{ background: 'radial-gradient(ellipse at center, rgba(20,17,13,0.45) 0%, rgba(12,11,10,0.78) 100%)' }}
       />
       {/* Period-paper grain */}
       <div className="absolute inset-0 opacity-[0.10] mix-blend-overlay pointer-events-none"
@@ -92,32 +93,22 @@ export function Scene3D({
       />
 
       
-      <Canvas shadows className="w-full h-full relative z-10">
-        <PerspectiveCamera makeDefault position={[0, 12, 8]} fov={50} />
+      <Canvas fallback={<SceneUnavailable />} shadows dpr={[1, 1.7]} gl={{ antialias: true, alpha: true }} className="w-full h-full relative z-10">
+        <FittedTableCamera span={isCircular ? 12.7 : boardWidth + 1.5} />
         <OrbitControls 
           enablePan={false}
           enableRotate={true}
           enableZoom={true}
           minDistance={8}
-          maxDistance={25}
+          maxDistance={120}
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={Math.PI / 2.5}
-          target={[0, 0, 0]}
+          target={[0, 0, .55]}
         />
         
-        {/* Lighting */}
-        <ambientLight intensity={0.8} />
-        <directionalLight
-          position={[0, 15, 0]}
-          intensity={0.6}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-        />
-        <pointLight position={[-5, 8, -5]} intensity={0.4} color="#ffcc88" />
-        <pointLight position={[5, 8, -5]} intensity={0.4} color="#ffcc88" />
-        <pointLight position={[-5, 8, 5]} intensity={0.4} color="#ffcc88" />
-        <pointLight position={[5, 8, 5]} intensity={0.4} color="#ffcc88" />
+        <TableLighting span={isCircular ? 13 : boardWidth + 2} />
         
+        <Suspense fallback={null}>
         {/* Conditional board rendering */}
         {isCircular ? (
           <CircularBoard3D
@@ -154,7 +145,9 @@ export function Scene3D({
             />
           );
         })}
+        </Suspense>
       </Canvas>
+      <SceneLoading />
     </div>
   );
 }

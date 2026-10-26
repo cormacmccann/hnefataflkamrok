@@ -48,5 +48,5 @@ export const PATOLLI_CONFIG: RaceConfig = {
   exactBearOff: false,
   layout,
   specialIndices: [6, 19, 32, 45, 12, 25, 38, 51],
-  rulesNote: 'Aztec cross-board game played with marked beans. Durán\'s chronicle reconstruction; betting mechanic omitted.',
+  rulesNote: 'Aztec cross-board game played with marked beans. Simplified modern interpretation inspired by Durán\'s account; betting omitted.',
 };

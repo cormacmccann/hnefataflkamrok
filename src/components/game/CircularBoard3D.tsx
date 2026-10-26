@@ -3,7 +3,7 @@ import { Group, Vector3 } from 'three';
 import { GameState, FidchellPosition, BoardTheme } from '@/types/game';
 import { FIDCHELL_CONFIG, OGHAM } from '@/constants/game';
 import { Piece3D } from './Piece3D';
-import { Text } from '@react-three/drei';
+import { getWoodTexture, InlayLabel } from './BoardCraft';
 
 interface CircularBoard3DProps {
   gameState: GameState;
@@ -59,23 +59,23 @@ export function CircularBoard3D({
   const isValidMoveTarget = (pos: FidchellPosition) =>
     gameState.validMoves.some(m => m.row === pos.ring && m.col === pos.spoke);
 
-  const baseColor = theme?.boardBase || '#1A1428';
-  const accentColor = theme?.accentRing || '#9F7AEA';
-  const runeColor = theme?.runeColor || '#DDA0DD';
-  const throneColor = theme?.throne || '#6B4EAB';
+  const baseColor = '#725136';
+  const accentColor = '#aa8c57';
+  const runeColor = '#d3bc8a';
+  const throneColor = '#4d3d29';
 
   return (
     <group ref={groupRef}>
       {/* Board base */}
-      <mesh position={[0, -0.1, 0]} receiveShadow>
-        <cylinderGeometry args={[BOARD_RADIUS, BOARD_RADIUS + 0.15, 0.3, 64]} />
-        <meshStandardMaterial color={baseColor} roughness={0.85} />
+      <mesh position={[0, -0.23, 0]} receiveShadow>
+        <cylinderGeometry args={[BOARD_RADIUS, BOARD_RADIUS + 0.08, 0.56, 96]} />
+        <meshStandardMaterial color={baseColor} map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.018} roughness={0.68} />
       </mesh>
 
       {/* Decorative outer rim */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
         <torusGeometry args={[BOARD_RADIUS - 0.1, 0.12, 16, 64]} />
-        <meshStandardMaterial color={accentColor} metalness={0.6} roughness={0.3} />
+        <meshStandardMaterial color={accentColor} metalness={0.65} roughness={0.48} />
       </mesh>
 
       {/* Concentric rings */}
@@ -87,7 +87,7 @@ export function CircularBoard3D({
             metalness={0.4}
             roughness={0.5}
             emissive={ringIdx === 0 ? throneColor : undefined}
-            emissiveIntensity={ringIdx === 0 ? 0.3 : 0}
+            emissiveIntensity={0}
           />
         </mesh>
       ))}
@@ -113,10 +113,10 @@ export function CircularBoard3D({
         <sphereGeometry args={[0.32, 32, 32]} />
         <meshStandardMaterial
           color="#C0C0C0"
-          metalness={0.8}
-          roughness={0.2}
+          metalness={0.15}
+          roughness={0.6}
           emissive={throneColor}
-          emissiveIntensity={0.35}
+          emissiveIntensity={0}
         />
       </mesh>
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -125,7 +125,7 @@ export function CircularBoard3D({
           color={throneColor}
           metalness={0.5}
           emissive={throneColor}
-          emissiveIntensity={0.25}
+          emissiveIntensity={0}
         />
       </mesh>
 
@@ -134,17 +134,8 @@ export function CircularBoard3D({
         const angle = (idx / 16) * Math.PI * 2 - Math.PI / 2;
         const radius = BOARD_RADIUS - 0.3;
         return (
-          <Text
-            key={`ogham-${idx}`}
-            position={[Math.cos(angle) * radius, 0.1, Math.sin(angle) * radius]}
-            rotation={[-Math.PI / 2, 0, -angle + Math.PI]}
-            fontSize={0.22}
-            color={runeColor}
-            anchorX="center"
-            anchorY="middle"
-          >
-            {char}
-          </Text>
+          <InlayLabel key={`ogham-${idx}`} position={[Math.cos(angle) * radius, .07, Math.sin(angle) * radius]}
+            rotation={[-Math.PI / 2, 0, -angle + Math.PI]} size={.22} color={runeColor}>{char}</InlayLabel>
         );
       })}
 
@@ -171,14 +162,14 @@ export function CircularBoard3D({
                 <cylinderGeometry args={[0.16, 0.16, 0.04, 16]} />
                 <meshStandardMaterial
                   color={
-                    isMoveTarget ? '#22C55E' :
-                    isPath ? '#50C878' :
-                    placeable ? accentColor : '#2D5A3D'
+                    isMoveTarget ? '#dfc885' :
+                    isPath ? '#7e9b72' :
+                    placeable ? accentColor : '#36291d'
                   }
-                  emissive={isMoveTarget ? '#22C55E' : isPath ? '#50C878' : placeable ? accentColor : undefined}
-                  emissiveIntensity={isMoveTarget || isPath ? 0.55 : placeable ? 0.25 : 0}
+                  emissive={isMoveTarget ? '#dfc885' : isPath ? '#7e9b72' : placeable ? accentColor : undefined}
+                  emissiveIntensity={isMoveTarget || isPath ? .2 : 0}
                   transparent={!isMoveTarget && !isPath && !placeable}
-                  opacity={isMoveTarget || isPath ? 1 : placeable ? 0.85 : 0.5}
+                  opacity={isMoveTarget || isPath ? 1 : placeable ? .7 : .35}
                 />
               </mesh>
             )}
@@ -187,9 +178,9 @@ export function CircularBoard3D({
               <mesh position={[0, 0.1, 0]}>
                 <sphereGeometry args={[0.09, 16, 16]} />
                 <meshStandardMaterial
-                  color="#22C55E"
-                  emissive="#22C55E"
-                  emissiveIntensity={0.9}
+                  color="#dfc885"
+                  emissive="#8d7547"
+                  emissiveIntensity={.25}
                   transparent
                   opacity={0.9}
                 />
@@ -210,9 +201,9 @@ export function CircularBoard3D({
               <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.18, 0.3, 16]} />
                 <meshStandardMaterial
-                  color="#50C878"
-                  emissive="#50C878"
-                  emissiveIntensity={0.6}
+                  color="#7e9b72"
+                  emissive="#57734d"
+                  emissiveIntensity={.15}
                   transparent
                   opacity={0.7}
                 />
@@ -222,26 +213,7 @@ export function CircularBoard3D({
         );
       })}
 
-      <Text
-        position={[0, 0.1, -(BOARD_RADIUS - 0.05)]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.35}
-        color={runeColor}
-        anchorX="center"
-        anchorY="middle"
-      >
-        FIDCHELL
-      </Text>
-      <Text
-        position={[0, 0.1, BOARD_RADIUS - 0.05]}
-        rotation={[-Math.PI / 2, 0, Math.PI]}
-        fontSize={0.22}
-        color={runeColor}
-        anchorX="center"
-        anchorY="middle"
-      >
-        Gwth Bwch · Connect Centre to Rim
-      </Text>
+      <InlayLabel position={[0, .07, -(BOARD_RADIUS - .08)]} size={.28} color={runeColor}>FIDCHELL</InlayLabel>
     </group>
   );
 }

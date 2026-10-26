@@ -58,6 +58,8 @@ export function MehenBoard({ state, myMoves, onSelectMove, selectedPieceId, onSe
   return (
     <svg
       viewBox={`0 0 ${BOARD} ${BOARD}`}
+      role="group"
+      aria-label="Mehen spiral board. Select a movable pawn then its highlighted destination."
       className="w-full h-full max-h-[min(82vh,82vw)] mx-auto block touch-none select-none"
       onClick={() => onSelectPiece(null)}
     >
@@ -148,6 +150,8 @@ export function MehenBoard({ state, myMoves, onSelectMove, selectedPieceId, onSe
                 strokeWidth={3}
                 opacity={0.9}
                 style={{ cursor: 'pointer' }}
+                role="button" tabIndex={0} aria-label={`Move to spiral space ${i + 1}`}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMove(target); } }}
                 onClick={(e) => { e.stopPropagation(); onSelectMove(target); }}
               >
                 <animate attributeName="r" values="16;22;16" dur="1.2s" repeatCount="indefinite" />
@@ -181,6 +185,10 @@ export function MehenBoard({ state, myMoves, onSelectMove, selectedPieceId, onSe
           return (
             <g
               key={p.id}
+              role="button" tabIndex={isMovable ? 0 : -1}
+              aria-label={`${state.players[p.player].name} ${p.kind}, space ${pos + 1}${isMovable ? ', movable' : ''}`}
+              aria-pressed={isSelected}
+              onKeyDown={e => { if (isMovable && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelectPiece(isSelected ? null : p.id); } }}
               style={{ cursor: isMovable ? 'pointer' : 'default' }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -217,7 +225,7 @@ export function MehenBoard({ state, myMoves, onSelectMove, selectedPieceId, onSe
 
       {/* "Return home" button — appears at tail when selected piece can bear off */}
       {selectedReturnMove && (
-        <g style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); onSelectMove(selectedReturnMove); }}>
+        <g role="button" tabIndex={0} aria-label="Return selected piece home" style={{ cursor: 'pointer' }} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMove(selectedReturnMove); } }} onClick={(e) => { e.stopPropagation(); onSelectMove(selectedReturnMove); }}>
           <circle cx={tailSpace.x} cy={tailSpace.y} r={32} fill="#9bff7c" opacity={0.25}>
             <animate attributeName="r" values="28;36;28" dur="1.2s" repeatCount="indefinite" />
           </circle>

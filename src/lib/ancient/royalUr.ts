@@ -34,19 +34,17 @@ export type SquareId =
   | 'b0'|'b1'|'b2'|'b3'|'b12'|'b13'
   | 's0'|'s1'|'s2'|'s3'|'s4'|'s5'|'s6'|'s7';
 
-// Render coords (row, col) on a 3×8 grid (gap cells excluded by not being in maps)
+// Coordinates follow the continuous modern Finkel route: own row towards the
+// left rosette, shared middle row left to right, then two own finishing squares.
 export const SQUARE_COORDS: Record<SquareId, { row: number; col: number }> = {
-  w3: { row: 0, col: 0 }, w2: { row: 0, col: 1 }, w1: { row: 0, col: 2 }, w0: { row: 0, col: 3 },
-  w13: { row: 0, col: 6 }, w12: { row: 0, col: 7 },
-  s0: { row: 1, col: 3 }, s1: { row: 1, col: 2 }, s2: { row: 1, col: 1 }, s3: { row: 1, col: 0 },
-  s4: { row: 1, col: 7 }, s5: { row: 1, col: 6 }, s6: { row: 1, col: 5 }, s7: { row: 1, col: 4 },
-  b3: { row: 2, col: 0 }, b2: { row: 2, col: 1 }, b1: { row: 2, col: 2 }, b0: { row: 2, col: 3 },
-  b13: { row: 2, col: 6 }, b12: { row: 2, col: 7 },
+  w0: { row: 0, col: 0 }, w1: { row: 0, col: 1 }, w2: { row: 0, col: 2 }, w3: { row: 0, col: 3 },
+  w12: { row: 0, col: 6 }, w13: { row: 0, col: 7 },
+  s0: { row: 1, col: 0 }, s1: { row: 1, col: 1 }, s2: { row: 1, col: 2 }, s3: { row: 1, col: 3 },
+  s4: { row: 1, col: 4 }, s5: { row: 1, col: 5 }, s6: { row: 1, col: 6 }, s7: { row: 1, col: 7 },
+  b0: { row: 2, col: 0 }, b1: { row: 2, col: 1 }, b2: { row: 2, col: 2 }, b3: { row: 2, col: 3 },
+  b12: { row: 2, col: 6 }, b13: { row: 2, col: 7 },
 };
-// Note: shared row mapping is canonical to BM 12345 (Finkel) — squares run right-to-left for white as they enter shared row, then forward. We use a renderer-friendly mapping above so the visible path flows left→right→loop.
-
-export const ROSETTE_SQUARES = new Set<SquareId>(['w3', 'b3', 's7', 'w13', 'b13']);
-// (path-index rosettes 3 = own w3/b3, 7 = shared s7 centre, 13 = own w13/b13)
+export const ROSETTE_SQUARES = new Set<SquareId>(['w0', 'b0', 's3', 'w12', 'b12']);
 
 export interface UrState {
   // -1 = at start (off-board, waiting to enter), 0..13 = path index, 14 = borne off
@@ -87,7 +85,7 @@ export interface UrMove {
 }
 
 export function legalMoves(state: UrState, roll: number): UrMove[] {
-  if (roll === 0 || state.winner) return [];
+  if (!Number.isInteger(roll) || roll < 1 || roll > 4 || state.winner) return [];
   const me = state.turn === 'white' ? state.white : state.black;
   const them = state.turn === 'white' ? state.black : state.white;
   const myPath = pathOf(state.turn);
@@ -109,10 +107,10 @@ export function legalMoves(state: UrState, roll: number): UrMove[] {
     }
     const sq = myPath[target];
     if (occupiedByMe.has(sq)) continue;
-    // Central rosette s7 may hold only one piece, and is safe from capture
-    if (sq === 's7') {
-      // can't land on s7 if opponent already there
-      const opponentOnCenter = them.some((p, idx) => p >= 0 && p < 14 && theirPath[p] === 's7');
+    // Central rosette s3 may hold only one piece, and is safe from capture
+    if (sq === 's3') {
+      // can't land on s3 if opponent already there
+      const opponentOnCenter = them.some((p, idx) => p >= 0 && p < 14 && theirPath[p] === 's3');
       if (opponentOnCenter) continue;
     }
     moves.push({ tokenIndex: i, fromPathIdx: cur, toPathIdx: target });
@@ -121,6 +119,7 @@ export function legalMoves(state: UrState, roll: number): UrMove[] {
 }
 
 export function applyMove(state: UrState, move: UrMove): UrState {
+  if (!state.rolled || !legalMoves(state, state.dice).some(m => m.tokenIndex === move.tokenIndex && m.fromPathIdx === move.fromPathIdx && m.toPathIdx === move.toPathIdx)) return state;
   const next: UrState = {
     ...state,
     white: [...state.white],
@@ -138,7 +137,7 @@ export function applyMove(state: UrState, move: UrMove): UrState {
     const landSq = myPath[move.toPathIdx];
     // Capture if on shared range (not the safe central rosette)
     const sharedIdx = move.toPathIdx;
-    if (sharedIdx >= SHARED_RANGE[0] && sharedIdx <= SHARED_RANGE[1] && landSq !== 's7') {
+    if (sharedIdx >= SHARED_RANGE[0] && sharedIdx <= SHARED_RANGE[1] && landSq !== 's3') {
       for (let i = 0; i < them.length; i++) {
         const p = them[i];
         if (p >= 0 && p < 14 && theirPath[p] === landSq) {
@@ -205,7 +204,7 @@ export function chooseAIMove(state: UrState, roll: number): UrMove | null {
     const landSq = m.toPathIdx < 14 ? myPath[m.toPathIdx] : null;
     if (m.toPathIdx === 14) score += 50;
     if (m.toPathIdx < 14 && ROSETTES.has(m.toPathIdx)) score += 25;
-    if (landSq && m.toPathIdx >= SHARED_RANGE[0] && m.toPathIdx <= SHARED_RANGE[1] && landSq !== 's7') {
+    if (landSq && m.toPathIdx >= SHARED_RANGE[0] && m.toPathIdx <= SHARED_RANGE[1] && landSq !== 's3') {
       const capCount = them.filter((p, i) => p >= 0 && p < 14 && theirPath[p] === landSq).length;
       score += capCount * 40;
     }

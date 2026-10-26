@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import * as Dialog from '@radix-ui/react-dialog';
 import { RoyalUrGame } from './RoyalUrGame';
 import { PetteiaGame } from './PetteiaGame';
 import { LatrunculorumGame } from './LatrunculorumGame';
@@ -18,18 +18,16 @@ interface Props {
 
 export function AncientGameModal({ game, onClose }: Props) {
   return (
-    <AnimatePresence>
-      {game && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] bg-black"
-        >
+    <Dialog.Root open={!!game} onOpenChange={open => { if (!open) onClose(); }}>
+      {game && <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[79] bg-black" />
+        <Dialog.Content aria-describedby={undefined} className="fixed inset-0 z-[80] bg-black outline-none">
+          <Dialog.Title className="sr-only">{game.name}</Dialog.Title>
           <button
             onClick={onClose}
             className="absolute top-4 left-4 z-30 carved-button p-2 rounded-md text-foreground"
-            aria-label="Close"
+            aria-label="Back to collection"
+            title="Back to collection"
           >
             <X className="w-5 h-5" />
           </button>
@@ -48,7 +46,7 @@ export function AncientGameModal({ game, onClose }: Props) {
               baseColor="#3a2410"
               surfaceColor="#5b3a1f"
               diceLabel="Throw sticks"
-              disclaimer="Original Senet rules are lost. This uses the Kendall/Bell reconstruction — educated guesswork, not history."
+              disclaimer="The complete Senet rules are lost. This is a simplified modern race game inspired by Senet, not a full scholarly reconstruction."
             />
           )}
           {game.id === 'patolli' && (
@@ -62,7 +60,7 @@ export function AncientGameModal({ game, onClose }: Props) {
               surfaceColor="#3d1e10"
               tileSize={0.7}
               diceLabel="Throw beans"
-              disclaimer="Reconstructed from Diego Durán's chronicle (c. 1581). The Aztec betting mechanic has been omitted."
+              disclaimer="A simplified modern race game inspired by Patolli. The original betting system and some historical mechanics are omitted."
             />
           )}
           {game.id === 'liubo' && (
@@ -79,8 +77,8 @@ export function AncientGameModal({ game, onClose }: Props) {
             />
           )}
           {game.id === 'mehen' && <MehenGame />}
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </Dialog.Content>
+      </Dialog.Portal>}
+    </Dialog.Root>
   );
 }

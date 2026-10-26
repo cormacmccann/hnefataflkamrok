@@ -1,4 +1,4 @@
-// Senet — Kendall/Bell reconstruction (most widely used modern ruleset).
+// Senet — simplified modern interpretation, not a complete Kendall/Bell ruleset.
 // 3 rows × 10 squares = 30 squares, "boustrophedon" snake path.
 // 5 pieces per side, alternating start on row 1 (white on odd, black on even).
 // 4 throwing-sticks: roll 1,2,3,4,5 — rolls of 1,4,5 grant an extra turn.
@@ -49,10 +49,11 @@ export const SENET_CONFIG: RaceConfig = {
   squares,
   diceRoll: fourStickRoll,
   exactBearOff: true,
+  extraTurnRolls: [1, 4, 5],
   initialWhite,
   initialBlack,
   rebirthIndex: 14,
   layout,
   specialIndices: [14, 25, 26, 27, 28, 29],
-  rulesNote: "Egyptian race game from Tutankhamun's tomb. Kendall/Bell reconstruction — original rules are partly lost.",
+  rulesNote: "Egyptian-inspired race game. Original rules are incomplete; this simplified interpretation does not implement a complete scholarly ruleset.",
 };

@@ -260,7 +260,7 @@ function simulateMove(state: BaoState, move: Move): SimResult {
   const p = tmp.turn;
   let seeds: number;
   let i: number;
-  let dir = move.direction;
+  const dir = move.direction;
 
   if (tmp.phase === 'kunamua') {
     if (tmp.storage[p] <= 0) return { firstSowingIsCapture: false, captureRingIndex: null };
@@ -315,6 +315,8 @@ export interface ApplyResult {
 }
 
 export function applyMove(state: BaoState, move: Move): ApplyResult {
+  const valid = legalMoves(state).some(m => m.startRing === move.startRing && m.direction === move.direction && m.kichwaChoice === move.kichwaChoice && !!m.taxation === !!move.taxation);
+  if (!valid) return { state };
   const next = clone(state);
   const p = next.turn;
   const path: Array<{ row: number; col: number }> = [];
@@ -441,6 +443,9 @@ export function applyMove(state: BaoState, move: Move): ApplyResult {
       break;
     }
   }
+
+  // A defensive iteration limit must never silently discard the seeds held in hand.
+  if (seeds > 0) return { state };
 
   // Nyumba destruction check: if opp emptied our Nyumba via capture this turn, mark destroyed.
   // (Standard rule: only the opponent's capture of seeds from the Nyumba destroys it.)

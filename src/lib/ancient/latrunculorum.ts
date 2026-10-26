@@ -76,7 +76,7 @@ export function allLegalMoves(state: LatState, who: LatPlayer): { piece: LatPiec
 
 export function applyLatMove(state: LatState, pieceId: number, to: LatPos): LatState {
   const piece = state.pieces.find((x) => x.id === pieceId);
-  if (!piece) return state;
+  if (!piece || state.winner || piece.owner !== state.turn || !legalMovesFor(state, pieceId).some(p => p.row === to.row && p.col === to.col)) return state;
   const moved: LatPiece = { ...piece, pos: { ...to } };
   let pieces = state.pieces.map((p) => (p.id === pieceId ? moved : p));
 

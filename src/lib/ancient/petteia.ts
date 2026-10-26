@@ -57,7 +57,7 @@ export function allLegalMoves(state: PettState, who: PettPlayer): { piece: PettP
 
 export function applyPettMove(state: PettState, pieceId: number, to: PettPos): PettState {
   const piece = state.pieces.find((x) => x.id === pieceId);
-  if (!piece) return state;
+  if (!piece || state.winner || piece.owner !== state.turn || !legalMovesFor(state, pieceId).some(p => p.row === to.row && p.col === to.col)) return state;
   const moved: PettPiece = { ...piece, pos: { ...to } };
   let pieces = state.pieces.map((p) => (p.id === pieceId ? moved : p));
 

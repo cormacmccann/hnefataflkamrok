@@ -104,6 +104,8 @@ export interface GameState {
   isPlayerTurn: boolean;
   playerSide: Player;
   boardType?: BoardType;
+  rules?: VariantRules;
+  variantId?: string;
   connectionPath?: FidchellPosition[]; // For Fidchell connection victory visualization
 }
 

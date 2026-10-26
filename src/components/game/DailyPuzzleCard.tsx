@@ -68,7 +68,7 @@ export function DailyPuzzleCard() {
           .limit(60);
         if (!cancelled && history) {
           const dates = new Set(
-            (history as any[])
+            history
               .map((h) => h.daily_puzzles?.puzzle_date)
               .filter(Boolean),
           );

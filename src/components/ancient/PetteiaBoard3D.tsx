@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { getWoodTexture } from '@/components/game/BoardCraft';
 import { PettState, PettPos, BOARD_SIZE } from '@/lib/ancient/petteia';
 
 interface Props {
@@ -21,11 +22,11 @@ export function PetteiaBoard3D({ state, validTargets, onSquareClick }: Props) {
       {/* Base */}
       <mesh position={[0, -0.18, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.6, 0.3, boardWidth + 0.6]} />
-        <meshStandardMaterial color="#4A3728" roughness={0.85} />
+        <meshStandardMaterial color="#4A3728" map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.85} />
       </mesh>
       <mesh position={[0, -0.01, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.35, 0.1, boardWidth + 0.35]} />
-        <meshStandardMaterial color="#5D4037" roughness={0.7} />
+        <meshStandardMaterial color="#5D4037" map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.7} />
       </mesh>
 
       {/* Squares (marble-ish for Greek feel) */}
@@ -48,7 +49,7 @@ export function PetteiaBoard3D({ state, validTargets, onSquareClick }: Props) {
               <meshStandardMaterial
                 color={light ? '#E5DCC5' : '#7B6B52'}
                 roughness={0.5}
-                emissive={valid ? '#22ff22' : selected ? '#ffdd44' : '#000000'}
+                emissive={valid ? '#c6b678' : selected ? '#ffdd44' : '#000000'}
                 emissiveIntensity={valid ? 0.3 : selected ? 0.4 : 0}
               />
             </mesh>
@@ -60,7 +61,7 @@ export function PetteiaBoard3D({ state, validTargets, onSquareClick }: Props) {
       {validTargets.map((t, i) => (
         <mesh key={`vm-${i}`} position={[t.col * SQ - OFFSET, 0.18, t.row * SQ - OFFSET]}>
           <sphereGeometry args={[0.1, 16, 16]} />
-          <meshStandardMaterial color="#44ff44" emissive="#22ff22" emissiveIntensity={0.6} transparent opacity={0.8} />
+          <meshStandardMaterial color="#dfc885" emissive="#dfc885" emissiveIntensity={0.6} transparent opacity={0.8} />
         </mesh>
       ))}
 

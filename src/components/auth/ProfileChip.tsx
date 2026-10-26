@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useUiTranslation } from '@/i18n/useUiTranslation';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Language, languageFlags } from '@/i18n/translations';
 import { cn } from '@/lib/utils';
@@ -19,9 +20,10 @@ const LANGUAGES: Language[] = ['en', 'swe', 'ga', 'gd', 'cy', 'ang'];
 export function ProfileChip() {
   const { profile, isAnonymous, signOut, loading } = useAuth();
   const { language, setLanguage } = useLanguage();
+  const { tr } = useUiTranslation();
   const [authOpen, setAuthOpen] = useState(false);
 
-  if (loading) return null;
+  if (loading) return <span aria-hidden="true" className="block h-[52px] w-[56px] shrink-0" />;
   const initials = (profile?.display_name || 'P').slice(0, 2).toUpperCase();
 
   return (
@@ -42,7 +44,7 @@ export function ProfileChip() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="font-['Cinzel']">
-            {profile?.display_name || 'Guest'}
+            <span data-no-translate>{profile?.display_name || tr('Guest')}</span>
             {isAnonymous && (
               <div className="text-[10px] text-muted-foreground font-normal">Playing as guest</div>
             )}
@@ -85,7 +87,7 @@ export function ProfileChip() {
                   )}
                 >
                   <span className="text-lg leading-none">{languageFlags[lang].flag}</span>
-                  <span className="flex-1 font-medium">{languageFlags[lang].name}</span>
+                  <span data-no-translate className="flex-1 font-medium">{languageFlags[lang].name}</span>
                   {active && <Check className="w-4 h-4 text-primary" />}
                 </button>
               );

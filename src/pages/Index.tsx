@@ -1,494 +1,138 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BoardSize, Player, Position, AIDifficulty, GameMode, BoardTheme, FidchellPosition, BoardType } from '@/types/game';
+import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { ArrowLeft, BookOpen, ChevronDown, Maximize2, Minimize2, RotateCcw, Shield, Swords, Users } from 'lucide-react';
+import type { BoardSize, Player, Position, AIDifficulty, GameMode } from '@/types/game';
 import { GAME_VARIANTS } from '@/constants/game';
 import { useGameState } from '@/hooks/useGameState';
 import { useAI } from '@/hooks/useAI';
+import { useUiTranslation } from '@/i18n/useUiTranslation';
 import { useVolumeControl } from '@/hooks/useVolumeControl';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
-import { useDemoMode } from '@/hooks/useDemoMode';
 import { useFidchellState } from '@/hooks/useFidchellState';
 import { useFidchellAI } from '@/hooks/useFidchellAI';
-import { Scene3D } from '@/components/game/Scene3D';
-import { EraBackdrop } from '@/components/ancient/EraBackdrop';
-import { ProfileChip } from '@/components/auth/ProfileChip';
-import { TurnIndicator } from '@/components/game/TurnIndicator';
+import { GameSetup } from '@/components/game/GameSetup';
+import { LogoIntro } from '@/components/game/LogoIntro';
+import { BrandMark } from '@/components/game/BrandMark';
+import { TaflBoard2D } from '@/components/game/TaflBoard2D';
+import { BoardViewToggle, type BoardView } from '@/components/game/BoardViewToggle';
 import { MoveHistory } from '@/components/game/MoveHistory';
-import { GameControls } from '@/components/game/GameControls';
+import { LanguageSelector } from '@/components/game/LanguageSelector';
+import { VolumeControl } from '@/components/game/VolumeControl';
 import { VictoryModal } from '@/components/game/VictoryModal';
 import { RulesModal } from '@/components/game/RulesModal';
-import { GameSetup } from '@/components/game/GameSetup';
-import { VolumeControl } from '@/components/game/VolumeControl';
-import { LogoIntro } from '@/components/game/LogoIntro';
-import { DemoMovePopup } from '@/components/game/DemoMovePopup';
-import { useLanguage } from '@/i18n/LanguageContext';
-import hnefataflLogo from '@/assets/hnefatafl-logo.png';
-import builtwithImg from '@/assets/builtwith.png';
-import kamrokLogo from '@/assets/kamrok-logo.png';
+import { ERA_IMAGES } from '@/components/ancient/EraBackdrop';
+import '@/components/ancient/ancient-games.css';
+
+const Scene3D = lazy(() => import('@/components/game/Scene3D').then(m => ({ default: m.Scene3D })));
 
 export default function Index() {
-  const { t } = useLanguage();
-  const [showIntro, setShowIntro] = useState(true);
+  const { tr } = useUiTranslation();
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('tafl-intro-seen'));
   const [gameStarted, setGameStarted] = useState(false);
   const [gameMode, setGameMode] = useState<GameMode>('play');
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const [playerSide, setPlayerSide] = useState<Player>('defender');
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
-  const [boardTheme, setBoardTheme] = useState<BoardTheme>(GAME_VARIANTS[1].theme);
-  const [boardType, setBoardType] = useState<BoardType>('square');
-  const [variantId, setVariantId] = useState<string>('tablut');
+  const [variantId, setVariantId] = useState('tablut');
+  const [view, setView] = useState<BoardView>(() => localStorage.getItem('tafl-board-view') === '2d' ? '2d' : '3d');
   const [showRules, setShowRules] = useState(false);
   const [showVictory, setShowVictory] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [isPassAndPlay, setIsPassAndPlay] = useState(false);
-
-  const { musicVolume, sfxVolume, updateMusicVolume, updateSfxVolume } = useVolumeControl();
-  const { isPlaying, startMusic } = useMusicPlayer(musicVolume);
-
-  const handleIntroComplete = () => {
-    setShowIntro(false);
-    startMusic();
-  };
-
-  // Standard Tafl game state (for square boards)
-  const taflState = useGameState(boardSize, playerSide, sfxVolume);
-  const taflAI = useAI(boardSize, difficulty);
-  
-  // Fidchell game state (for circular board)
-  const fidchellState = useFidchellState(playerSide, sfxVolume);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const roomRef = useRef<HTMLDivElement>(null);
+  const variant = GAME_VARIANTS.find(v => v.id === variantId) || GAME_VARIANTS[2];
+  const isFidchell = variant.boardType === 'circular';
+  const { musicVolume, sfxVolume, updateMusicVolume, updateSfxVolume, toggleMute } = useVolumeControl();
+  const { startMusic } = useMusicPlayer(musicVolume);
+  const tafl = useGameState(boardSize, playerSide, sfxVolume, variant.defaultRules, variantId);
+  const taflAI = useAI(boardSize, difficulty, variant.defaultRules, variantId);
+  const fidchell = useFidchellState(playerSide, sfxVolume);
   const fidchellAI = useFidchellAI(difficulty);
-  
-  // Select the appropriate game state based on board type
-  const isFidchell = boardType === 'circular';
-  const gameState = isFidchell ? fidchellState.gameState : taflState.gameState;
-  const selectPiece = isFidchell ? fidchellState.selectPiece : taflState.selectPiece;
-  
-  const { demoState, setDemoMove, hidePopup, startDemo, stopDemo } = useDemoMode(boardSize, difficulty);
+  const gameState = isFidchell ? fidchell.gameState : tafl.gameState;
+  const aiRef = useRef({ tafl, taflAI, fidchell, fidchellAI });
+  aiRef.current = { tafl, taflAI, fidchell, fidchellAI };
 
-  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty, mode: GameMode, selectedVariantId: string) => {
-    const variant = GAME_VARIANTS.find(v => v.id === selectedVariantId) || GAME_VARIANTS[1];
-    setBoardSize(size);
-    setPlayerSide(side);
-    setDifficulty(diff);
-    setGameMode(mode);
-    setBoardTheme(variant.theme);
-    setBoardType(variant.boardType);
-    setVariantId(selectedVariantId);
-    setIsPassAndPlay(false);
-    setGameStarted(true);
-
-    if (variant.boardType === 'circular') {
-      fidchellState.resetGame(side);
-    } else {
-      taflState.resetGame(size, side);
-    }
-
-    startMusic();
-
-    if (mode === 'demo') {
-      startDemo();
-    }
-  };
-
-  const handleStartPassAndPlay = (selectedVariantId: string) => {
-    const variant = GAME_VARIANTS.find(v => v.id === selectedVariantId) || GAME_VARIANTS[1];
-    setBoardSize(variant.boardSize);
-    setPlayerSide('attacker'); // attacker moves first; pass-and-play ignores side anyway
-    setGameMode('play');
-    setBoardTheme(variant.theme);
-    setBoardType(variant.boardType);
-    setVariantId(selectedVariantId);
-    setIsPassAndPlay(true);
-    setGameStarted(true);
-    if (variant.boardType === 'circular') {
-      fidchellState.resetGame('attacker');
-    } else {
-      taflState.resetGame(variant.boardSize, 'attacker');
-    }
+  const finishIntro = useCallback(() => { sessionStorage.setItem('tafl-intro-seen', '1'); setShowIntro(false); }, []);
+  const setBoardView = (next: BoardView) => { setView(next); localStorage.setItem('tafl-board-view', next); };
+  const handleStartGame = (size: BoardSize, side: Player, diff: AIDifficulty, mode: GameMode, id: string, local = false) => {
+    const selected = GAME_VARIANTS.find(v => v.id === id) || GAME_VARIANTS[2];
+    setBoardSize(size); setPlayerSide(side); setDifficulty(diff); setGameMode(mode); setVariantId(selected.id); setIsPassAndPlay(local); setGameStarted(true); setShowVictory(true); setShowHistory(false);
+    if (selected.boardType === 'circular') fidchell.resetGame(side);
+    else tafl.resetGame(size, side, selected.defaultRules, selected.id);
     startMusic();
   };
-
-  const handleNewGame = () => {
-    setGameStarted(false);
-    setShowVictory(true);
-    setGameMode('play');
-    stopDemo();
+  const handleStartPassAndPlay = (id: string) => { const selected = GAME_VARIANTS.find(v => v.id === id) || GAME_VARIANTS[2]; handleStartGame(selected.boardSize, 'attacker', difficulty, 'play', id, true); };
+  const backToCollection = () => { setGameStarted(false); setShowRules(false); };
+  const canInteract = gameMode !== 'demo' && !gameState.gameResult && (isPassAndPlay || gameState.isPlayerTurn);
+  const handleSquareClick = (pos: Position) => {
+    if (!canInteract) return;
+    if (isFidchell) { fidchell.handleNodeClick({ ring: pos.row, spoke: pos.col }); return; }
+    if (gameState.selectedPiece && !tafl.makeMove(pos)) tafl.selectPiece(null);
+  };
+  const handlePieceClick = (id: string) => {
+    if (!canInteract) return;
+    if (isFidchell) { fidchell.handlePieceClick(id); return; }
+    const piece = gameState.pieces.find(p => p.id === id);
+    if (piece) tafl.selectPiece(gameState.selectedPiece?.id === id ? null : piece);
   };
 
-  // Handle move for both board types
-  const makeMove = useCallback((position: Position) => {
-    if (isFidchell) {
-      return fidchellState.makeMove({ ring: position.row, spoke: position.col });
-    }
-    return taflState.makeMove(position);
-  }, [isFidchell, fidchellState, taflState]);
-
-  const handleSquareClick = useCallback((position: Position) => {
-    if (gameMode === 'demo') return;
-    if (gameState.gameResult) return;
-    if (!isPassAndPlay && !gameState.isPlayerTurn) return;
-
-    if (isFidchell) {
-      fidchellState.handleNodeClick({ ring: position.row, spoke: position.col });
-      return;
-    }
-
-    if (gameState.selectedPiece) {
-      const moveSuccess = makeMove(position);
-      if (!moveSuccess) {
-        const pieceAtPos = gameState.pieces.find(
-          p => p.position.row === position.row && p.position.col === position.col
-        );
-        if (pieceAtPos) {
-          selectPiece(pieceAtPos);
-        } else {
-          selectPiece(null);
-        }
-      }
-    }
-  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.selectedPiece, gameState.pieces, makeMove, selectPiece, isFidchell, fidchellState]);
-
-  const handlePieceClick = useCallback((pieceId: string) => {
-    if (gameMode === 'demo') return;
-    if (gameState.gameResult) return;
-    if (!isPassAndPlay && !gameState.isPlayerTurn) return;
-
-    if (isFidchell) {
-      fidchellState.handlePieceClick(pieceId);
-      return;
-    }
-
-    const piece = gameState.pieces.find(p => p.id === pieceId);
-    if (!piece) return;
-
-    if (gameState.selectedPiece?.id === pieceId) {
-      selectPiece(null);
-    } else {
-      selectPiece(piece);
-    }
-  }, [gameMode, isPassAndPlay, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, gameState.selectedPiece, selectPiece, isFidchell, fidchellState]);
-
-  // Demo mode & AI: plays both sides
+  // One cancellable action per turn; execute against current state atomically.
   useEffect(() => {
-    if (!gameStarted || gameState.gameResult) return;
-    if (isPassAndPlay) return; // no AI in pass-and-play
-    
-    
-    // Fidchell uses different AI (placement phase + movement phase)
-    if (isFidchell) {
-      const phase = fidchellState.phase;
-      const runFidchellAI = (side: Player, delay: number, demo: boolean) => {
-        const timeoutId = setTimeout(() => {
-          const action = phase === 'placement'
-            ? fidchellAI.getBestPlacement(gameState.pieces, side)
-            : fidchellAI.getBestMove(gameState.pieces, side);
-          if (!action) return;
-          if (action.kind === 'place') {
-            if (demo) {
-              const explanation = side === 'defender' ? t.defendersManeuver : t.attackersSiege;
-              setDemoMove(
-                { id: 'ai-place', type: side === 'defender' ? 'defender' : 'attacker', position: { row: action.to.ring, col: action.to.spoke } } as any,
-                { row: action.to.ring, col: action.to.spoke },
-                side,
-                explanation,
-              );
-            }
-            fidchellState.handleNodeClick(action.to);
-            if (demo) setTimeout(() => hidePopup(), 1200);
-          } else if (action.piece) {
-            selectPiece(action.piece);
-            setTimeout(() => fidchellState.makeMove(action.to), 250);
-            if (demo) setTimeout(() => hidePopup(), 1500);
-          }
-        }, delay);
-        return () => clearTimeout(timeoutId);
-      };
-      if (gameMode === 'demo') {
-        return runFidchellAI(gameState.currentPlayer, 1500, true);
+    if (!gameStarted || gameState.gameResult || isPassAndPlay || (gameMode !== 'demo' && gameState.isPlayerTurn)) return;
+    const timer = window.setTimeout(() => {
+      const live = aiRef.current;
+      if (isFidchell) {
+        const action = live.fidchell.phase === 'placement' ? live.fidchellAI.getBestPlacement(gameState.pieces, gameState.currentPlayer) : live.fidchellAI.getBestMove(gameState.pieces, gameState.currentPlayer);
+        if (action?.kind === 'place') live.fidchell.handleNodeClick(action.to);
+        else if (action?.piece) live.fidchell.makeMove(action.to, action.piece.id);
       } else {
-        if (gameState.isPlayerTurn) return;
-        const aiSide: Player = playerSide === 'attacker' ? 'defender' : 'attacker';
-        return runFidchellAI(aiSide, 450, false);
+        const action = live.taflAI.getBestMove(gameState.pieces, gameState.currentPlayer);
+        if (action) live.tafl.makeMove(action.to, action.piece.id);
       }
-    }
-    
-    // Standard Tafl AI
-    if (gameMode === 'demo') {
-      const currentPlayer = gameState.currentPlayer;
-      
-      const timeoutId = setTimeout(() => {
-        const bestMove = taflAI.getBestMove(gameState.pieces, currentPlayer);
-        if (bestMove) {
-          const isKingMove = bestMove.piece.type === 'king';
-          const corners = [
-            { row: 0, col: 0 },
-            { row: 0, col: boardSize - 1 },
-            { row: boardSize - 1, col: 0 },
-            { row: boardSize - 1, col: boardSize - 1 },
-          ];
-          const currentMinDist = Math.min(...corners.map(c => 
-            Math.abs(bestMove.piece.position.row - c.row) + Math.abs(bestMove.piece.position.col - c.col)
-          ));
-          const newMinDist = Math.min(...corners.map(c => 
-            Math.abs(bestMove.to.row - c.row) + Math.abs(bestMove.to.col - c.col)
-          ));
-          const movesTowardsCorner = isKingMove && newMinDist < currentMinDist;
-          
-          let explanation = '';
-          if (isKingMove) {
-            explanation = movesTowardsCorner ? t.kingAdvances : t.kingRepositions;
-          } else if (currentPlayer === 'attacker') {
-            explanation = t.attackersSiege;
-          } else {
-            explanation = t.defendersManeuver;
-          }
-          
-          setDemoMove(bestMove.piece, bestMove.to, currentPlayer, explanation);
-          selectPiece(bestMove.piece);
-          
-          setTimeout(() => {
-            taflState.makeMove(bestMove.to);
-            setTimeout(() => hidePopup(), 1500);
-          }, 1200);
-        }
-      }, 2000);
+    }, gameMode === 'demo' ? 1300 : 550);
+    return () => window.clearTimeout(timer);
+  }, [gameStarted, gameState.gameResult, gameState.pieces, gameState.currentPlayer, gameState.isPlayerTurn, isPassAndPlay, gameMode, isFidchell]);
 
-      return () => clearTimeout(timeoutId);
-    } else {
-      if (gameState.isPlayerTurn) return;
-      
-      const aiSide: Player = playerSide === 'attacker' ? 'defender' : 'attacker';
-      
-      const timeoutId = setTimeout(() => {
-        const bestMove = taflAI.getBestMove(gameState.pieces, aiSide);
-        if (bestMove) {
-          selectPiece(bestMove.piece);
-          setTimeout(() => {
-            taflState.makeMove(bestMove.to);
-          }, 300);
-        }
-      }, 500);
+  useEffect(() => { if (gameState.gameResult) setShowVictory(true); }, [gameState.gameResult]);
+  useEffect(() => { const update = () => setIsFullscreen(!!document.fullscreenElement); document.addEventListener('fullscreenchange', update); return () => document.removeEventListener('fullscreenchange', update); }, []);
+  const toggleFullscreen = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch { /* The viewport layout remains usable when fullscreen is unavailable. */ } };
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [gameStarted, isPassAndPlay, gameMode, gameState.currentPlayer, gameState.isPlayerTurn, gameState.gameResult, gameState.pieces, playerSide, boardSize, isFidchell, taflAI, fidchellAI, selectPiece, taflState, fidchellState, setDemoMove, hidePopup, t]);
-
-  useEffect(() => {
-    if (gameState.gameResult) {
-      setShowVictory(true);
-    }
-  }, [gameState.gameResult]);
-
-  if (showIntro) {
-    return <LogoIntro onComplete={handleIntroComplete} />;
-  }
-
-  if (!gameStarted) {
-    return (
-      <GameSetup 
-        onStartGame={handleStartGame}
-        onStartPassAndPlay={handleStartPassAndPlay}
-        musicVolume={musicVolume}
-        sfxVolume={sfxVolume}
-        onMusicVolumeChange={updateMusicVolume}
-        onSfxVolumeChange={updateSfxVolume}
-      />
-    );
-  }
-
-  return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* Fullscreen 3D Scene */}
-      <Scene3D 
-        gameState={gameState} 
-        onSquareClick={handleSquareClick} 
-        onPieceClick={handlePieceClick}
-        capturePositions={taflState.capturePositions}
-        onCaptureComplete={taflState.clearCapturePositions}
-        theme={boardTheme}
-        boardType={boardType}
-        connectionPath={isFidchell ? fidchellState.connectionPath : undefined}
-        variantId={variantId}
-        placementMode={isFidchell && fidchellState.phase === 'placement' && (isPassAndPlay || gameState.isPlayerTurn)}
-      />
-      <EraBackdrop gameId={variantId} />
-
-      {/* Fidchell HUD: phase + pawns in hand */}
-      {isFidchell && !gameState.gameResult && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
-        >
-          <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md bg-black/55 backdrop-blur-sm border border-amber-200/30 text-amber-100 font-serif text-xs sm:text-sm shadow-lg text-center">
-            <div className="uppercase tracking-widest text-[10px] sm:text-xs opacity-80">
-              {fidchellState.phase === 'placement' ? 'Placement Phase' : 'Movement Phase'}
-            </div>
-            <div className="mt-0.5 flex items-center gap-3 sm:gap-4 justify-center">
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300" />
-                <span>{fidchellState.pawnsInHand.defender}</span>
-              </span>
-              <span className="opacity-60">in hand</span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-stone-800 border border-stone-500" />
-                <span>{fidchellState.pawnsInHand.attacker}</span>
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Header Overlay with Logo and Volume */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3"
-        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
-      >
-        <div className="flex-1" />
-        <img 
-          src={hnefataflLogo} 
-          alt={t.appName}
-          className="h-7 sm:h-14 md:h-16 drop-shadow-lg"
-        />
-        <div className="flex-1 flex flex-wrap justify-end items-start gap-1.5 sm:gap-2">
-          <ProfileChip />
-          <VolumeControl
-            musicVolume={musicVolume}
-            sfxVolume={sfxVolume}
-            onMusicVolumeChange={updateMusicVolume}
-            onSfxVolumeChange={updateSfxVolume}
-          />
-        </div>
-      </motion.header>
-
-      {/* Left Panel - Turn Indicator & Controls */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1 }}
-        className="fixed top-16 sm:top-20 left-2 sm:left-4 z-20 space-y-2 sm:space-y-3 w-[44vw] max-w-[180px] sm:w-48"
-      >
-        {!gameMode || gameMode === 'play' ? (
-          <>
-            <TurnIndicator 
-              currentPlayer={gameState.currentPlayer} 
-              isPlayerTurn={gameState.isPlayerTurn} 
-              playerSide={playerSide} 
-            />
-            <GameControls 
-              onUndo={isFidchell ? () => {} : taflState.undoMove} 
-              onNewGame={handleNewGame} 
-              onShowRules={() => setShowRules(true)} 
-              canUndo={!isFidchell && gameState.moveHistory.length >= 2 && gameState.isPlayerTurn} 
-              isGameOver={!!gameState.gameResult} 
-            />
-          </>
-        ) : (
-          <div className="bg-card/90 backdrop-blur p-3 rounded-lg border border-border shadow-lg">
-            <div className="text-center font-['Cinzel'] text-primary text-sm mb-2">{t.demoMode}</div>
-            <p className="text-xs text-muted-foreground text-center mb-3">{t.watchAI}</p>
-            <button 
-              onClick={handleNewGame}
-              className="w-full text-sm bg-secondary hover:bg-secondary/80 px-3 py-2 rounded-lg transition-colors"
-            >
-              {t.exitDemo}
-            </button>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Right Panel - Move History */}
-      <motion.div 
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1 }}
-        className="fixed top-24 right-4 z-10 hidden lg:block w-48 h-72"
-      >
-        <MoveHistory moves={gameState.moveHistory} />
-      </motion.div>
-
-      {/* Mobile History Toggle */}
-      <button
-        onClick={() => setShowHistory(!showHistory)}
-        className="fixed top-16 right-2 z-20 lg:hidden tap-target rounded-full bg-card/90 backdrop-blur border border-border flex items-center justify-center shadow-lg"
-        aria-label={t.moveHistory}
-      >
-        <span className="text-lg">📜</span>
-      </button>
-
-      {/* Mobile History Panel */}
-      <AnimatePresence>
-        {showHistory && (
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
-            className="fixed top-28 right-2 z-30 w-[80vw] max-w-xs h-[60vh] lg:hidden"
-          >
-            <MoveHistory moves={gameState.moveHistory} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Bottom Stats Bar */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="fixed left-1/2 -translate-x-1/2 z-20 flex gap-1.5 sm:gap-4 text-[11px] sm:text-sm safe-bottom"
-        style={{ bottom: 'max(3rem, calc(env(safe-area-inset-bottom) + 2.75rem))' }}
-      >
-        <div className="flex items-center gap-1 sm:gap-2 bg-card/90 backdrop-blur px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-border shadow-lg">
-          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--piece-attacker))]" />
-          <span className="text-foreground/90"><span className="hidden sm:inline">{t.attackers}: </span><span className="sm:hidden">A: </span>{gameState.pieces.filter(p => p.type === 'attacker').length}</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2 bg-card/90 backdrop-blur px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-border shadow-lg">
-          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--piece-defender))]" />
-          <span className="text-foreground/90"><span className="hidden sm:inline">{t.defenders}: </span><span className="sm:hidden">D: </span>{gameState.pieces.filter(p => p.type === 'defender' || p.type === 'king').length}</span>
-        </div>
-      </motion.div>
-
-      {/* Demo Mode Move Popup */}
-      {gameMode === 'demo' && (
-        <DemoMovePopup
-          piece={demoState.currentMove.piece}
-          to={demoState.currentMove.to}
-          player={demoState.currentMove.player}
-          explanation={demoState.currentMove.explanation}
-          visible={demoState.showPopup}
-        />
-      )}
-
-      {/* Modals */}
-      <VictoryModal 
-        result={showVictory ? gameState.gameResult : null} 
-        playerSide={playerSide} 
-        onPlayAgain={handleNewGame} 
-        onClose={() => setShowVictory(false)} 
-      />
-      <RulesModal open={showRules} onClose={() => setShowRules(false)} />
-
-      {/* Kamrok logo */}
-      <a
-        href="https://kamrok.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed left-3 z-30 safe-bottom"
-      >
-        <img src={kamrokLogo} alt="Kamrok" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
-      </a>
-
-      {/* Built with Lovable badge */}
-      <a
-        href="https://lovable.dev/invite/8MUK1UP"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed right-3 z-30 safe-bottom"
-      >
-        <img src={builtwithImg} alt="Built with Lovable" className="h-5 sm:h-6 w-auto drop-shadow-lg opacity-70 hover:opacity-100 transition-opacity" />
-      </a>
-    </div>
-  );
+  if (showIntro) return <LogoIntro onComplete={finishIntro} />;
+  if (!gameStarted) return <GameSetup onStartGame={handleStartGame} onStartPassAndPlay={handleStartPassAndPlay} musicVolume={musicVolume} sfxVolume={sfxVolume} onMusicVolumeChange={updateMusicVolume} onSfxVolumeChange={updateSfxVolume} onToggleMute={toggleMute} />;
+  const sideName = (side: Player) => tr(isFidchell ? side === 'attacker' ? 'Ebony' : 'Ivory' : side === 'attacker' ? 'Attackers' : 'Defenders');
+  const status = gameState.gameResult ? 'The game is complete' : gameMode === 'demo' ? 'A game in motion' : isPassAndPlay ? tr('{side} to move', {side:sideName(gameState.currentPlayer)}) : gameState.isPlayerTurn ? 'Your move' : 'Your opponent is thinking…';
+  const objective = isFidchell ? 'Connect the centre to the outer ring with an unbroken chain of your pawns.' : variant.defaultRules.edgeEscape ? 'The king wins by reaching any edge. The attackers must capture the king.' : 'Guide the king to a corner. The attackers must close the escape and capture the king.';
+  const undoAvailable = !isFidchell && gameMode !== 'demo' && gameState.moveHistory.length >= (isPassAndPlay ? 1 : 2) && (isPassAndPlay || gameState.isPlayerTurn);
+  return <div className="game-room" ref={roomRef}>
+    <header className="game-room-header">
+      <button className="back-to-collection" aria-label="The collection" onClick={backToCollection}><ArrowLeft size={17} /><span>The collection</span></button>
+      <div className="game-room-identity"><BrandMark compact /><div><span className="eyebrow">{variant.origin}</span><h1>{variant.name}</h1></div></div>
+      <div className="game-room-tools"><BoardViewToggle view={view} onChange={setBoardView} /><button className="room-icon-button fullscreen-button" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>{isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button><VolumeControl musicVolume={musicVolume} sfxVolume={sfxVolume} onMusicVolumeChange={updateMusicVolume} onSfxVolumeChange={updateSfxVolume} onToggleMute={toggleMute} /></div>
+    </header>
+    <div className="game-room-status" role="status" aria-live="polite"><span>{status}</span>{isFidchell && <small>{fidchell.phase === 'placement' ? 'Place your pawns' : 'Move your pawns'} · Ivory {fidchell.pawnsInHand.defender} · Ebony {fidchell.pawnsInHand.attacker}</small>}</div>
+    <main className="game-room-layout">
+      <aside className="game-room-sidebar">
+        <div className="room-turn-card" aria-live="polite"><span className="eyebrow">{gameMode === 'demo' ? 'Watching the table' : isPassAndPlay ? 'Shared table' : 'At the table'}</span><div className="room-current-player"><span className={`player-stone ${gameState.currentPlayer}`} /><h2>{sideName(gameState.currentPlayer)}</h2></div><p>{status}</p></div>
+        <div className="room-objective"><span className="eyebrow">The object of play</span><p>{objective}</p>{!isFidchell && <span className="room-rule-detail">{variant.defaultRules.kingArmed ? 'The king may take part in captures.' : 'The king cannot take part in captures.'}</span>}</div>
+        {isFidchell && <div className="room-placement"><span className="eyebrow">{fidchell.phase === 'placement' ? 'Place your pawns' : 'Move your pawns'}</span><p>In hand <strong>Ivory {fidchell.pawnsInHand.defender} · Ebony {fidchell.pawnsInHand.attacker}</strong></p></div>}
+        <div className="room-actions"><button onClick={() => tafl.undoMove(isPassAndPlay ? 1 : 2)} disabled={!undoAvailable}><RotateCcw size={15} /> Undo {isPassAndPlay ? 'move' : 'turn'}</button><button onClick={() => setShowRules(true)}><BookOpen size={15} /> Rules of this table</button></div>
+        <div className="room-provenance"><img src={ERA_IMAGES[variantId]} alt={`Artist's impression of ${variant.origin}`} /><span>{variant.era} · {variant.origin}</span><small>{isFidchell ? 'Modern connection interpretation' : variant.id === 'hnefatafl' ? 'Copenhagen core rules' : 'A modern playable reconstruction'}</small></div>
+      </aside>
+      <section className="game-board-stage" aria-label={`${variant.name} game board`}>
+        {view === '2d' ? <TaflBoard2D gameState={gameState} onSquareClick={handleSquareClick} onPieceClick={handlePieceClick} placementMode={isFidchell && fidchell.phase === 'placement' && canInteract} /> : <BoardSceneBoundary onUse2D={() => setBoardView('2d')}><Suspense fallback={<div className="board-loading"><img src="/brand/tafl-emblem.png" alt="" width="70" height="70" /><p>Preparing the carved pieces…</p><button onClick={() => setBoardView('2d')}>Play in 2D now</button></div>}><Scene3D gameState={gameState} onSquareClick={handleSquareClick} onPieceClick={handlePieceClick} capturePositions={tafl.capturePositions} onCaptureComplete={tafl.clearCapturePositions} theme={variant.theme} boardType={variant.boardType} connectionPath={isFidchell ? fidchell.connectionPath : undefined} variantId={variantId} placementMode={isFidchell && fidchell.phase === 'placement' && canInteract} /></Suspense></BoardSceneBoundary>}
+        <div className="board-stage-instruction">{gameState.selectedPiece ? 'Choose a marked destination' : isFidchell && fidchell.phase === 'placement' ? 'Choose an empty intersection' : view === '3d' ? 'Drag to look around · Scroll to zoom · Select a piece to move' : 'Select a piece · Choose a marked destination'}</div>
+      </section>
+      <aside className={`room-history ${showHistory ? 'room-history--open' : ''}`}><MoveHistory moves={gameState.moveHistory} /></aside>
+    </main>
+    <div className="game-room-toolbar"><button onClick={() => tafl.undoMove(isPassAndPlay ? 1 : 2)} disabled={!undoAvailable}><RotateCcw size={16} /><span>Undo move</span></button><button onClick={() => setShowRules(true)}><BookOpen size={16} /><span>Rules</span></button><button onClick={() => setShowHistory(!showHistory)} aria-expanded={showHistory}><ChevronDown size={16} /><span>Moves</span><small>{gameState.moveHistory.length}</small></button></div>
+    <footer className="game-room-footer"><div className="room-piece-counts"><span><i className="player-stone attacker" />{sideName('attacker')} <strong>{gameState.pieces.filter(p => p.type === 'attacker').length}</strong></span><span><i className="player-stone defender" />{sideName('defender')} <strong>{gameState.pieces.filter(p => p.type !== 'attacker').length}</strong></span></div><span className="room-mode">{gameMode === 'demo' ? 'Computer vs computer' : isPassAndPlay ? 'Two players · one table' : `${tr('You play as')} ${sideName(playerSide)}`}</span><button className="mobile-history-toggle" onClick={() => setShowHistory(!showHistory)} aria-expanded={showHistory}>Moves {gameState.moveHistory.length}<ChevronDown size={14} /></button><span className="room-move-count">Move {gameState.moveHistory.length + 1}</span></footer>
+    <div className="game-language-control"><LanguageSelector compact align="up" /></div>
+    <VictoryModal circular={isFidchell} sharedTable={isPassAndPlay || gameMode === 'demo'} result={showVictory ? gameState.gameResult : null} playerSide={playerSide} onPlayAgain={backToCollection} onClose={() => setShowVictory(false)} />
+    <RulesModal open={showRules} onClose={() => setShowRules(false)} variant={variant} />
+  </div>;
+}
+class BoardSceneBoundary extends Component<{ children: ReactNode; onUse2D: () => void }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? <div className="board-loading"><p>The 3D board could not load on this device.</p><button onClick={this.props.onUse2D}>Continue in 2D</button></div> : this.props.children; }
 }

@@ -32,6 +32,7 @@ export interface RaceConfig {
   squares: Partial<Record<number, RaceSquare>>;
   diceRoll: () => { value: number; faces: number[] }; // value 0..maxRoll
   exactBearOff: boolean;       // require exact roll to bear off
+  extraTurnRolls?: number[];   // e.g. Senet rolls 1, 4 and 5
   // Optional initial token positions (path indices); default all at -1
   initialWhite?: number[];
   initialBlack?: number[];
@@ -82,7 +83,7 @@ export interface RaceMove {
 }
 
 export function legalRaceMoves(state: RaceState, roll: number): RaceMove[] {
-  if (roll === 0 || state.winner) return [];
+  if (!Number.isInteger(roll) || roll <= 0 || state.winner) return [];
   const me = state.turn === 'white' ? state.white : state.black;
   const them = state.turn === 'white' ? state.black : state.white;
   const myOccupied = new Set<number>();
@@ -92,8 +93,11 @@ export function legalRaceMoves(state: RaceState, roll: number): RaceMove[] {
   for (let i = 0; i < me.length; i++) {
     const cur = me[i];
     if (cur === state.cfg.pathLength) continue;
-    const target = cur === -1 ? roll - 1 : cur + roll;
-    if (target > state.cfg.pathLength) continue;
+    let target = cur === -1 ? roll - 1 : cur + roll;
+    if (target > state.cfg.pathLength) {
+      if (state.cfg.exactBearOff || cur === -1) continue;
+      target = state.cfg.pathLength;
+    }
     if (target === state.cfg.pathLength) {
       if (!state.cfg.exactBearOff || cur + roll === state.cfg.pathLength) {
         moves.push({ tokenIndex: i, from: cur, to: state.cfg.pathLength });
@@ -111,6 +115,7 @@ export function legalRaceMoves(state: RaceState, roll: number): RaceMove[] {
 }
 
 export function applyRaceMove(state: RaceState, move: RaceMove): RaceState {
+  if (!state.rolled || !legalRaceMoves(state, state.dice).some(m => m.tokenIndex === move.tokenIndex && m.from === move.from && m.to === move.to)) return state;
   const cfg = state.cfg;
   const next: RaceState = {
     ...state,
@@ -149,7 +154,8 @@ export function applyRaceMove(state: RaceState, move: RaceMove): RaceState {
 
   const tags: string[] = [];
   if (captured) tags.push('✦ capture');
-  if (move.to < cfg.pathLength && cfg.squares[move.to]?.extraRoll) tags.push('✦ extra roll');
+  const extra = (move.to < cfg.pathLength && (cfg.squares[move.to]?.extraRoll ?? false)) || (cfg.extraTurnRolls?.includes(state.dice) ?? false);
+  if (extra) tags.push('✦ extra roll');
   if (sentBackNote) tags.push(sentBackNote);
 
   next.log.push(
@@ -162,7 +168,6 @@ export function applyRaceMove(state: RaceState, move: RaceMove): RaceState {
     return next;
   }
 
-  const extra = move.to < cfg.pathLength && (cfg.squares[move.to]?.extraRoll ?? false);
   next.extraTurn = extra;
   if (!extra) next.turn = next.turn === 'white' ? 'black' : 'white';
   next.rolled = false;

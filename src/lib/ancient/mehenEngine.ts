@@ -230,6 +230,8 @@ export function legalMehenMoves(state: MehenState, roll: number): MehenMove[] {
 }
 
 export function applyMehenMove(state: MehenState, move: MehenMove): MehenState {
+  const valid = state.rolled && legalMehenMoves(state, state.dice).some(m => m.pieceId === move.pieceId && m.toPos === move.toPos && m.toOutDist === move.toOutDist && m.kind === move.kind && m.captureId === move.captureId && m.swapId === move.swapId);
+  if (!valid) return state;
   const next: MehenState = {
     ...state,
     players: state.players.map((p) => ({ ...p })),

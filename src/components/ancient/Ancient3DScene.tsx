@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
+import { FittedTableCamera, SceneLoading, SceneUnavailable, TableLighting } from '@/components/game/BoardCraft';
 import vikingTableBg from '@/assets/viking-table-bg.jpg';
 import { ERA_IMAGES } from './EraBackdrop';
 
@@ -28,12 +29,14 @@ export function Ancient3DScene({
   eraId,
   overlayOpacity = 0.55,
 }: Props) {
+  const spans: Record<string, [number, number]> = { 'royal-ur': [12, 6], petteia: [10, 10], latrunculorum: [11, 10], bao: [14, 8], senet: [12, 5], patolli: [25, 25], liubo: [16, 5] };
+  const [span, depth] = (eraId && spans[eraId]) || [12, 12];
   const bg = (eraId && ERA_IMAGES[eraId]) || vikingTableBg;
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 overflow-hidden">
       {/* Era painting backdrop with subtle Ken-Burns drift */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-[era-pan_60s_ease-in-out_infinite_alternate]"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
         style={{ backgroundImage: `url(${bg})` }}
       />
       {/* Warm vignette + darkening so the 3D board stays legible */}
@@ -47,26 +50,22 @@ export function Ancient3DScene({
       <div className="absolute inset-0 opacity-[0.12] mix-blend-overlay pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(rgba(255,220,160,0.4) 1px, transparent 1px)', backgroundSize: '3px 3px' }}
       />
-      <Canvas shadows className="w-full h-full relative z-10">
-        <PerspectiveCamera makeDefault position={cameraPosition} fov={50} />
+      <Canvas fallback={<SceneUnavailable />} shadows dpr={[1, 1.7]} className="w-full h-full relative z-10">
+        <FittedTableCamera span={span} depth={depth} direction={cameraPosition} />
         <OrbitControls
           enablePan={false}
           enableRotate
           enableZoom
           minDistance={minDistance}
-          maxDistance={maxDistance}
+          maxDistance={Math.max(maxDistance, 120)}
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={Math.PI / 2.3}
-          target={[0, 0, 0]}
+          target={[0, 0, .55]}
         />
-        <ambientLight intensity={0.75} />
-        <directionalLight position={[0, 15, 0]} intensity={0.6} castShadow shadow-mapSize={[2048, 2048]} />
-        <pointLight position={[-6, 8, -6]} intensity={0.4} color="#ffcc88" />
-        <pointLight position={[6, 8, -6]} intensity={0.4} color="#ffcc88" />
-        <pointLight position={[-6, 8, 6]} intensity={0.4} color="#ffcc88" />
-        <pointLight position={[6, 8, 6]} intensity={0.4} color="#ffcc88" />
-        {children}
+        <TableLighting span={span} />
+        <Suspense fallback={null}>{children}</Suspense>
       </Canvas>
+      <SceneLoading />
     </div>
   );
 }

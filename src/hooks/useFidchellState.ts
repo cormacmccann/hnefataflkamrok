@@ -13,7 +13,7 @@ const colorToPlayer = (c: Color): Player => (c === 'white' ? 'defender' : 'attac
 interface FidchellStateReturn {
   gameState: GameState;
   selectPiece: (piece: Piece | null) => void;
-  makeMove: (to: FidchellPosition) => boolean;
+  makeMove: (to: FidchellPosition, pieceId?: string) => boolean;
   resetGame: (playerSide: Player) => void;
   handleNodeClick: (pos: FidchellPosition) => void;
   handlePieceClick: (pieceId: string) => void;
@@ -76,7 +76,7 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
   const placePawn = useCallback((at: FidchellPosition) => {
     if (gameResult) return false;
     if (pawnsInHand[currentPlayer] <= 0) return false;
-    if (at.ring === 0) return false; // never place on Navel Stone
+    if (!Number.isInteger(at.ring) || !Number.isInteger(at.spoke) || at.ring < 1 || at.ring >= FIDCHELL_CONFIG.rings || at.spoke < 0 || at.spoke >= FIDCHELL_CONFIG.spokes) return false;
     if (pieces.some(p => p.circularPosition?.ring === at.ring && p.circularPosition?.spoke === at.spoke)) {
       return false;
     }
@@ -125,21 +125,22 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
     setValidMoves(logic.getValidMoves(piece, pieces));
   }, [gameResult, pawnsInHand, currentPlayer, logic, pieces, playSelect]);
 
-  const makeMove = useCallback((to: FidchellPosition): boolean => {
-    if (!selectedPiece || !selectedPiece.circularPosition) return false;
-    if (gameResult) return false;
-    if (!validMoves.some(m => m.ring === to.ring && m.spoke === to.spoke)) return false;
+  const makeMove = useCallback((to: FidchellPosition, pieceId?: string): boolean => {
+    const movingPiece = pieces.find(p => p.id === (pieceId ?? selectedPiece?.id));
+    if (!movingPiece?.circularPosition || gameResult || pawnsInHand[currentPlayer] > 0) return false;
+    if ((movingPiece.type === 'attacker' ? 'attacker' : 'defender') !== currentPlayer) return false;
+    if (!logic.getValidMoves(movingPiece, pieces).some(m => m.ring === to.ring && m.spoke === to.spoke)) return false;
 
-    const { newPieces, captured } = logic.applyMove(pieces, selectedPiece, to);
+    const { newPieces, captured } = logic.applyMove(pieces, movingPiece, to);
     playMove();
     if (captured.length > 0) playCapture();
 
     const move: Move = {
-      piece: selectedPiece,
-      from: { row: selectedPiece.circularPosition.ring, col: selectedPiece.circularPosition.spoke },
+      piece: movingPiece,
+      from: { row: movingPiece.circularPosition.ring, col: movingPiece.circularPosition.spoke },
       to: { row: to.ring, col: to.spoke },
       captured,
-      notation: `(${selectedPiece.circularPosition.ring},${selectedPiece.circularPosition.spoke})→(${to.ring},${to.spoke})${captured.length ? `×${captured.length}` : ''}`,
+      notation: `(${movingPiece.circularPosition.ring},${movingPiece.circularPosition.spoke})→(${to.ring},${to.spoke})${captured.length ? `×${captured.length}` : ''}`,
     };
 
     setPieces(newPieces);
@@ -149,7 +150,7 @@ export function useFidchellState(playerSide: Player, sfxVolume: number): Fidchel
 
     afterAction(newPieces, captured.length > 0);
     return true;
-  }, [selectedPiece, gameResult, validMoves, pieces, logic, playMove, playCapture, afterAction]);
+  }, [selectedPiece, gameResult, pawnsInHand, currentPlayer, pieces, logic, playMove, playCapture, afterAction]);
 
   const handleNodeClick = useCallback((pos: FidchellPosition) => {
     if (gameResult) return;

@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import { AncientInlayLabel as Text } from './AncientInlayLabel';
+import { getWoodTexture } from '@/components/game/BoardCraft';
 import * as THREE from 'three';
 import {
   UrState, UrMove, SquareId, SQUARE_COORDS, ROSETTE_SQUARES,
@@ -55,11 +56,11 @@ export function RoyalUrBoard3D({ state, myMoves, onMove }: Props) {
       {/* Base */}
       <mesh position={[0, -0.18, 0]} receiveShadow>
         <boxGeometry args={[boardW + 1.2, 0.3, boardD + 1.2]} />
-        <meshStandardMaterial color="#3B2412" roughness={0.85} />
+        <meshStandardMaterial color="#3B2412" map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.85} />
       </mesh>
       <mesh position={[0, -0.02, 0]} receiveShadow>
         <boxGeometry args={[boardW, 0.1, boardD]} />
-        <meshStandardMaterial color="#5D3A1F" roughness={0.7} />
+        <meshStandardMaterial color="#5D3A1F" map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.7} />
       </mesh>
 
       {/* Squares */}
@@ -80,8 +81,8 @@ export function RoyalUrBoard3D({ state, myMoves, onMove }: Props) {
               <meshStandardMaterial
                 color={isRosette ? '#B5651D' : '#C9A877'}
                 roughness={0.55}
-                emissive={target ? '#22ff22' : '#000000'}
-                emissiveIntensity={target ? 0.4 : 0}
+                emissive={target ? '#c6b678' : '#000000'}
+                emissiveIntensity={target ? 0.12 : 0}
               />
             </mesh>
             {isRosette && (
@@ -99,7 +100,7 @@ export function RoyalUrBoard3D({ state, myMoves, onMove }: Props) {
             {target && (
               <mesh position={[x, 0.18, z]}>
                 <sphereGeometry args={[0.1, 16, 16]} />
-                <meshStandardMaterial color="#44ff44" emissive="#22ff22" emissiveIntensity={0.6} transparent opacity={0.8} />
+                <meshStandardMaterial color="#dfc885" emissive="#dfc885" emissiveIntensity={0.6} transparent opacity={0.8} />
               </mesh>
             )}
           </group>
@@ -124,17 +125,17 @@ export function RoyalUrBoard3D({ state, myMoves, onMove }: Props) {
 
       {/* Pool: start (left) */}
       {Array.from({ length: wStartCount }).map((_, i) => (
-        <UrToken key={`ws-${i}`} position={[-X_OFFSET - 1.2, 0.2, -Z_OFFSET + i * 0.35]} who="white" small />
+        <UrToken key={`ws-${i}`} position={[-X_OFFSET - .82, .04, -Z_OFFSET + i * .35]} who="white" small />
       ))}
       {Array.from({ length: bStartCount }).map((_, i) => (
-        <UrToken key={`bs-${i}`} position={[-X_OFFSET - 1.2, 0.2, Z_OFFSET - i * 0.35]} who="black" small />
+        <UrToken key={`bs-${i}`} position={[-X_OFFSET - 1.22, .04, -Z_OFFSET + i * .35]} who="black" small />
       ))}
       {/* Pool: off (right) */}
       {Array.from({ length: wOffCount }).map((_, i) => (
-        <UrToken key={`wo-${i}`} position={[X_OFFSET + 1.2, 0.2, -Z_OFFSET + i * 0.35]} who="white" small />
+        <UrToken key={`wo-${i}`} position={[X_OFFSET + .82, .04, -Z_OFFSET + i * .35]} who="white" small />
       ))}
       {Array.from({ length: bOffCount }).map((_, i) => (
-        <UrToken key={`bo-${i}`} position={[X_OFFSET + 1.2, 0.2, Z_OFFSET - i * 0.35]} who="black" small />
+        <UrToken key={`bo-${i}`} position={[X_OFFSET + 1.22, .04, -Z_OFFSET + i * .35]} who="black" small />
       ))}
     </group>
   );

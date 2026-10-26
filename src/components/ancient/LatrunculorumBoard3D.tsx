@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { getWoodTexture } from '@/components/game/BoardCraft';
 import { LatState, LatPos, BOARD_SIZE } from '@/lib/ancient/latrunculorum';
 
 interface Props {
@@ -20,11 +21,11 @@ export function LatrunculorumBoard3D({ state, validTargets, onSquareClick }: Pro
     <group>
       <mesh position={[0, -0.18, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.8, 0.3, boardWidth + 0.8]} />
-        <meshStandardMaterial color="#2a1810" roughness={0.9} />
+        <meshStandardMaterial color="#2a1810" map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.9} />
       </mesh>
       <mesh position={[0, -0.01, 0]} receiveShadow>
         <boxGeometry args={[boardWidth + 0.35, 0.1, boardWidth + 0.35]} />
-        <meshStandardMaterial color="#4a2820" roughness={0.7} />
+        <meshStandardMaterial color="#4a2820" map={getWoodTexture()} bumpMap={getWoodTexture()} bumpScale={.012} roughness={0.7} />
       </mesh>
 
       {Array.from({ length: BOARD_SIZE }).map((_, row) =>
@@ -46,7 +47,7 @@ export function LatrunculorumBoard3D({ state, validTargets, onSquareClick }: Pro
               <meshStandardMaterial
                 color={light ? '#C9B280' : '#5C2A18'}
                 roughness={0.55}
-                emissive={valid ? '#ff3322' : selected ? '#ffaa22' : '#000000'}
+                emissive={valid ? '#c6b678' : selected ? '#ffaa22' : '#000000'}
                 emissiveIntensity={valid ? 0.4 : selected ? 0.4 : 0}
               />
             </mesh>
@@ -57,7 +58,7 @@ export function LatrunculorumBoard3D({ state, validTargets, onSquareClick }: Pro
       {validTargets.map((t, i) => (
         <mesh key={`vm-${i}`} position={[t.col * SQ - OFFSET, 0.18, t.row * SQ - OFFSET]}>
           <sphereGeometry args={[0.1, 16, 16]} />
-          <meshStandardMaterial color="#ff5544" emissive="#ff2211" emissiveIntensity={0.7} transparent opacity={0.85} />
+          <meshStandardMaterial color="#dfc885" emissive="#dfc885" emissiveIntensity={0.7} transparent opacity={0.85} />
         </mesh>
       ))}
 

@@ -1,0 +1,11 @@
+# TAFL identity
+
+The introduction, collection and game headers use the same carved wooden disc in `public/brand/tafl-emblem.png`; the favicon uses its 64px derivative. The full generated master is retained beside it.
+
+Generated with the built-in imagegen tool. Final prompt: a front-facing, circular hand-carved walnut disc with the exact word TAFL in classical serif capitals, an aged-bronze inner ring, and eight low-relief decorative motifs around the rim inspired by Norse interlace, Irish triskele, Egyptian lotus, Mesopotamian rosette, Greek meander, Roman laurel, Chinese cloud scroll and Mesoamerican stepped forms. Museum-quality artisan material, warm light, worn edges, genuine transparent background; no additional lettering, weapons, flags or stand.
+
+The emblem is a contemporary identity inspired by several game cultures, not a representation of an archaeological artefact. Collection landscape illustrations are artist impressions rather than historical evidence.
+
+## Exact generation prompt
+
+> Use case: logo-brand. Create a polished photographic brand emblem for TAFL, a respectful collection of ancient strategy board games. One single circular hand-carved dark walnut wooden disc, front facing, perfectly round, centered, entire disc visible with generous transparent margin. The exact word "TAFL" (T A F L) deeply carved in large beautiful classical Roman serif capitals across the middle, extremely clear and legible. Around the outer rim are eight small low-relief emblems inspired by the cultures of the games: Norse interlace, Irish triskele, Egyptian lotus, Mesopotamian eight-point rosette, Greek meander, Roman laurel, Chinese cloud scroll, Mesoamerican stepped motif. These are decorative respectful motifs, no modern flags or religious/political symbols. A narrow restrained aged-bronze inlaid circle borders the central lettering. Rich actual walnut wood grain, aged patina, subtly worn carved edges, warm directional light revealing the depth of the carving, museum-quality artisan object, high-class old-world feel, realistic product photography, not a fantasy shield. Subtle highlights in carved letters retain excellent readability at small size. No other text, no weapons, no crown, no background, no stand, no drop shadow extending far beyond disc. Genuine transparent background.

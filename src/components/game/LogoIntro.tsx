@@ -1,72 +1,13 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import hnefataflLogo from '@/assets/hnefatafl-logo.png';
-import vikingBackground from '@/assets/viking-background.jpg';
-import { useLanguage } from '@/i18n/LanguageContext';
-
-interface LogoIntroProps {
-  onComplete: () => void;
-}
-
-export function LogoIntro({ onComplete }: LogoIntroProps) {
-  const [showLogo, setShowLogo] = useState(true);
-  const { t } = useLanguage();
-
+import { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+export function LogoIntro({ onComplete }: { onComplete: () => void }) {
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLogo(false);
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleExitComplete = () => {
-    onComplete();
-  };
-
-  return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: `url(${vikingBackground})` }}
-    >
-      <div className="absolute inset-0 bg-background/80" />
-      
-      <AnimatePresence onExitComplete={handleExitComplete}>
-        {showLogo && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            transition={{ 
-              duration: 0.8,
-              exit: { duration: 0.5 }
-            }}
-            className="relative z-10 flex flex-col items-center"
-          >
-            <motion.img 
-              src={hnefataflLogo} 
-              alt={t.appName}
-              className="h-32 sm:h-40 md:h-48 drop-shadow-2xl"
-              animate={{ 
-                filter: ['drop-shadow(0 0 20px hsl(var(--primary)/0.3))', 'drop-shadow(0 0 40px hsl(var(--primary)/0.5))', 'drop-shadow(0 0 20px hsl(var(--primary)/0.3))']
-              }}
-              transition={{ 
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="mt-6 text-lg text-muted-foreground font-['Cinzel'] tracking-widest text-center max-w-md px-4"
-            >
-              {t.subtitle}
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+    const timer = window.setTimeout(onComplete, reducedMotion ? 250 : 1600);
+    return () => window.clearTimeout(timer);
+  }, [onComplete, reducedMotion]);
+  return <div className="tafl-intro"><motion.div initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }}>
+    <img src="/brand/tafl-emblem.png" alt="TAFL carved wooden emblem" width="260" height="260" />
+    <p>Old worlds. Timeless play.</p><button onClick={onComplete}>Enter the collection <span aria-hidden>→</span></button>
+  </motion.div></div>;
 }

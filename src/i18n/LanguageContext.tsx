@@ -16,7 +16,7 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('tafl-language');
-    return (saved as Language) || 'en';
+    return saved && saved in translations ? saved as Language : 'en';
   });
 
   const setLanguage = useCallback((lang: Language) => {
